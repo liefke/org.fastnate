@@ -1,0 +1,81 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<name>FastNate Data Importer</name>
+	<description>The FastNate Data Importer for offline SQL generation</description>
+
+	<parent>
+		<groupId>org.fastnate</groupId>
+		<artifactId>fastnate-base</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../fastnate-base/pom.xml</relativePath>
+	</parent>
+
+	<artifactId>fastnate-data</artifactId>
+	<packaging>jar</packaging>
+
+	<dependencies>
+		<!-- Use the generator -->
+		<dependency>
+			<groupId>org.fastnate</groupId>
+			<artifactId>fastnate-generator</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<!-- Compile time dependencies -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.supercsv</groupId>
+			<artifactId>super-csv</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+		</dependency>
+
+		<!-- This is just the JPA 2.0 standalone API (without hibernate) -->
+		<dependency>
+			<groupId>org.hibernate.javax.persistence</groupId>
+			<artifactId>hibernate-jpa-2.0-api</artifactId>
+		</dependency>
+
+		<!-- Test dependencies -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jdk14</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.easytesting</groupId>
+			<artifactId>fest-assert</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-entitymanager</artifactId>
+		</dependency>
+
+	</dependencies>
+
+</project>

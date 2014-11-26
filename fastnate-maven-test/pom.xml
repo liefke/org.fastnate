@@ -1,0 +1,92 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<name>FastNate Maven Test</name>
+	<description>Test the fastnate.org maven plugin</description>
+
+	<parent>
+		<groupId>org.fastnate</groupId>
+		<artifactId>fastnate-base</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../fastnate-base/pom.xml</relativePath>
+	</parent>
+
+	<artifactId>fastnate-maven-test</artifactId>
+	<packaging>jar</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.fastnate</groupId>
+			<artifactId>fastnate-data</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+
+		<!-- This is just the JPA 2.0 standalone API (without hibernate) -->
+		<dependency>
+			<groupId>org.hibernate.javax.persistence</groupId>
+			<artifactId>hibernate-jpa-2.0-api</artifactId>
+		</dependency>
+
+		<!-- Test dependencies -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jdk14</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-entitymanager</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-validator</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.easytesting</groupId>
+			<artifactId>fest-assert</artifactId>
+		</dependency>		
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>fastnate-maven-plugin</artifactId>
+				<version>${project.version}</version>
+				<executions>
+					<execution>
+						<id>importData</id>
+						<goals>
+							<goal>import-data</goal>
+						</goals>
+						<configuration>
+							<packages>org.fastnate.maven.test</packages>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

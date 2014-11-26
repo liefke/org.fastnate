@@ -1,0 +1,21 @@
+<!-- Describes import declarations within of the org.fastnate projects. -->
+<!DOCTYPE import-control PUBLIC
+    "-//Puppy Crawl//DTD Import Control 1.1//EN"
+    "http://www.puppycrawl.com/dtds/import_control_1_1.dtd">
+<import-control pkg="org.fastnate">
+	<!-- Permit normal root imports -->
+	<allow pkg="com" />
+	<allow pkg="de" />
+	<allow pkg="java" />
+	<allow pkg="javax" />
+	<allow pkg="net" />
+	<allow pkg="org" />
+
+	<!-- allow Lombok, although they do not use any root package -->
+	<allow pkg="lombok" />
+
+	<!-- for logging use @Slf4j -->
+	<disallow class="org.apache.log4j.spi.LoggerFactory" />
+	<disallow class="org.slf4j.LoggerFactory" />
+
+</import-control>

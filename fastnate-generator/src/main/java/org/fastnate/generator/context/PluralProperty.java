@@ -1,0 +1,318 @@
+package org.fastnate.generator.context;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.persistence.AssociationOverride;
+import javax.persistence.AttributeOverride;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Embeddable;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.MapsId;
+
+import org.fastnate.generator.statements.InsertStatement;
+
+import lombok.Getter;
+
+/**
+ * Base class for {@link MapProperty} and {@link CollectionProperty}.
+ * 
+ * @author Tobias Liefke
+ * @param <E>
+ *            The type of the container class
+ * @param <C>
+ *            The type of the collection of map
+ * @param <T>
+ *            The type of the elements in the collection
+ */
+@Getter
+public abstract class PluralProperty<E, C, T> extends Property<E, C> {
+
+	/**
+	 * Builds the name of the column that contains the ID of the entity for the given field.
+	 * 
+	 * @param field
+	 *            the inspected field
+	 * @param override
+	 *            contains optional override options
+	 * @param collectionMetadata
+	 *            the default join column
+	 * @param defaultIdColumn
+	 *            the default name for the column, if {@code joinColumn} is empty or {@code null}
+	 * @return the column name
+	 */
+	protected static String buildIdColumn(final Field field, final AssociationOverride override,
+			final CollectionTable collectionMetadata, final String defaultIdColumn) {
+		return buildIdColumn(field, override, collectionMetadata != null ? collectionMetadata.joinColumns() : null,
+				defaultIdColumn);
+	}
+
+	/**
+	 * Builds the name of the column that contains the ID of the entity for the given field.
+	 * 
+	 * @param field
+	 *            the inspected field
+	 * @param override
+	 *            contains optional override options
+	 * @param joinColumns
+	 *            the default join columns
+	 * @param defaultIdColumn
+	 *            the default name for the column, if {@code joinColumn} is empty or {@code null}
+	 * @return the column name
+	 */
+	private static String buildIdColumn(final Field field, final AssociationOverride override,
+			final JoinColumn[] joinColumns, final String defaultIdColumn) {
+		if (override != null && override.joinColumns().length > 0) {
+			final JoinColumn joinColumn = override.joinColumns()[0];
+			if (joinColumn.name().length() > 0) {
+				return joinColumn.name();
+			}
+		}
+
+		final JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
+		if (joinColumn != null && joinColumn.name().length() > 0) {
+			return joinColumn.name();
+		}
+
+		if (joinColumns != null && joinColumns.length > 0 && joinColumns[0].name().length() > 0) {
+			return joinColumns[0].name();
+		}
+		return defaultIdColumn;
+	}
+
+	/**
+	 * Builds the name of the column that contains the ID of the entity for the given field.
+	 * 
+	 * @param field
+	 *            the inspected field
+	 * @param override
+	 *            contains optional override options
+	 * @param tableMetadata
+	 *            the default join column
+	 * @param defaultIdColumn
+	 *            the default name for the column, if {@code joinColumn} is empty or {@code null}
+	 * @return the column name
+	 */
+	protected static String buildIdColumn(final Field field, final AssociationOverride override,
+			final JoinTable tableMetadata, final String defaultIdColumn) {
+		return buildIdColumn(field, override, tableMetadata != null ? tableMetadata.joinColumns() : null,
+				defaultIdColumn);
+	}
+
+	/**
+	 * Builds the name of the table of the association for the given field.
+	 * 
+	 * @param tableMetadata
+	 *            the current metadata of the field
+	 * @param defaultTableName
+	 *            the default name for the table
+	 * @return the column name
+	 */
+	protected static String buildTableName(final CollectionTable tableMetadata, final String defaultTableName) {
+		return tableMetadata != null && tableMetadata.name().length() != 0 ? tableMetadata.name() : defaultTableName;
+	}
+
+	/**
+	 * Builds the name of the table of the association for the given field.
+	 * 
+	 * @param field
+	 *            the inspected field
+	 * @param override
+	 *            contains optional override options
+	 * @param tableMetadata
+	 *            the optional metadata of the table
+	 * 
+	 * @param defaultTableName
+	 *            the default name for the table
+	 * @return the table name
+	 */
+	protected static String buildTableName(final Field field, final AssociationOverride override,
+			final JoinTable tableMetadata, final String defaultTableName) {
+		if (override != null) {
+			final JoinTable joinTable = override.joinTable();
+			if (joinTable != null && joinTable.name().length() > 0) {
+				return joinTable.name();
+			}
+		}
+		return tableMetadata != null && tableMetadata.name().length() > 0 ? tableMetadata.name() : defaultTableName;
+	}
+
+	/**
+	 * Builds the name of the column that contains the value for the collection / map.
+	 * 
+	 * @param field
+	 *            the inspected field
+	 * @param defaultValueColumn
+	 *            the default name
+	 * @return the column name
+	 */
+	protected static String buildValueColumn(final Field field, final String defaultValueColumn) {
+		final JoinTable tableMetadata = field.getAnnotation(JoinTable.class);
+		if (tableMetadata != null && tableMetadata.inverseJoinColumns().length > 0
+				&& tableMetadata.inverseJoinColumns()[0].name().length() > 0) {
+			return tableMetadata.inverseJoinColumns()[0].name();
+		}
+		final Column columnMetadata = field.getAnnotation(Column.class);
+		if (columnMetadata != null && columnMetadata.name().length() > 0) {
+			return columnMetadata.name();
+		}
+		return defaultValueColumn;
+	}
+
+	/**
+	 * Inspects the given field and searches for a generic type argument.
+	 * 
+	 * @param field
+	 *            the field to inspect
+	 * @param explicitClass
+	 *            an explicit class to use, if the metadata specified one
+	 * @param argumentIndex
+	 *            the index of the argument, for maps there are two: the key and the value
+	 * @return the found class
+	 */
+	@SuppressWarnings("unchecked")
+	protected static <T> Class<T> getFieldArgument(final Field field, final Class<T> explicitClass,
+			final int argumentIndex) {
+		if (explicitClass != void.class) {
+			// Explict target class
+			return explicitClass;
+		}
+
+		// Inspect the type binding
+		if (!(field.getGenericType() instanceof ParameterizedType)) {
+			throw new IllegalArgumentException(field + " is not of generic type and has no defined entity class");
+		}
+
+		final ParameterizedType type = (ParameterizedType) field.getGenericType();
+		final Type[] parameterArgTypes = type.getActualTypeArguments();
+		if (parameterArgTypes.length > argumentIndex) {
+			Type genericType = parameterArgTypes[argumentIndex];
+			if (genericType instanceof ParameterizedType) {
+				genericType = ((ParameterizedType) genericType).getRawType();
+			}
+			if (genericType instanceof Class<?>) {
+				return (Class<T>) genericType;
+			}
+		}
+		throw new IllegalArgumentException(field + " has illegal generic type signature");
+
+	}
+
+	/** The current context. */
+	private final GeneratorContext context;
+
+	/** Contains all properties of an embedded element collection. */
+	private List<SingularProperty<T, ?>> embeddedProperties;
+
+	/** The field to use, if an id is embedded. */
+	private final String idField;
+
+	/**
+	 * Creates a new property.
+	 * 
+	 * @param context
+	 *            the current context
+	 * @param field
+	 *            the field
+	 */
+	public PluralProperty(final GeneratorContext context, final Field field) {
+		super(field);
+		this.context = context;
+
+		final MapsId mapsId = field.getAnnotation(MapsId.class);
+		this.idField = mapsId == null || mapsId.value().length() == 0 ? null : mapsId.value();
+	}
+
+	@Override
+	public void addInsertExpression(final E entity, final InsertStatement statement) {
+		// Ignore
+	}
+
+	/**
+	 * Builds the embedded properties of this property.
+	 * 
+	 * @param targetType
+	 *            the target type
+	 */
+	protected void buildEmbeddedProperties(final Class<?> targetType) {
+		if (targetType.getAnnotation(Embeddable.class) != null) {
+			this.embeddedProperties = new ArrayList<>();
+			final Map<String, AttributeOverride> attributeOverrides = EntityClass.getAttributeOverrides(getField());
+			for (final Field field : targetType.getDeclaredFields()) {
+				final AttributeOverride attributeOveride = attributeOverrides.get(field.getName());
+				final Column columnMetadata = attributeOveride != null ? attributeOveride.column() : field
+						.getAnnotation(Column.class);
+				final AssociationOverride assocOverride = EntityClass.getAccociationOverrides(getField()).get(
+						field.getName());
+				final SingularProperty<T, ?> property = buildProperty(field, columnMetadata, assocOverride);
+				if (property != null) {
+					this.embeddedProperties.add(property);
+				}
+			}
+		}
+	}
+
+	private SingularProperty<T, ?> buildProperty(final Field field, final Column columnMetadata,
+			final AssociationOverride override) {
+		// Ignore static, transient and generated fields
+		if (EntityClass.isPersistentField(field)) {
+			if (CollectionProperty.isCollectionField(field) || MapProperty.isMapField(field)) {
+				throw new IllegalArgumentException("Plural attributes not allowed for embedded element collection: "
+						+ field);
+			}
+			if (EntityProperty.isEntityField(field)) {
+				return new EntityProperty<>(this.context, field, override);
+			}
+			return new PrimitiveProperty<>(this.context, getTable(), field, columnMetadata);
+		}
+		return null;
+	}
+
+	/**
+	 * The name of the column that contains the ID of the entity that contains this collection.
+	 * 
+	 * @return the name of the ID column
+	 */
+	public abstract String getIdColumn();
+
+	/**
+	 * The name of the table of this property, if any.
+	 * 
+	 * @return the name of the table
+	 */
+	public abstract String getTable();
+
+	/**
+	 * The name of the column that contains the values of the collection.
+	 * 
+	 * @return the name of the value column or {@code null} if {@link #isEmbedded() embedded}
+	 */
+	public abstract String getValueColumn();
+
+	/**
+	 * Indicates that this propery is a {@link ElementCollection} that references {@link Embeddable}s.
+	 * 
+	 * @return true if {@link #getEmbeddedProperties()} returns a list of properties
+	 */
+	public boolean isEmbedded() {
+		return this.embeddedProperties != null;
+	}
+
+	@Override
+	public boolean isRequired() {
+		return false;
+	}
+
+	@Override
+	public boolean isTableColumn() {
+		return false;
+	}
+
+}
