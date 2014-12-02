@@ -16,7 +16,7 @@ import java.util.Collection;
  * If references to other DataProviders are used in the constructor, the {@link #buildEntities()} method of these
  * providers are called before our {@link #buildEntities()}.
  *
- * @author apenski
+ * @author Andreas Penski
  * @author Tobias Liefke
  */
 public interface DataProvider {

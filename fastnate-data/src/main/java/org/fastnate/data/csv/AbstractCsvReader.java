@@ -29,7 +29,7 @@ import org.supercsv.prefs.CsvPreference;
 /**
  * Base class for reading a csv file into an object. Useful for constructing arbitrary object types - not only entities.
  *
- * @author apenski
+ * @author Andreas Penski
  * @param <R>
  *            the row type
  */
@@ -74,7 +74,7 @@ public abstract class AbstractCsvReader<R> {
 		}
 		final Reader reader = new InputStreamReader(inputStream, charset);
 		return new CsvListReader(reader, new CsvPreference.Builder(CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE)
-		.skipComments(new CommentMatches("(//|/\\*|#|;).*")).build());
+				.skipComments(new CommentMatches("(//|/\\*|#|;).*")).build());
 	}
 
 	private final List<File> importFiles;

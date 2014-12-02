@@ -33,7 +33,7 @@ import org.fastnate.generator.statements.InsertStatement;
  * @param <T>
  *            The type of the primitive
  * @author Tobias Liefke
- * @author apenski
+ * @author Andreas Penski
  */
 @Getter
 public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {

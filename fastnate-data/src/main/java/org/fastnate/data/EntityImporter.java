@@ -35,7 +35,7 @@ import org.reflections.Reflections;
  * "import_generated.txt" is created, which contains the includes for all written files (taking their dependencies into
  * account).
  *
- * @author apenski
+ * @author Andreas Penski
  * @author Tobias Liefke
  */
 @Slf4j

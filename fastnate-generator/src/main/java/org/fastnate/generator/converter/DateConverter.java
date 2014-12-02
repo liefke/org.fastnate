@@ -10,7 +10,7 @@ import org.fastnate.generator.context.EntityClass;
 /**
  * Describes a date property of an {@link EntityClass}.
  *
- * @author apenski
+ * @author Andreas Penski
  */
 public class DateConverter extends TemporalConverter<Date> {
 
@@ -28,7 +28,7 @@ public class DateConverter extends TemporalConverter<Date> {
 
 	/**
 	 * Creates a new instance of {@link DateConverter}.
-	 * 
+	 *
 	 * @param type
 	 *            the temporal type of the property
 	 */

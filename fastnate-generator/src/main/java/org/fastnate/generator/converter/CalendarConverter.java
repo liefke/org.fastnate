@@ -11,7 +11,7 @@ import org.fastnate.generator.context.GeneratorContext;
 /**
  * Describes a calendar property of an {@link EntityClass}.
  *
- * @author apenski
+ * @author Andreas Penski
  */
 public class CalendarConverter extends TemporalConverter<Calendar> {
 
@@ -29,7 +29,7 @@ public class CalendarConverter extends TemporalConverter<Calendar> {
 
 	/**
 	 * Creates a new instance of {@link CalendarConverter}.
-	 * 
+	 *
 	 * @param type
 	 *            the temporal type of the property
 	 */
