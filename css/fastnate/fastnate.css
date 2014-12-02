@@ -1,0 +1,65 @@
+body {
+	position: relative;
+}
+
+footer {
+	margin-top: 200px;
+}
+
+.navbar-brand {
+	background: url("../../images/logo.png") no-repeat 10px center;
+	padding-left: 50px;
+}
+
+.navbar {
+	box-shadow: 0px 0px 5px #000000;
+}
+
+.header {
+	font-size: 24px;
+	padding: 30px 0;
+	background: #E75A0A linear-gradient(to bottom, #FE871B 0px, #DB6900 100%) repeat-x;
+	color: white;
+	position: relative;
+	text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.102);
+	margin-top: 50px;
+	box-shadow: 0px 0px 5px #000000;
+}
+
+.header .container {
+	padding: 0 60px;
+}
+
+.page-header {
+	border-bottom: 1px solid #E75A0A;
+	margin-top: 0;
+	padding-top: 60px;
+}
+
+.introduction dt {
+	padding-bottom: 20px;
+}
+
+.introduction dd {
+	margin-bottom: 40px;
+}
+
+.introduction dd .separate::after {
+	content: "...";
+	display: block;
+	font-size: 50px;
+	text-align: center;
+}
+
+ol li {
+	margin-bottom: 10px;
+}
+
+@media ( min-width : 768px) {
+	.introduction dt {
+		width: 110px;
+	}
+	.introduction dd {
+		margin-left: 130px;
+	}
+}
