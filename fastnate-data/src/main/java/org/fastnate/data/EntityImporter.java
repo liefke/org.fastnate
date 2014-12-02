@@ -31,9 +31,8 @@ import org.reflections.Reflections;
 /**
  * Main class for importing entities.
  *
- * Discovers all implementations of {@link DataProvider} and generates a SQL file for each of them. Finally a file
- * "import_generated.txt" is created, which contains the includes for all written files (taking their dependencies into
- * account).
+ * Discovers all implementations of {@link DataProvider} and creates one big SQL file for the
+ * {@link DataProvider#buildEntities() generated entities}.
  *
  * @author Andreas Penski
  * @author Tobias Liefke
