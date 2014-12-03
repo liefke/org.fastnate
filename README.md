@@ -3,11 +3,11 @@
 
 *The Offline SQL Generator*
 
-Fastnate is a [JPA](http://www.oracle.com/technetwork/java/javaee/tech/persistence-jsp-140049.html "Java Persistence API")
-tool to generate SQL statements without having access to a database. Its main usecase is to create test data for databases during development time.
+Fastnate is a tool on top of [JPA](http://www.oracle.com/technetwork/java/javaee/tech/persistence-jsp-140049.html "Java Persistence API")
+to generate SQL statements without having access to a database. Its main usecase is to import initial data into databases.
 
-Read more on [org.fastnate](http://fastnate.org).
+Read more on [fastnate.org](http://fastnate.org).
 Further options:
 * [Dowload the library](http://fastnate.org#download)
-* [Read the Wiki](https://github.com/liefke/org.fastnate/wiki)
-* [Open an issue](https://github.com/liefke/org.fastnate/issues)
+* [Explore the documentation and examples](https://github.com/liefke/org.fastnate/wiki)
+* [Search or open an issue](https://github.com/liefke/org.fastnate/issues)
