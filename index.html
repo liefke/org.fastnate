@@ -254,12 +254,37 @@
 		</p>
 		<h3>Snapshot releases</h3>
 		<p>You can aquire Fastnate in different styles:</p>
-		<dl>
-			<dt>Include as Maven dependency</dt>
+		<dl class="download">
+			<dt>Include Fastnate as Maven dependency:</dt>
 			<dd>
-				<i>About to come</i>
+				To add the latest Snapshot you need to add our repository to your <code>settings.xml</code> or <code>pom.xml</code>:
+				<div class="highlight">
+					<pre>&lt;repositories>
+	&lt;repository>
+		&lt;id>fastnate.org&lt;/id>
+		&lt;url>http://download.fastnate.org/repository&lt;/url>
+		&lt;snapshots>
+			&lt;enabled>true&lt;/enabled>
+		&lt;/snapshots>
+	&lt;/repository>
+&lt;/repositories></pre>
+				</div>
+				Now you can add the dependencies:
+				<div class="highlight">
+					<pre>&lt;!-- Use the DataProvider -->
+&lt;dependency>
+	&lt;groupId>org.fastnate&lt;/groupId>
+	&lt;artifactId>fastnate-data&lt;/artifactId>
+	&lt;version>1.0.0-SNAPSHOT&lt;/version>
+&lt;/dependency>
+&lt;!-- Or use the generator itself -->
+&lt;dependency>
+	&lt;groupId>org.fastnate&lt;/groupId>
+	&lt;artifactId>fastnate-generator&lt;/artifactId>
+	&lt;version>1.0.0-SNAPSHOT&lt;/version>
+&lt;/dependency></pre>				
 			</dd>
-			<dt>Use the prebuilt binaries:</dt>
+			<dt>Download the snapshot binaries:</dt>
 			<dd>
 				<a
 					href="http://download.fastnate.org/repository/org/fastnate/fastnate-generator/1.0.0-SNAPSHOT/fastnate-generator-1.0.0-SNAPSHOT.jar">fastnate-generator-1.0.0-SNAPSHOT.jar</a>
@@ -317,7 +342,6 @@
 			<li>Andreas Penski</li>
 			<li>Heiko Schefter</li>
 			<li>André Babinski</li>
-			<li>André Pankraz</li>
 		</ul>
 		<p>
 			If you would like to contribute to Fastnate, you can create a <a

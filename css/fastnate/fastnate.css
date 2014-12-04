@@ -55,6 +55,14 @@ ol li {
 	margin-bottom: 10px;
 }
 
+dl.download dt {
+	margin-bottom: 10px;
+	margin-top: 20px;
+}
+dl.download dd {
+	margin-left: 40px;
+}
+
 @media ( min-width : 768px) {
 	.introduction dt {
 		width: 110px;
