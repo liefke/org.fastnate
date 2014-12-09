@@ -177,7 +177,7 @@ public abstract class GeneratorDialect {
 	/**
 	 * Indicates that a construct like {@code INSERT INTO t (c1, c2) VALUES (SELECT id - 1 FROM t, 'x')}.
 	 *
-	 * @return {code true} if every table is supported in the select statement, {@code false} if we need to rewrite the
+	 * @return {@code true} if every table is supported in the select statement, {@code false} if we need to rewrite the
 	 *         statement to {@code INSERT INTO t (c) SELECT id - 1, 'x' FROM t}
 	 */
 	public boolean isInsertSelectSameTableSupported() {
