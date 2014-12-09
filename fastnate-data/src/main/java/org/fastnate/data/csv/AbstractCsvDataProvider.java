@@ -18,6 +18,7 @@ import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang.StringUtils;
 import org.fastnate.data.DataProvider;
 import org.fastnate.data.util.ClassUtil;
+import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.Property;
 import org.fastnate.generator.context.SingularProperty;
@@ -245,8 +246,12 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	 * Useful if the CSV file is a database export.
 	 */
 	protected void useTableColumns() {
-		final Map<String, Property<E, ?>> properties = new GeneratorContext().getDescription(getEntityClass())
-				.getProperties();
+		final EntityClass<E> description = new GeneratorContext().getDescription(getEntityClass());
+		if (description.getIdProperty() instanceof SingularProperty) {
+			final SingularProperty<?, ?> property = (SingularProperty<?, ?>) description.getIdProperty();
+			this.columnProperties.put(property.getColumn(), property.getField().getName());
+		}
+		final Map<String, Property<E, ?>> properties = description.getProperties();
 		for (final Map.Entry<String, Property<E, ?>> entry : properties.entrySet()) {
 			if (entry.getValue() instanceof SingularProperty) {
 				final SingularProperty<?, ?> property = (SingularProperty<?, ?>) entry.getValue();
