@@ -1,11 +1,12 @@
 package org.fastnate.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Properties;
 
 import org.fastnate.data.test.TestData;
-import org.fest.assertions.Assertions;
 import org.junit.Test;
 
 /**
@@ -38,16 +39,16 @@ public class EntityImporterTest {
 		final String sql = sqlWriter.toString().replaceFirst("^/\\*.*", "").trim().replaceFirst("^/\\*.*", "").trim();
 
 		// Check prefix and postfix
-		Assertions.assertThat(sql).startsWith(prefix);
-		Assertions.assertThat(sql).endsWith(postfix);
+		assertThat(sql).startsWith(prefix);
+		assertThat(sql).endsWith(postfix);
 
 		// Check TestData and SuccessorData
-		Assertions.assertThat(sql).contains("INSERT INTO TestEntity (name) VALUES ('Root')");
-		Assertions.assertThat(sql).contains(
+		assertThat(sql).contains("INSERT INTO TestEntity (name) VALUES ('Root')");
+		assertThat(sql).contains(
 				"INSERT INTO TestEntity (name, parent_id) VALUES ('Successor', (SELECT max(id) - 1 FROM TestEntity))");
 
 		// Check CSVData
-		Assertions.assertThat(sql).contains(
+		assertThat(sql).contains(
 				"INSERT INTO TestEntity (bool, name, integ, parent_id) "
 						+ "VALUES (0, 'CSV Child;Example', 0, (SELECT max(id) FROM TestEntity))");
 

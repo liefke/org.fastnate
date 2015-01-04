@@ -23,5 +23,5 @@ public class TestEmbeddedProperties {
 	private String description;
 
 	@OneToOne
-	private TestSingularEntity otherNode;
+	private PrimitiveTestEntity otherNode;
 }

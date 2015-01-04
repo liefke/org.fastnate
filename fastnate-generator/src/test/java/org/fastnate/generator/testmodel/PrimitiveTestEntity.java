@@ -7,7 +7,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Lob;
-import javax.persistence.NamedQuery;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
@@ -20,16 +19,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Entity to test primitive properties and .
- * 
+ * Entity to test primitive properties.
+ *
  * @author Tobias Liefke
  */
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@NamedQuery(name = TestSingularEntity.NQ_ENTITY_BY_NAME, query = "SELECT e FROM TestSingularEntity e WHERE e.name = :name")
-public class TestSingularEntity {
+public class PrimitiveTestEntity {
 
 	/**
 	 * Name query to find entity by :name.
@@ -86,19 +84,19 @@ public class TestSingularEntity {
 	private byte[] manyBytes;
 
 	/**
-	 * Creates a new instance of {@link TestSingularEntity}.
-	 * 
+	 * Creates a new instance of {@link PrimitiveTestEntity}.
+	 *
 	 * @param name
 	 *            the name of the entity
 	 */
-	public TestSingularEntity(final String name) {
+	public PrimitiveTestEntity(final String name) {
 		this.name = name;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		return this.id == null ? this == obj : obj instanceof TestSingularEntity
-				&& this.id.equals(((TestSingularEntity) obj).id);
+		return this.id == null ? this == obj : obj instanceof PrimitiveTestEntity
+				&& this.id.equals(((PrimitiveTestEntity) obj).id);
 	}
 
 	@Override

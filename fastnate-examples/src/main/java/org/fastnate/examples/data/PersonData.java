@@ -25,5 +25,6 @@ public class PersonData implements DataProvider {
 	@Override
 	public void buildEntities() throws IOException {
 		this.entities.add(new Person("Nate", "Smith"));
+		this.entities.add(new Person("Natalie", "Smith"));
 	}
 }

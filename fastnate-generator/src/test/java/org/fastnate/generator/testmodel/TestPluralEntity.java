@@ -51,15 +51,15 @@ public class TestPluralEntity {
 	private List<TestPluralEntityProperty> embeddedList = new ArrayList<>();
 
 	@ManyToMany
-	private Set<TestSingularEntity> entitySet = new HashSet<>();
+	private Set<PrimitiveTestEntity> entitySet = new HashSet<>();
 
 	@OneToMany
 	@JoinTable(name = "ENTITY_LIST")
-	private List<TestSingularEntity> entityList = new ArrayList<>();
+	private List<PrimitiveTestEntity> entityList = new ArrayList<>();
 
 	@OneToMany
 	@JoinTable(name = "OE_LIST", joinColumns = @JoinColumn(name = "join_id"))
 	@OrderColumn(name = "sorting")
-	private List<TestSingularEntity> orderedEntityList = new ArrayList<>();
+	private List<PrimitiveTestEntity> orderedEntityList = new ArrayList<>();
 
 }
