@@ -42,7 +42,7 @@ import org.hibernate.annotations.Formula;
 
 /**
  * Describes the DB relevant metadata of an {@link Entity entity class}.
- * 
+ *
  * @author Tobias Liefke
  * @param <E>
  *            The described class
@@ -52,9 +52,9 @@ public class EntityClass<E> {
 
 	/**
 	 * Helper object to use as key in the state map, if we have a {@link GeneratedIdProperty}.
-	 * 
+	 *
 	 * As the hashcode of entities usually changes if the id changes, we can't use the entity as key itself.
-	 * 
+	 *
 	 * As result, the hash map is used as linked list.
 	 */
 	@RequiredArgsConstructor
@@ -73,44 +73,6 @@ public class EntityClass<E> {
 		}
 
 	}
-
-	private static final SequenceGenerator DEFAULT_SEQUENCE_GENERATOR = new SequenceGenerator() {
-
-		@Override
-		public int allocationSize() {
-			return 1;
-		}
-
-		@Override
-		public Class<? extends Annotation> annotationType() {
-			return SequenceGenerator.class;
-		}
-
-		@Override
-		public String catalog() {
-			return "";
-		}
-
-		@Override
-		public int initialValue() {
-			return 0;
-		}
-
-		@Override
-		public String name() {
-			return "";
-		}
-
-		@Override
-		public String schema() {
-			return "";
-		}
-
-		@Override
-		public String sequenceName() {
-			return "hibernate_sequence";
-		}
-	};
 
 	static Map<String, AssociationOverride> getAccociationOverrides(final Field field) {
 		final Collection<AssociationOverride> config = new ArrayList<>();
@@ -158,7 +120,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Indicates that the given field is written to the database.
-	 * 
+	 *
 	 * @param field
 	 *            the field to check
 	 * @return {@code true} if the given field is neither static, nor transient, nor generated
@@ -167,6 +129,44 @@ public class EntityClass<E> {
 		return !Modifier.isStatic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers())
 				&& field.getAnnotation(Transient.class) == null && field.getAnnotation(Formula.class) == null;
 	}
+
+	private static final SequenceGenerator DEFAULT_SEQUENCE_GENERATOR = new SequenceGenerator() {
+
+		@Override
+		public int allocationSize() {
+			return 1;
+		}
+
+		@Override
+		public Class<? extends Annotation> annotationType() {
+			return SequenceGenerator.class;
+		}
+
+		@Override
+		public String catalog() {
+			return "";
+		}
+
+		@Override
+		public int initialValue() {
+			return 1;
+		}
+
+		@Override
+		public String name() {
+			return "";
+		}
+
+		@Override
+		public String schema() {
+			return "";
+		}
+
+		@Override
+		public String sequenceName() {
+			return "hibernate_sequence";
+		}
+	};
 
 	/** The current context. */
 	private final GeneratorContext context;
@@ -185,7 +185,7 @@ public class EntityClass<E> {
 
 	/**
 	 * The id in the disciminator column for this class.
-	 * 
+	 *
 	 * {@code null} if no entity superclass with {@link InheritanceType#SINGLE_TABLE} is used.
 	 */
 	private String dtype;
@@ -218,7 +218,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Creates a new description of an entity class.
-	 * 
+	 *
 	 * @param context
 	 *            the current context
 	 * @param entityClass
@@ -234,7 +234,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Reads the metadata from {@link #entityClass} and fills all other properties.
-	 * 
+	 *
 	 * Not done in the constructor to prevent endless loops.
 	 */
 	void build() {
@@ -290,9 +290,10 @@ public class EntityClass<E> {
 	private void buildDisciminatorType(final Class<?> c) {
 		if (this.dtype == null) {
 			final Inheritance inheritance = c.getAnnotation(Inheritance.class);
-			if (inheritance == null ? c != this.entityClass : inheritance.strategy() == InheritanceType.SINGLE_TABLE) {
+			final boolean isSuperclass = c != this.entityClass;
+			if (inheritance == null ? isSuperclass : inheritance.strategy() != InheritanceType.TABLE_PER_CLASS) {
 				this.dtype = this.entityClass.getSimpleName();
-				if (c != this.entityClass) {
+				if (isSuperclass) {
 					final EntityClass<?> description = this.context.getDescription(c);
 					this.table = description.table;
 					if (description.dtype == null) {
@@ -305,7 +306,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Fills the {@link #idProperty}.
-	 * 
+	 *
 	 * @param c
 	 *            the currently inspected class
 	 */
@@ -329,6 +330,7 @@ public class EntityClass<E> {
 				this.idProperty = new EmbeddedProperty<>(this, field);
 			} else if (field.getAnnotation(Id.class) != null) {
 				if (field.getAnnotation(GeneratedValue.class) != null) {
+					registerSequence(field.getAnnotation(SequenceGenerator.class));
 					this.idProperty = new GeneratedIdProperty<>(this, field, getColumnAnnotation(field));
 				} else {
 					this.idProperty = buildProperty(field, getColumnAnnotation(field), null);
@@ -340,7 +342,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Fills the {@link #properties}.
-	 * 
+	 *
 	 * @param c
 	 *            the currently inspected class
 	 */
@@ -386,7 +388,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Fills the {@link #sequences}.
-	 * 
+	 *
 	 * @param c
 	 *            the currently inspected class
 	 */
@@ -396,10 +398,7 @@ public class EntityClass<E> {
 			buildSequences(c.getSuperclass());
 		}
 
-		final SequenceGenerator generator = c.getAnnotation(SequenceGenerator.class);
-		if (generator != null) {
-			this.sequences.put(generator.name(), generator);
-		}
+		registerSequence(c.getAnnotation(SequenceGenerator.class));
 
 	}
 
@@ -427,7 +426,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Marks an entity as written and creates any pending update / insert statements.
-	 * 
+	 *
 	 * @param entity
 	 *            the entity that exists now in the database
 	 * @return all statements that have to be written now
@@ -454,7 +453,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Creates an expression that references the id of an entity of this class.
-	 * 
+	 *
 	 * @param entity
 	 *            the entity
 	 * @param idField
@@ -525,7 +524,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Resolves the column for the {@link #idProperty id property}.
-	 * 
+	 *
 	 * @param required
 	 *            indicates to throw a {@link IllegalStateException} if the id property is not a
 	 *            {@link SingularProperty}
@@ -544,10 +543,10 @@ public class EntityClass<E> {
 
 	/**
 	 * Resolves the column for the {@link #getIdProperty() id property} of this entity class.
-	 * 
+	 *
 	 * @param field
 	 *            the referencing field (for evaluating annotations)
-	 * 
+	 *
 	 * @return the column name
 	 * @throws IllegalStateException
 	 *             if the id property is not singular and no MapsId is given
@@ -568,7 +567,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Finds the id for the given entity, for look up in the {@link #entityStates}.
-	 * 
+	 *
 	 * @param entity
 	 *            the entity
 	 * @return the ID to use as key
@@ -617,7 +616,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Indicates that the given entity needs to be written.
-	 * 
+	 *
 	 * @param entity
 	 *            the entity to check
 	 * @return {@code true} if the entity was neither written, nor exists in the database
@@ -631,7 +630,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Marks a entity reference, where we don't know the ID in the database.
-	 * 
+	 *
 	 * @param entity
 	 *            the entity to mark
 	 */
@@ -646,7 +645,7 @@ public class EntityClass<E> {
 
 	/**
 	 * Marks an update that is necessary when an entity is written (in the future).
-	 * 
+	 *
 	 * @param pendingEntity
 	 *            the entity that needs to be written, before the update can take place
 	 * @param entityToUpdate
@@ -668,6 +667,12 @@ public class EntityClass<E> {
 			this.entityStates.put(id, pendingState);
 		}
 		pendingState.addPendingUpdate(entityToUpdate, propertyToUpdate, arguments);
+	}
+
+	private void registerSequence(final SequenceGenerator generator) {
+		if (generator != null) {
+			this.sequences.put(generator.name(), generator);
+		}
 	}
 
 	@Override
