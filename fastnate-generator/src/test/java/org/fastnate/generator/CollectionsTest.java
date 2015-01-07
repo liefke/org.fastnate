@@ -9,11 +9,10 @@ import java.util.List;
 import org.fastnate.generator.testmodel.PrimitiveTestEntity;
 import org.fastnate.generator.testmodel.TestPluralEntity;
 import org.fastnate.generator.testmodel.TestPluralEntityProperty;
-import org.fastnate.generator.testmodel.TestRecursiveEntity;
 import org.junit.Test;
 
 /**
- * Test the {@link EntitySqlGenerator} framework.
+ * Test collections in entities.
  *
  * @author Tobias Liefke
  */
@@ -95,41 +94,6 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getOrderedEntityList()).hasSize(testEntity.getOrderedEntityList().size());
 		assertThat(extractNames(result.getOrderedEntityList())).containsExactly("Plural sort test 1",
 				"Plural sort test 3", "Plural sort test 2");
-	}
-
-	/**
-	 * Tests to write recursion.
-	 *
-	 * @throws IOException
-	 *             if the generator throws one
-	 */
-	@Test
-	public void testRecursion() throws IOException {
-		// Check that both nodes are written, no matter which order we use
-		final TestRecursiveEntity root = new TestRecursiveEntity(null, "Test Recursion Root");
-		final TestRecursiveEntity child = new TestRecursiveEntity(root, "Test Recursion Child");
-		write(root);
-
-		final TestRecursiveEntity writtenChild = getEm()
-				.createNamedQuery(TestRecursiveEntity.NQ_ENTITY_BY_NAME, TestRecursiveEntity.class)
-				.setParameter("name", child.getName()).getSingleResult();
-		assertThat(writtenChild.getChildren()).isEmpty();
-		final TestRecursiveEntity writtenRoot = writtenChild.getParent();
-		assertThat(writtenRoot.getName()).isEqualTo(root.getName());
-		assertThat(writtenRoot.getParent()).isNull();
-		assertThat(writtenRoot.getChildren()).contains(writtenChild);
-
-		final TestRecursiveEntity root2 = new TestRecursiveEntity(null, "Test Recursion Root2");
-		final TestRecursiveEntity child2 = new TestRecursiveEntity(root2, "Test Recursion Child2");
-		write(child2);
-
-		final TestRecursiveEntity writtenRoot2 = getEm()
-				.createNamedQuery(TestRecursiveEntity.NQ_ENTITY_BY_NAME, TestRecursiveEntity.class)
-				.setParameter("name", root2.getName()).getSingleResult();
-		assertThat(writtenRoot2.getParent()).isNull();
-		assertThat(writtenRoot2.getChildren()).hasSize(1);
-		final TestRecursiveEntity writtenChild2 = writtenRoot2.getChildren().iterator().next();
-		assertThat(writtenChild2.getName()).isEqualTo(child2.getName());
 	}
 
 }
