@@ -1,14 +1,11 @@
-package org.fastnate.generator;
+package org.fastnate.generator.test.embedded;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 
-import org.fastnate.generator.testmodel.PrimitiveTestEntity;
-import org.fastnate.generator.testmodel.TestEmbeddedId;
-import org.fastnate.generator.testmodel.TestEmbeddedProperties;
-import org.fastnate.generator.testmodel.TestEmbeddingEntity;
-import org.fastnate.generator.testmodel.TestRequiredEmbeddedProperties;
+import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
+import org.fastnate.generator.test.SimpleTestEntity;
 import org.junit.Test;
 
 /**
@@ -28,7 +25,7 @@ public class EmbeddedTest extends AbstractEntitySqlGeneratorTest {
 	public void testEmbedded() throws IOException {
 		final TestEmbeddingEntity testEntity = new TestEmbeddingEntity();
 		testEntity.setId(new TestEmbeddedId(2, "Test embedding"));
-		final TestEmbeddedProperties testProperties = new TestEmbeddedProperties("Example", new PrimitiveTestEntity(
+		final TestEmbeddedProperties testProperties = new TestEmbeddedProperties("Example", new SimpleTestEntity(
 				"embedded child"));
 		testEntity.setProperties(testProperties);
 		testEntity.setRequired(new TestRequiredEmbeddedProperties("req", "opt"));

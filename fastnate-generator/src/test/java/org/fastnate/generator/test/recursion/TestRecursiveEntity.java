@@ -1,4 +1,4 @@
-package org.fastnate.generator.testmodel;
+package org.fastnate.generator.test.recursion;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,6 +15,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import org.fastnate.generator.test.BaseTestEntity;
+
 /**
  * Entity to test recursion in SQL generation.
  *
@@ -24,7 +26,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TestRecursiveEntity extends TestSuperclassEntity {
+public class TestRecursiveEntity extends BaseTestEntity {
 
 	private static final int NAME_LENGTH = 30;
 

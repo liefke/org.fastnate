@@ -1,4 +1,4 @@
-package org.fastnate.generator.testmodel;
+package org.fastnate.generator.test.collections;
 
 import javax.persistence.Embeddable;
 import javax.persistence.ManyToOne;

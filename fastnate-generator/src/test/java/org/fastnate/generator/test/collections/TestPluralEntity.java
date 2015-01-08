@@ -1,4 +1,4 @@
-package org.fastnate.generator.testmodel;
+package org.fastnate.generator.test.collections;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -10,7 +10,6 @@ import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -20,6 +19,9 @@ import javax.persistence.OrderColumn;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.fastnate.generator.test.BaseTestEntity;
+import org.fastnate.generator.test.SimpleTestEntity;
+
 /**
  * An entity for testing collections in SQL generation.
  *
@@ -28,10 +30,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class TestPluralEntity {
-
-	@Id
-	private Long id;
+public class TestPluralEntity extends BaseTestEntity {
 
 	@ElementCollection
 	private Set<String> stringSet = new HashSet<>();
@@ -51,15 +50,15 @@ public class TestPluralEntity {
 	private List<TestPluralEntityProperty> embeddedList = new ArrayList<>();
 
 	@ManyToMany
-	private Set<PrimitiveTestEntity> entitySet = new HashSet<>();
+	private Set<SimpleTestEntity> entitySet = new HashSet<>();
 
 	@OneToMany
 	@JoinTable(name = "ENTITY_LIST")
-	private List<PrimitiveTestEntity> entityList = new ArrayList<>();
+	private List<SimpleTestEntity> entityList = new ArrayList<>();
 
 	@OneToMany
 	@JoinTable(name = "OE_LIST", joinColumns = @JoinColumn(name = "join_id"))
 	@OrderColumn(name = "sorting")
-	private List<PrimitiveTestEntity> orderedEntityList = new ArrayList<>();
+	private List<SimpleTestEntity> orderedEntityList = new ArrayList<>();
 
 }

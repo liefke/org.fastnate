@@ -1,4 +1,4 @@
-package org.fastnate.generator.testmodel;
+package org.fastnate.generator.test.primitive;
 
 import java.util.Date;
 

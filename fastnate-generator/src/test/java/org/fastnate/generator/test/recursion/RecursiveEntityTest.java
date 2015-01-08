@@ -1,10 +1,10 @@
-package org.fastnate.generator;
+package org.fastnate.generator.test.recursion;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 
-import org.fastnate.generator.testmodel.TestRecursiveEntity;
+import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.junit.Test;
 
 /**

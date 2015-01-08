@@ -1,12 +1,14 @@
-package org.fastnate.generator.testmodel;
+package org.fastnate.generator.test.embedded;
 
-import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import javax.persistence.OneToOne;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import org.fastnate.generator.test.SimpleTestEntity;
 
 /**
  * An embedded property of an entry.
@@ -18,11 +20,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class TestRequiredEmbeddedProperties {
+public class TestEmbeddedProperties {
 
-	@Column(nullable = false)
-	private String required;
+	private String description;
 
-	@Column
-	private String optional;
+	@OneToOne
+	private SimpleTestEntity otherNode;
 }

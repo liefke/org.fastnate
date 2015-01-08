@@ -1,4 +1,4 @@
-package org.fastnate.generator;
+package org.fastnate.generator.test.primitive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -7,7 +7,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import org.apache.commons.lang.time.DateUtils;
-import org.fastnate.generator.testmodel.PrimitiveTestEntity;
+import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.junit.Test;
 
 /**

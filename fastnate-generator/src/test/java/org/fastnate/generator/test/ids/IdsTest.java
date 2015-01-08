@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 
-import org.fastnate.generator.AbstractEntitySqlGeneratorTest;
-import org.fastnate.generator.EmbeddedTest;
+import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
+import org.fastnate.generator.test.embedded.EmbeddedTest;
 import org.junit.Test;
 
 /**

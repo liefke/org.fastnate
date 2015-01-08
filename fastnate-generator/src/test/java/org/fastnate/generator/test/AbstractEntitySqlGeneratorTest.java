@@ -1,4 +1,4 @@
-package org.fastnate.generator;
+package org.fastnate.generator.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,6 +22,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import lombok.AccessLevel;
 import lombok.Getter;
 
+import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.dialect.H2Dialect;
 import org.junit.After;

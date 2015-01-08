@@ -1,4 +1,4 @@
-package org.fastnate.generator.testmodel;
+package org.fastnate.generator.test.embedded;
 
 import java.io.Serializable;
 

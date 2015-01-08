@@ -1,21 +1,40 @@
-package org.fastnate.generator.testmodel;
+package org.fastnate.generator.test.inheritance;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
- * Entity class to test mapped superclass properties.
- * 
+ * Mapped superclasses to test inheritance in entities.
+ *
  * @author Tobias Liefke
  */
 @MappedSuperclass
-public class TestSuperclassEntity {
+@Getter
+@NoArgsConstructor
+public class MappedSuperclassTestEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
+	@Setter
+	private String superProperty;
+
+	/**
+	 * Creates a new instance of {@link MappedSuperclassTestEntity}.
+	 * 
+	 * @param superProperty
+	 *            a test property that is written
+	 */
+	public MappedSuperclassTestEntity(final String superProperty) {
+		this.superProperty = superProperty;
+	}
 
 	@Override
 	public boolean equals(final Object obj) {
@@ -25,7 +44,7 @@ public class TestSuperclassEntity {
 		if (!getClass().isAssignableFrom(obj.getClass()) && !obj.getClass().isAssignableFrom(getClass())) {
 			return false;
 		}
-		final TestSuperclassEntity other = (TestSuperclassEntity) obj;
+		final MappedSuperclassTestEntity other = (MappedSuperclassTestEntity) obj;
 		return this.id.equals(other.id);
 	}
 

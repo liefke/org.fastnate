@@ -1,4 +1,4 @@
-package org.fastnate.generator;
+package org.fastnate.generator.test;
 
 import java.io.IOException;
 import java.io.Writer;
