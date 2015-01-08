@@ -3,6 +3,7 @@ package org.fastnate.generator.test.ids;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 
 import org.fastnate.generator.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.EmbeddedTest;
@@ -18,65 +19,65 @@ import org.junit.Test;
 public class IdsTest extends AbstractEntitySqlGeneratorTest {
 
 	/**
-	 * Tests to write an entity with an identity column.
+	 * Tests to write entities with fixed ids.
 	 *
-	 * @throws IOException
-	 *             if the generator throws one
+	 * @throws Exception
+	 *             if Hibernate or the generator throws one
 	 */
 	@Test
-	public void testIdentity() throws IOException {
+	public void testFixedId() throws Exception {
+		final FixedIdTestEntity foundEntity = testIds(FixedIdTestEntity.class);
+		assertThat(foundEntity.getId()).isEqualTo(foundEntity.getName());
+	}
+
+	/**
+	 * Tests to write an entity with an identity column.
+	 *
+	 * @throws Exception
+	 *             if Hibernate or the generator throws one
+	 */
+	@Test
+	public void testIdentityGenerator() throws Exception {
+		testIds(IdentityTestEntity.class);
+	}
+
+	private <E extends IdTestEntity<E>> E testIds(final Class<E> entityClass) throws IOException,
+			ReflectiveOperationException {
+		final Constructor<E> entityConstructor = entityClass.getConstructor(String.class);
 		// Write three entities
-		final IdentityTestEntity entity1 = new IdentityTestEntity("entity1");
+		final E entity1 = entityConstructor.newInstance("entity1");
 		write(entity1);
 
-		write(new IdentityTestEntity("entity2"));
+		write(entityConstructor.newInstance("entity2"));
 
-		// And let the second one reference the first
-		final IdentityTestEntity entity3 = new IdentityTestEntity("entity3");
+		// And let the third one reference the first one
+		final E entity3 = entityConstructor.newInstance("entity3");
 		entity3.setOther(entity1);
 		write(entity3);
 
-		// Read the last entity
-		final IdentityTestEntity foundEntity = findSingleResult(
-				"SELECT e FROM IdentityTestEntity e WHERE e.name = 'entity3'", IdentityTestEntity.class);
+		// Read and check the last entity
+		final E foundEntity = findSingleResult("SELECT e FROM " + entityClass.getSimpleName()
+				+ " e WHERE e.name = 'entity3'", entityClass);
 		assertThat(foundEntity.getOther()).isNotNull();
 		assertThat(foundEntity.getOther().getName()).isEqualTo("entity1");
 
 		// And ensure that another entity may be written afterwards
-		final IdentityTestEntity entity4 = new IdentityTestEntity("entity4");
+		final E entity4 = entityConstructor.newInstance("entity4");
 		entity4.setOther(foundEntity);
 		getEm().persist(entity4);
+
+		return foundEntity;
 	}
 
 	/**
 	 * Tests to write an entity with a sequence generator.
 	 *
-	 * @throws IOException
-	 *             if the generator throws one
+	 * @throws Exception
+	 *             if Hibernate or the generator throws one
 	 */
 	@Test
-	public void testSequence() throws IOException {
-		// Write three entities
-		final SequenceTestEntity entity1 = new SequenceTestEntity("entity1");
-		write(entity1);
-
-		write(new SequenceTestEntity("entity2"));
-
-		// And let the second one reference the first
-		final SequenceTestEntity entity3 = new SequenceTestEntity("entity3");
-		entity3.setOther(entity1);
-		write(entity3);
-
-		// Read the last entity
-		final SequenceTestEntity foundEntity = findSingleResult(
-				"SELECT e FROM SequenceTestEntity e WHERE e.name = 'entity3'", SequenceTestEntity.class);
-		assertThat(foundEntity.getOther()).isNotNull();
-		assertThat(foundEntity.getOther().getName()).isEqualTo("entity1");
-
-		// And ensure that another entity may be written afterwards
-		final SequenceTestEntity entity4 = new SequenceTestEntity("entity4");
-		entity4.setOther(foundEntity);
-		getEm().persist(entity4);
+	public void testSequenceGenerator() throws Exception {
+		testIds(SequenceTestEntity.class);
 	}
 
 }

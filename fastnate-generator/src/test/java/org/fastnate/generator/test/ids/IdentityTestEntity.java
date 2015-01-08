@@ -1,6 +1,5 @@
 package org.fastnate.generator.test.ids;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -12,22 +11,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * An entity that uses an identity column for it's primary key.
+ * An entity that uses an identity column for generating its primary key.
  *
  * @author Tobias Liefke
  */
 @Getter
 @NoArgsConstructor
 @Entity
-public class IdentityTestEntity {
+public class IdentityTestEntity extends IdTestEntity<IdentityTestEntity> {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
-	@Column
-	@Setter
-	private String name;
 
 	@ManyToOne
 	@Setter
@@ -40,12 +35,7 @@ public class IdentityTestEntity {
 	 *            the name of the entity
 	 */
 	public IdentityTestEntity(final String name) {
-		this.name = name;
-	}
-
-	@Override
-	public String toString() {
-		return this.name;
+		super(name);
 	}
 
 }

@@ -53,7 +53,8 @@ public class EntityClass<E> {
 	/**
 	 * Helper object to use as key in the state map, if we have a {@link GeneratedIdProperty}.
 	 *
-	 * As the hashcode of entities usually changes if the id changes, we can't use the entity as key itself.
+	 * As the hashcode of entities in some implementations changes if the id changes, we can't use the entity as key
+	 * itself.
 	 *
 	 * As result, the hash map is used as linked list.
 	 */
@@ -132,9 +133,11 @@ public class EntityClass<E> {
 
 	private static final SequenceGenerator DEFAULT_SEQUENCE_GENERATOR = new SequenceGenerator() {
 
+		private static final int DEFAULT_ALLOCATION_SIZE = 50;
+
 		@Override
 		public int allocationSize() {
-			return 1;
+			return DEFAULT_ALLOCATION_SIZE;
 		}
 
 		@Override
