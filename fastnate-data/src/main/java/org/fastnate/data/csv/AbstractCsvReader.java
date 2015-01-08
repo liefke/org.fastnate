@@ -21,6 +21,7 @@ import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.io.input.BOMInputStream;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.supercsv.comment.CommentMatches;
 import org.supercsv.io.CsvListReader;
@@ -120,19 +121,18 @@ public abstract class AbstractCsvReader<R> {
 
 			try (final CsvListReader csvList = openCsvListReader(importFile)) {
 				final String[] header = csvList.getHeader(true);
-				if (header == null || header.length == 0) {
+				if (ArrayUtils.isEmpty(header)) {
 					log.error("Ignoring {}, as no header was found", importFile);
 					continue;
 				}
 				final Map<String, Integer> columnNames = new HashMap<>();
 				for (int i = 0; i < header.length; i++) {
-					columnNames.put(header[i], i);
+					if (header[i] != null) {
+						columnNames.put(header[i], i);
+					}
 				}
 				for (List<String> values; (values = csvList.read()) != null;) {
 					if (isNotEmpty(values)) {
-						if (values.size() > columnNames.size()) {
-							throw new IllegalArgumentException("Unexpected count of columns: " + values);
-						}
 						final Map<String, String> row = new HashMap<>();
 						for (final Map.Entry<String, Integer> column : columnNames.entrySet()) {
 							if (column.getValue() < values.size()) {
@@ -145,6 +145,5 @@ public abstract class AbstractCsvReader<R> {
 			}
 		}
 		return entities;
-
 	}
 }

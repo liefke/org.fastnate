@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang.StringUtils;
@@ -49,6 +50,11 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	private final Map<String, CsvPropertyConverter<?>> columnConverter = new HashMap<>();
 
 	private final Map<String, String> columnProperties = new HashMap<>();
+
+	/** Indicates to ignore any column that can't be mapped to a property. */
+	@Getter
+	@Setter
+	private boolean ignoreUnknownColumns;
 
 	/**
 	 * Initializes the converter from a path.
@@ -97,11 +103,13 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	 *            the name of the current column
 	 * @param value
 	 *            the value of the property (converts the property, if nessecary)
+	 * @return {@code true} if an appropriate property was found, {@code false} if a matching property was not found and
+	 *         {@code #isIgnoreUnknownColumns()} is {@code true}
 	 *
 	 * @throws IllegalArgumentException
 	 *             if a matching property was not found or the was not converted
 	 */
-	protected void applyColumn(final E entity, final String column, final String value) {
+	protected boolean applyColumn(final E entity, final String column, final String value) {
 		String property = this.columnProperties.get(column);
 		if (property == null) {
 			property = column;
@@ -116,11 +124,14 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 
 					// Now convert and apply to property
 					method.invoke(entity, convertColumn(column, method.getParameterTypes()[0], value));
-					return;
+					return true;
 				}
 			}
-			throw new IllegalArgumentException("Could not find a public method '" + setter + "' in "
-					+ entity.getClass());
+			if (!this.ignoreUnknownColumns) {
+				throw new IllegalArgumentException("Could not find a public method '" + setter + "' in "
+						+ entity.getClass());
+			}
+			return false;
 		} catch (final IllegalAccessException | InvocationTargetException e) {
 			throw new IllegalArgumentException(e);
 		}
