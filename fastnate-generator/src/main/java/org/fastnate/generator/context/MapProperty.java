@@ -15,6 +15,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyClass;
 import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyJoinColumn;
 import javax.persistence.OneToMany;
 
 import org.fastnate.generator.converter.EntityConverter;
@@ -40,10 +41,16 @@ import com.google.common.base.Preconditions;
 @Getter
 public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 
-	private static String buildKeyColumn(final Field field, final String defaultKeyColumn) {
-		final MapKeyColumn columnMetadata = field.getAnnotation(MapKeyColumn.class);
-		if (columnMetadata != null && columnMetadata.name().length() > 0) {
-			return columnMetadata.name();
+	private static String buildKeyColumn(final MapKeyColumn keyColumn, final String defaultKeyColumn) {
+		if (keyColumn != null && keyColumn.name().length() > 0) {
+			return keyColumn.name();
+		}
+		return defaultKeyColumn;
+	}
+
+	private static String buildKeyColumn(final MapKeyJoinColumn keyColumn, final String defaultKeyColumn) {
+		if (keyColumn != null && keyColumn.name().length() > 0) {
+			return keyColumn.name();
 		}
 		return defaultKeyColumn;
 	}
@@ -104,11 +111,18 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	public MapProperty(final EntityClass<?> sourceClass, final Field field, final AssociationOverride override) {
 		super(sourceClass.getContext(), field);
 
-		// Initialize the key information
+		// Initialize the key description
 		final MapKeyClass keyClassAnnotation = field.getAnnotation(MapKeyClass.class);
 		this.keyClass = getFieldArgument(field, keyClassAnnotation != null ? keyClassAnnotation.value() : void.class, 0);
-		this.keyColumn = buildKeyColumn(field, field.getName() + "_KEY");
-		this.keyConverter = PrimitiveProperty.createConverter(field, this.keyClass, true);
+		if (sourceClass.getContext().getDescription(this.keyClass) != null) {
+			// Entity key
+			this.keyConverter = null;
+			this.keyColumn = buildKeyColumn(field.getAnnotation(MapKeyJoinColumn.class), field.getName() + "_KEY");
+		} else {
+			// Primitive key
+			this.keyConverter = PrimitiveProperty.createConverter(field, this.keyClass, true);
+			this.keyColumn = buildKeyColumn(field.getAnnotation(MapKeyColumn.class), field.getName() + "_KEY");
+		}
 
 		// Initialize the value description
 
@@ -210,7 +224,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 		return result;
 	}
 
-	private EntityStatement createDirectPropertyStatement(final E entity, final String key, final String sourceId,
+	private EntityStatement createDirectPropertyStatement(final E entity, final String sourceId, final String key,
 			final T value) {
 		String target;
 		if (value == null) {
