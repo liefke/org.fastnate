@@ -10,7 +10,7 @@ import java.text.ParseException;
  *            the type of the returned value
  * @author Tobias Liefke
  */
-public final class CsvFormatConverter<T> implements CsvPropertyConverter<T> {
+public class CsvFormatConverter<T> implements CsvPropertyConverter<T> {
 
 	private final Format[] formats;
 
@@ -26,6 +26,9 @@ public final class CsvFormatConverter<T> implements CsvPropertyConverter<T> {
 
 	@Override
 	public T convert(final Class<? extends T> targetType, final String value) {
+		if (value == null) {
+			return null;
+		}
 		ParseException firstError = null;
 		for (final Format format : this.formats) {
 			try {

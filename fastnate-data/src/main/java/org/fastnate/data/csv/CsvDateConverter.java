@@ -1,12 +1,10 @@
 package org.fastnate.data.csv;
 
 import java.lang.reflect.InvocationTargetException;
-import java.text.Format;
-import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.apache.commons.lang.time.DateFormatUtils;
-import org.apache.commons.lang.time.FastDateFormat;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Converts a string in a CSV file to a date.
@@ -15,32 +13,31 @@ import org.apache.commons.lang.time.FastDateFormat;
  *
  * @author Tobias Liefke
  */
-public final class CsvDateConverter implements CsvPropertyConverter<Date> {
+public final class CsvDateConverter extends CsvFormatConverter<Date> {
 
-	private static final Format[] FORMATTER = new Format[] {
-			DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT, DateFormatUtils.ISO_DATETIME_FORMAT,
-			FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss"), DateFormatUtils.ISO_DATE_FORMAT,
-			DateFormatUtils.ISO_TIME_FORMAT, DateFormatUtils.ISO_TIME_NO_T_FORMAT,
-			FastDateFormat.getInstance("dd.MM.yyyy HH:mm:ss"), FastDateFormat.getInstance("dd.MM.yyyy"),
-			FastDateFormat.getInstance("HH:mm:ss"), FastDateFormat.getInstance("MM/dd/yyyy HH:mm:ss"),
-			FastDateFormat.getInstance("MM/dd/yyyy"), FastDateFormat.getInstance("dd-MMM-yy") };
+	/**
+	 * Creates a new instance of {@link CsvDateConverter}.
+	 */
+	public CsvDateConverter() {
+		super(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZ"), new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"),
+				new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"), new SimpleDateFormat("yyyy-MM-dd"), //
+				new SimpleDateFormat("'T'HH:mm:ss"), new SimpleDateFormat("HH:mm:ss"), //
+				new SimpleDateFormat("dd.MM.yy HH:mm:ss"), new SimpleDateFormat("dd.MM.yy"), //
+				new SimpleDateFormat("HH:mm:ss"), new SimpleDateFormat("MM/dd/yy HH:mm:ss"), //
+				new SimpleDateFormat("MM/dd/yy"), new SimpleDateFormat("dd-MMM-yy"));
+	}
 
 	@Override
 	public Date convert(final Class<? extends Date> targetType, final String value) {
-		for (final Format format : FORMATTER) {
-			final Date date;
-			try {
-				date = (Date) format.parseObject(value);
-			} catch (final ParseException e) {
-				continue;
-			}
-			try {
-				return targetType.getConstructor(long.class).newInstance(date.getTime());
-			} catch (final InstantiationException | IllegalAccessException | InvocationTargetException
-					| NoSuchMethodException e) {
-				throw new IllegalArgumentException(e);
-			}
+		if (StringUtils.isEmpty(value)) {
+			return null;
 		}
-		throw new IllegalArgumentException("Not a date: " + value);
+		final Date date = super.convert(targetType, value);
+		try {
+			return targetType.getConstructor(long.class).newInstance(date.getTime());
+		} catch (final InstantiationException | IllegalAccessException | InvocationTargetException
+				| NoSuchMethodException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 }
