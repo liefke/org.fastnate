@@ -11,7 +11,7 @@ import org.fastnate.generator.context.GeneratorContext;
 
 /**
  * Describes a enum property of an {@link EntityClass}.
- * 
+ *
  * @author Tobias Liefke
  * @param <E>
  *            the type of the enum
@@ -24,7 +24,7 @@ public class EnumConverter<E extends Enum<E>> extends AbstractValueConverter<E> 
 
 	/**
 	 * Creates a new instance of this {@link EnumConverter}.
-	 * 
+	 *
 	 * @param field
 	 *            the inspected field
 	 * @param targetType
@@ -52,11 +52,11 @@ public class EnumConverter<E extends Enum<E>> extends AbstractValueConverter<E> 
 	@Override
 	public String getExpression(final E value, final GeneratorContext context) {
 		switch (this.exportType) {
-			case STRING:
-				return '\'' + value.name() + '\'';
-			case ORDINAL:
-			default:
-				return String.valueOf(value.ordinal());
+		case STRING:
+			return context.getDialect().quoteString(value.name());
+		case ORDINAL:
+		default:
+			return String.valueOf(value.ordinal());
 		}
 	}
 
