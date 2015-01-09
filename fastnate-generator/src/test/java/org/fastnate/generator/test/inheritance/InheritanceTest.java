@@ -1,6 +1,11 @@
 package org.fastnate.generator.test.inheritance;
 
-import org.assertj.core.api.Assertions;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
+import javax.persistence.InheritanceType;
+
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.junit.Test;
 
@@ -18,14 +23,88 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 	 *             if Hibernate or the generator throws one
 	 */
 	@Test
-	public void testIdentityGenerator() throws Exception {
+	public void testMappedSuperclasses() throws Exception {
+		// TODO (functional) Currently the Generator scans only classes that he is about to write
+		// So he doesn't know, that there is a subclass entity - until he finds one...
+		// Until that is fixed, we have to manually trigger that lookup
+		getGenerator().getContext().getDescription(SingleTableSubclassTestEntity.class);
+
 		final MappedSubclassTestEntity testEntity = new MappedSubclassTestEntity("entity1", "mapped");
 		write(testEntity);
 
 		final MappedSubclassTestEntity foundEntity = findSingleResult(MappedSubclassTestEntity.class);
 
-		Assertions.assertThat(foundEntity.getName()).isEqualTo(testEntity.getName());
-		Assertions.assertThat(foundEntity.getSuperProperty()).isEqualTo(testEntity.getSuperProperty());
+		assertThat(foundEntity.getName()).isEqualTo(testEntity.getName());
+		assertThat(foundEntity.getSuperProperty()).isEqualTo(testEntity.getSuperProperty());
+	}
+
+	/**
+	 * Tests to write an entity hierarchy with {@link InheritanceType#SINGLE_TABLE}.
+	 *
+	 * @throws Exception
+	 *             if Hibernate or the generator throws one
+	 */
+	@Test
+	public void testSingleTableInheritance() throws Exception {
+		// We have to write both entities in this order - see testMappedSuperclasses for an explanation
+		final SingleTableSubclassTestEntity subEntity = new SingleTableSubclassTestEntity("Sub entity",
+				"The inherited entity", "property1");
+		write(subEntity);
+		final MappedSubclassTestEntity superEntity = new MappedSubclassTestEntity("Main entity", "property2");
+		write(superEntity);
+
+		final SingleTableSubclassTestEntity foundSubEntity = findSingleResult(SingleTableSubclassTestEntity.class);
+		assertThat(foundSubEntity.getName()).isEqualTo(subEntity.getName());
+		assertThat(foundSubEntity.getDescription()).isEqualTo(subEntity.getDescription());
+		assertThat(foundSubEntity.getSuperProperty()).isEqualTo(subEntity.getSuperProperty());
+
+		final List<MappedSubclassTestEntity> foundEntities = findResults(MappedSubclassTestEntity.class);
+		assertThat(foundEntities).hasSize(2);
+		MappedSubclassTestEntity foundSuperEntity;
+		if (foundEntities.get(0).equals(foundSubEntity)) {
+			assertThat(foundEntities.get(0)).isInstanceOf(SingleTableSubclassTestEntity.class);
+			foundSuperEntity = foundEntities.get(1);
+		} else {
+			foundSuperEntity = foundEntities.get(0);
+			assertThat(foundEntities.get(1)).isInstanceOf(SingleTableSubclassTestEntity.class);
+		}
+		assertThat(foundSuperEntity).isNotInstanceOf(SingleTableSubclassTestEntity.class);
+		assertThat(foundSuperEntity.getName()).isEqualTo(superEntity.getName());
+		assertThat(foundSuperEntity.getSuperProperty()).isEqualTo(superEntity.getSuperProperty());
+	}
+
+	/**
+	 * Tests to write an entity hierarchy with {@link InheritanceType#TABLE_PER_CLASS}.
+	 *
+	 * @throws Exception
+	 *             if Hibernate or the generator throws one
+	 */
+	@Test
+	public void testTablePerClassInheritance() throws Exception {
+		final TablePerClassSubclassTestEntity subEntity = new TablePerClassSubclassTestEntity(0, "Sub entity",
+				"The inherited entity");
+		write(subEntity);
+		final TablePerClassSuperclassTestEntity superEntity = new TablePerClassSuperclassTestEntity(1, "Super entity");
+		write(superEntity);
+
+		final TablePerClassSubclassTestEntity foundSubEntity = findSingleResult(TablePerClassSubclassTestEntity.class);
+		assertThat(foundSubEntity.getId()).isEqualTo(subEntity.getId());
+		assertThat(foundSubEntity.getName()).isEqualTo(subEntity.getName());
+		assertThat(foundSubEntity.getDescription()).isEqualTo(subEntity.getDescription());
+
+		final List<TablePerClassSuperclassTestEntity> foundEntities = findResults(TablePerClassSuperclassTestEntity.class);
+		assertThat(foundEntities).hasSize(2);
+		TablePerClassSuperclassTestEntity foundSuperEntity;
+		if (foundEntities.get(0).equals(foundSubEntity)) {
+			assertThat(foundEntities.get(0)).isInstanceOf(TablePerClassSubclassTestEntity.class);
+			foundSuperEntity = foundEntities.get(1);
+		} else {
+			foundSuperEntity = foundEntities.get(0);
+			assertThat(foundEntities.get(1)).isInstanceOf(TablePerClassSubclassTestEntity.class);
+		}
+		assertThat(foundSuperEntity).isNotInstanceOf(TablePerClassSubclassTestEntity.class);
+		assertThat(foundSuperEntity.getName()).isEqualTo(superEntity.getName());
+		assertThat(foundSuperEntity.getId()).isEqualTo(superEntity.getId());
 	}
 
 }

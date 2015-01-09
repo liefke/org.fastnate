@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
+entitygen.DEFAULT_PACKAGE=model
 org.eclipse.jpt.core.platform=generic2_0
 org.eclipse.jpt.jpa.core.discoverAnnotatedClasses=true
 problem.ASSOCIATION_OVERRIDE_INVALID_NAME=error
@@ -35,7 +36,7 @@ problem.ENTITY_NO_PK=error
 problem.ENTITY_SINGLE_TABLE_DESCENDANT_DEFINES_TABLE=error
 problem.ENTITY_TABLE_PER_CLASS_DISCRIMINATOR_COLUMN_DEFINED=error
 problem.ENTITY_TABLE_PER_CLASS_DISCRIMINATOR_VALUE_DEFINED=warning
-problem.ENTITY_TABLE_PER_CLASS_NOT_PORTABLE_ON_PLATFORM=warning
+problem.ENTITY_TABLE_PER_CLASS_NOT_PORTABLE_ON_PLATFORM=ignore
 problem.ENTITY_TABLE_PER_CLASS_NOT_SUPPORTED_ON_PLATFORM=error
 problem.GENERATOR_DUPLICATE_NAME=error
 problem.GENERATOR_NAME_UNDEFINED=error

@@ -291,6 +291,9 @@ public class EntityClass<E> {
 	}
 
 	private void buildDisciminatorType(final Class<?> c) {
+		// TODO (functional) The Generator scans only classes that he is about to write
+		// So he doesn't know, if there is a subclass entity - until he finds one
+		// So until that point we don't know something
 		if (this.dtype == null) {
 			final Inheritance inheritance = c.getAnnotation(Inheritance.class);
 			final boolean isSuperclass = c != this.entityClass;
