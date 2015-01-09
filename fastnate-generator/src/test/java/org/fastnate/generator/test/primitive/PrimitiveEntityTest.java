@@ -27,8 +27,8 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 	public void testLobs() throws IOException {
 		final PrimitiveTestEntity testEntity = new PrimitiveTestEntity("Test Lobs");
 
-		testEntity.setManyCharacters("Many \r\n Characters".toCharArray());
-		testEntity.setManyBytes("\0\1\2\3\4\5\6\7\t\r\n\b\f\u0027 Bytes".getBytes("ISO-8859-1"));
+		testEntity.setLobChars("Many \r\n Characters".toCharArray());
+		testEntity.setLobBytes("\0\1\2\3\4\5\6\7\t\r\n\b\f\u0027 Bytes".getBytes("ISO-8859-1"));
 
 		write(testEntity);
 
@@ -36,8 +36,8 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		final PrimitiveTestEntity result = findSingleResult(PrimitiveTestEntity.class);
 		assertThat(result.getName()).isEqualTo(testEntity.getName());
 
-		assertThat(result.getManyCharacters()).isEqualTo(testEntity.getManyCharacters());
-		assertThat(result.getManyBytes()).isEqualTo(testEntity.getManyBytes());
+		assertThat(result.getLobChars()).isEqualTo(testEntity.getLobChars());
+		assertThat(result.getLobBytes()).isEqualTo(testEntity.getLobBytes());
 	}
 
 	/**
@@ -82,6 +82,28 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 	}
 
 	/**
+	 * Tests to write primitive properties in an entity.
+	 *
+	 * @throws IOException
+	 *             if the generator throws one
+	 */
+	@Test
+	public void testSerializableProperties() throws IOException {
+		final PrimitiveTestEntity testEntity = new PrimitiveTestEntity("Test Serializables");
+
+		testEntity.setSerializale(new SerializableTestObject("stringProperty", 2));
+
+		write(testEntity);
+
+		// Test equalness
+		final PrimitiveTestEntity result = findSingleResult(PrimitiveTestEntity.class);
+		assertThat(result.getSerializale()).isEqualTo(testEntity.getSerializale());
+		assertThat(result.getSerializale().getStringProperty()).isEqualTo(
+				testEntity.getSerializale().getStringProperty());
+		assertThat(result.getSerializale().getIntProperty()).isEqualTo(testEntity.getSerializale().getIntProperty());
+	}
+
+	/**
 	 * Tests to write temporal properties in an entity.
 	 *
 	 * @throws IOException
@@ -94,24 +116,24 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		final long oneHour = DateUtils.MILLIS_PER_HOUR;
 		final long oneDay = DateUtils.MILLIS_PER_DAY;
 		final long time = oneDay + oneHour;
-		testEntity.setTestDate(new Date(time));
-		testEntity.setTestTime(new Date(time));
-		testEntity.setTestTimestamp(new Date(time));
+		testEntity.setDate(new Date(time));
+		testEntity.setTime(new Date(time));
+		testEntity.setTimestamp(new Date(time));
 
 		write(testEntity);
 
 		final PrimitiveTestEntity result = findSingleResult(PrimitiveTestEntity.class);
 
 		// Check that only the parts of the date are written
-		assertThat(result.getTestDate()).isEqualTo(DateUtils.truncate(testEntity.getTestDate(), Calendar.DATE));
+		assertThat(result.getDate()).isEqualTo(DateUtils.truncate(testEntity.getDate(), Calendar.DATE));
 
 		// Check that the time is correclty written
-		assertThat(result.getTestTime()).isEqualTo(new Date(oneHour));
+		assertThat(result.getTime()).isEqualTo(new Date(oneHour));
 
 		// Ignore the millis for timestamp comparison
 		assertThat(
-				new Date(result.getTestTimestamp().getTime() - result.getTestTimestamp().getTime()
-						% DateUtils.MILLIS_PER_SECOND)).isEqualTo(testEntity.getTestTimestamp());
+				new Date(result.getTimestamp().getTime() - result.getTimestamp().getTime()
+						% DateUtils.MILLIS_PER_SECOND)).isEqualTo(testEntity.getTimestamp());
 	}
 
 	/**

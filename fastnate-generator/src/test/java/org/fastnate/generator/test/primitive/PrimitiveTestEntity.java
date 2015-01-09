@@ -69,19 +69,21 @@ public class PrimitiveTestEntity {
 	private double testDouble;
 
 	@Temporal(TemporalType.DATE)
-	private Date testDate;
+	private Date date;
 
 	@Temporal(TemporalType.TIME)
-	private Date testTime;
+	private Date time;
 
 	@Temporal(TemporalType.TIMESTAMP)
-	private Date testTimestamp;
+	private Date timestamp;
 
 	@Lob
-	private char[] manyCharacters;
+	private char[] lobChars;
 
 	@Lob
-	private byte[] manyBytes;
+	private byte[] lobBytes;
+
+	private SerializableTestObject serializale;
 
 	/**
 	 * Creates a new instance of {@link PrimitiveTestEntity}.

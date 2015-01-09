@@ -1,5 +1,6 @@
 package org.fastnate.generator.context;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Calendar;
 import java.util.Date;
@@ -20,6 +21,7 @@ import org.fastnate.generator.converter.DateConverter;
 import org.fastnate.generator.converter.EnumConverter;
 import org.fastnate.generator.converter.LobConverter;
 import org.fastnate.generator.converter.NumberConverter;
+import org.fastnate.generator.converter.SerializableConverter;
 import org.fastnate.generator.converter.StringConverter;
 import org.fastnate.generator.converter.UnsupportedTypeConverter;
 import org.fastnate.generator.converter.ValueConverter;
@@ -74,6 +76,8 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 			return (ValueConverter<T>) new CalendarConverter(field, mapKey);
 		} else if (Enum.class.isAssignableFrom(type)) {
 			return (ValueConverter<T>) new EnumConverter<>(field, (Class<E>) type, mapKey);
+		} else if (Serializable.class.isAssignableFrom(type)) {
+			return (ValueConverter<T>) new SerializableConverter();
 		} else {
 			return (ValueConverter<T>) new UnsupportedTypeConverter(field);
 		}
