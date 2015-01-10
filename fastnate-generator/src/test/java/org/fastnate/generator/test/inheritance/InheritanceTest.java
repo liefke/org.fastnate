@@ -24,11 +24,6 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testMappedSuperclasses() throws Exception {
-		// TODO (functional) Currently the Generator scans only classes that he is about to write
-		// So he doesn't know, that there is a subclass entity - until he finds one...
-		// Until that is fixed, we have to manually trigger that lookup
-		getGenerator().getContext().getDescription(SingleTableSubclassTestEntity.class);
-
 		final MappedSubclassTestEntity testEntity = new MappedSubclassTestEntity("entity1", "mapped");
 		write(testEntity);
 
@@ -46,7 +41,6 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testSingleTableInheritance() throws Exception {
-		// We have to write both entities in this order - see testMappedSuperclasses for an explanation
 		final SingleTableSubclassTestEntity subEntity = new SingleTableSubclassTestEntity("Sub entity",
 				"The inherited entity", "property1");
 		write(subEntity);

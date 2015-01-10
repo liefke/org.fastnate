@@ -18,6 +18,9 @@ import javax.persistence.AssociationOverrides;
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -36,6 +39,7 @@ import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.context.GenerationState.PendingState;
 import org.fastnate.generator.statements.EntityStatement;
 import org.hibernate.annotations.Formula;
@@ -187,11 +191,18 @@ public class EntityClass<E> {
 	private String table;
 
 	/**
-	 * The id in the disciminator column for this class.
+	 * The SQL expression that is used for the disciminator column of this class.
 	 *
-	 * {@code null} if no entity superclass with {@link InheritanceType#SINGLE_TABLE} is used.
+	 * {@code null} if {@link InheritanceType#TABLE_PER_CLASS} is used or no subclass is known
 	 */
-	private String dtype;
+	private String discriminator;
+
+	/**
+	 * The column for {@link #discriminator}.
+	 *
+	 * {@code null} if discriminator type is {@code null}
+	 */
+	private String discriminatorColumn;
 
 	/** The property that contains the id for the entity. */
 	@NotNull
@@ -290,24 +301,57 @@ public class EntityClass<E> {
 		}
 	}
 
-	private void buildDisciminatorType(final Class<?> c) {
-		// TODO (functional) The Generator scans only classes that he is about to write
-		// So he doesn't know, if there is a subclass entity - until he finds one
-		// So until that point we don't know something
-		if (this.dtype == null) {
+	private void buildDiscriminator(final Class<?> c) {
+		if (this.discriminator == null) {
+			// TODO (functional) We scan only classes that we are about to write
+			// So we don't know, that there is a subclass entity - until we find one
+			// This could be to late for InheritanceType.SINGLE_TABLE - the defaault type
+			// That's why we build a discriminator, if one of the inheritance annotations exists
 			final Inheritance inheritance = c.getAnnotation(Inheritance.class);
-			final boolean isSuperclass = c != this.entityClass;
-			if (inheritance == null ? isSuperclass : inheritance.strategy() != InheritanceType.TABLE_PER_CLASS) {
-				this.dtype = this.entityClass.getSimpleName();
-				if (isSuperclass) {
+			final DiscriminatorColumn column = c.getAnnotation(DiscriminatorColumn.class);
+			final DiscriminatorValue value = c.getAnnotation(DiscriminatorValue.class);
+			final boolean inspectingSuperclass = c != this.entityClass;
+			if (inheritance == null ? inspectingSuperclass || column != null || value != null
+					: inheritance.strategy() != InheritanceType.TABLE_PER_CLASS) {
+				this.discriminatorColumn = column == null ? "DTYPE" : column.name();
+				this.discriminator = buildDiscriminator(this, column,
+						this.entityClass.getAnnotation(DiscriminatorValue.class));
+				if (inspectingSuperclass) {
 					final EntityClass<?> description = this.context.getDescription(c);
 					this.table = description.table;
-					if (description.dtype == null) {
-						description.dtype = description.entityClass.getSimpleName();
+					if (description.discriminator == null) {
+						description.discriminator = buildDiscriminator(description, column, value);
 					}
 				}
 			}
 		}
+	}
+
+	private String buildDiscriminator(final EntityClass<?> c, final DiscriminatorColumn column,
+			final DiscriminatorValue value) {
+		DiscriminatorType type;
+		int maxLength;
+		if (column == null) {
+			type = DiscriminatorType.STRING;
+			final int defaultMaxLength = 31;
+			maxLength = defaultMaxLength;
+		} else {
+			type = column.discriminatorType();
+			maxLength = column.length();
+		}
+		if (type == DiscriminatorType.INTEGER) {
+			return value == null ? String.valueOf(c.getEntityName().hashCode()) : value.value();
+		}
+		final String v = value == null ? c.getEntityName() : value.value();
+		if (StringUtils.isEmpty(v)) {
+			throw new IllegalArgumentException("Missing discriminator value for: " + c.getEntityClass());
+		}
+		if (type == DiscriminatorType.STRING) {
+			return getContext().getDialect().quoteString(v.length() <= maxLength ? v : v.substring(0, maxLength));
+		} else if (type == DiscriminatorType.CHAR) {
+			return getContext().getDialect().quoteString(v.substring(0, 1));
+		}
+		throw new IllegalArgumentException("Unknown discriminator type: " + type);
 	}
 
 	/**
@@ -317,7 +361,7 @@ public class EntityClass<E> {
 	 *            the currently inspected class
 	 */
 	private void buildIdProperty(final Class<?> c) {
-		// Fill properties of super classes
+		// Find ID properties of super classes
 		if (c.getSuperclass() != null) {
 			buildIdProperty(c.getSuperclass());
 		}
@@ -325,7 +369,7 @@ public class EntityClass<E> {
 		// Find the Entity / MappedSuperclass annotation
 		if (c.getAnnotation(Entity.class) != null) {
 			// As we are already here - inspect the discriminator type of the entity
-			buildDisciminatorType(c);
+			buildDiscriminator(c);
 		} else if (c.getAnnotation(MappedSuperclass.class) == null) {
 			return;
 		}
@@ -520,8 +564,8 @@ public class EntityClass<E> {
 				}
 				condition.append(expression);
 			}
-			if (this.dtype != null) {
-				condition.append(" AND DTYPE='").append(this.dtype).append('\'');
+			if (this.discriminator != null) {
+				condition.append(" AND ").append(this.discriminatorColumn).append(" = ").append(this.discriminator);
 			}
 			return "(SELECT " + generatedIdProperty.getColumn() + " FROM " + this.table + " WHERE " + condition + ')';
 		}

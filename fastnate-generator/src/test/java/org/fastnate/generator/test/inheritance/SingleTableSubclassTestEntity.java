@@ -1,5 +1,6 @@
 package org.fastnate.generator.test.inheritance;
 
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.InheritanceType;
 
@@ -14,6 +15,7 @@ import lombok.Setter;
  */
 @Entity
 @NoArgsConstructor
+@DiscriminatorValue(value = "2")
 public class SingleTableSubclassTestEntity extends MappedSubclassTestEntity {
 
 	@Getter

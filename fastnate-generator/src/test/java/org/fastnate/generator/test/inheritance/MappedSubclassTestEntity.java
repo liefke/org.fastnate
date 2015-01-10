@@ -1,5 +1,7 @@
 package org.fastnate.generator.test.inheritance;
 
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.InheritanceType;
 
@@ -16,6 +18,7 @@ import lombok.Setter;
  * @author Tobias Liefke
  */
 @Entity
+@DiscriminatorColumn(discriminatorType = DiscriminatorType.INTEGER)
 @NoArgsConstructor
 public class MappedSubclassTestEntity extends MappedSuperclassTestEntity {
 

@@ -219,8 +219,8 @@ public class EntitySqlGenerator implements Closeable {
 		classDescription.getIdProperty().addInsertExpression(entity, stmt);
 
 		// And the DTYPE
-		if (classDescription.getDtype() != null) {
-			stmt.addValue("DTYPE", '\'' + classDescription.getDtype() + '\'');
+		if (classDescription.getDiscriminator() != null) {
+			stmt.addValue(classDescription.getDiscriminatorColumn(), classDescription.getDiscriminator());
 		}
 
 		// Now add all other properties
