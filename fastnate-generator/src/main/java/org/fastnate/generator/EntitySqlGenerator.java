@@ -5,24 +5,19 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
 import org.fastnate.generator.context.EmbeddedProperty;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratedIdProperty;
 import org.fastnate.generator.context.GeneratorContext;
-import org.fastnate.generator.context.PrimitiveProperty;
 import org.fastnate.generator.context.Property;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
-import org.fastnate.generator.statements.UpdateStatement;
 
 import com.google.common.io.Closeables;
 
@@ -61,14 +56,6 @@ public class EntitySqlGenerator implements Closeable {
 	/** Used to keep the statement of indices and to remember the database dialect. */
 	@Getter
 	private final GeneratorContext context;
-
-	/** The state of the entities that where written up to now, used for updates. */
-	private final Map<Object, Map<String, String>> entitiesState = new HashMap<>();
-
-	/** Indicates to write update statements if an entity has changed since insertion. */
-	@Getter
-	@Setter
-	private boolean writeUpdates;
 
 	/**
 	 * Creates a new instance of this {@link EntitySqlGenerator}.
@@ -151,8 +138,7 @@ public class EntitySqlGenerator implements Closeable {
 	}
 
 	/**
-	 * Creates the Import-SQL for an entity. If the entity was already written (has an id) and {@link #writeUpdates is
-	 * true} it is updated.
+	 * Creates the Import-SQL for an entity. If the entity was already written, nothing happens.
 	 *
 	 * @param entity
 	 *            the entity to create the SQL for
@@ -169,7 +155,7 @@ public class EntitySqlGenerator implements Closeable {
 				postponedEntities.add(entity);
 			}
 
-			// Write all contained entities that are mapped in our table, as far as possible
+			// Write all contained entities that are mapped in our table(s), as far as possible
 			writeTableEntities(entity, postponedEntities, classDescription.getProperties().values());
 
 			// Check if we still need to be created
@@ -178,10 +164,6 @@ public class EntitySqlGenerator implements Closeable {
 			}
 		}
 
-		// Now update any missing properties
-		if (this.writeUpdates) {
-			writeUpdate(entity);
-		}
 	}
 
 	/**
@@ -218,7 +200,7 @@ public class EntitySqlGenerator implements Closeable {
 		// First add the id
 		classDescription.getIdProperty().addInsertExpression(entity, stmt);
 
-		// And the DTYPE
+		// And the discriminator
 		if (classDescription.getDiscriminator() != null) {
 			stmt.addValue(classDescription.getDiscriminatorColumn(), classDescription.getDiscriminator());
 		}
@@ -233,11 +215,6 @@ public class EntitySqlGenerator implements Closeable {
 
 		// And update the context
 		writePostInsertStatement(entity);
-
-		// Remember the state of the properties
-		if (this.writeUpdates) {
-			this.entitiesState.put(entity, stmt.getValues());
-		}
 
 		for (final Property<E, ?> property : classDescription.getProperties().values()) {
 			// Write all missing entities, even those that have no column (because they are referencing us and
@@ -289,40 +266,6 @@ public class EntitySqlGenerator implements Closeable {
 						write(value, postponedEntities);
 					}
 				}
-			}
-		}
-	}
-
-	/**
-	 * Writes all updates found in the given entity.
-	 *
-	 * @param entity
-	 *            the entity to be written
-	 * @throws IOException
-	 *             if the writer throws one
-	 */
-	private <E> void writeUpdate(final E entity) throws IOException {
-		final EntityClass<E> classDescription = this.context.getDescription(entity);
-
-		final Map<String, String> entityState = this.entitiesState.get(entity);
-
-		if (entityState != null) {
-			final GeneratedIdProperty<E> idProperty = (GeneratedIdProperty<E>) classDescription.getIdProperty();
-			final UpdateStatement updateStmt = new UpdateStatement(classDescription.getTable(), idProperty.getColumn(),
-					idProperty.getExpression(entity, true));
-			for (final Property<E, ?> property : classDescription.getProperties().values()) {
-				final InsertStatement stmt = new InsertStatement(null, this.context.getDialect());
-				property.addInsertExpression(entity, stmt);
-				for (final Map.Entry<String, String> entry : stmt.getValues().entrySet()) {
-					final String oldValue = entityState.get(entry.getKey());
-					if (oldValue == null || property instanceof PrimitiveProperty && !oldValue.equals(entry.getValue())) {
-						updateStmt.addValue(entry.getKey(), entry.getValue());
-						entityState.put(entry.getKey(), entry.getValue());
-					}
-				}
-			}
-			if (!updateStmt.getValues().isEmpty()) {
-				writeStatement(updateStmt);
 			}
 		}
 	}
