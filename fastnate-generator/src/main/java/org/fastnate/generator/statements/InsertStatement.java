@@ -49,23 +49,29 @@ public class InsertStatement extends EntityStatement {
 	 */
 	@Override
 	public String toString() {
-		final StringBuilder result = new StringBuilder("INSERT INTO ").append(getTable()).append(" (");
-		if (this.subselectPattern != null && this.subselectPattern.matcher(getValues().values().toString()).find()) {
-			// Create MySQL compatible INSERTs
-			JOINER.appendTo(result, getValues().keySet()).append(") SELECT ");
-			final List<String> rewrite = new ArrayList<>();
-			for (final String value : getValues().values()) {
-				final Matcher matcher = this.subselectPattern.matcher(value);
-				if (matcher.matches()) {
-					rewrite.add(matcher.group(1));
-				} else {
-					rewrite.add(value);
-				}
-			}
-			JOINER.appendTo(result, rewrite).append(" FROM ").append(getTable()).append(";\n");
+		final StringBuilder result = new StringBuilder("INSERT INTO ").append(getTable());
+		if (getValues().isEmpty()) {
+			// Can happen if we have an generated identity column and only null values
+			result.append(" DEFAULT VALUES;\n");
 		} else {
-			JOINER.appendTo(result, getValues().keySet()).append(") VALUES (");
-			JOINER.appendTo(result, getValues().values()).append(");\n");
+			result.append(" (");
+			if (this.subselectPattern != null && this.subselectPattern.matcher(getValues().values().toString()).find()) {
+				// Create MySQL compatible INSERTs
+				JOINER.appendTo(result, getValues().keySet()).append(") SELECT ");
+				final List<String> rewrite = new ArrayList<>();
+				for (final String value : getValues().values()) {
+					final Matcher matcher = this.subselectPattern.matcher(value);
+					if (matcher.matches()) {
+						rewrite.add(matcher.group(1));
+					} else {
+						rewrite.add(value);
+					}
+				}
+				JOINER.appendTo(result, rewrite).append(" FROM ").append(getTable()).append(";\n");
+			} else {
+				JOINER.appendTo(result, getValues().keySet()).append(") VALUES (");
+				JOINER.appendTo(result, getValues().values()).append(");\n");
+			}
 		}
 		return result.toString();
 	}

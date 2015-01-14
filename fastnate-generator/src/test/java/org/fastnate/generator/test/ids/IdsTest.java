@@ -19,6 +19,20 @@ import org.junit.Test;
 public class IdsTest extends AbstractEntitySqlGeneratorTest {
 
 	/**
+	 * Tests to write an entity with just the generated ID.
+	 *
+	 * @throws Exception
+	 *             if Hibernate or the generator throws one
+	 */
+	@Test
+	public void testEmptyEntity() throws Exception {
+		write(new IdentityTestEntity(null));
+
+		final IdentityTestEntity result = findSingleResult(IdentityTestEntity.class);
+		assertThat(result.getName()).isNull();
+	}
+
+	/**
 	 * Tests to write entities with fixed ids.
 	 *
 	 * @throws Exception
