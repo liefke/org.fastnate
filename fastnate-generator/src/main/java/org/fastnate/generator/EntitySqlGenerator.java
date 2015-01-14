@@ -156,11 +156,11 @@ public class EntitySqlGenerator implements Closeable {
 			}
 
 			// Write all contained entities that are mapped in our table(s), as far as possible
-			writeTableEntities(entity, postponedEntities, classDescription.getProperties().values());
+			writeTableEntities(entity, postponedEntities, classDescription.getAllProperties());
 
 			// Check if we still need to be created
 			if (postponedEntities.remove(entity)) {
-				writeInsert(entity, postponedEntities, classDescription);
+				writeInserts(entity, postponedEntities, classDescription, classDescription.getDiscriminator());
 			}
 		}
 
@@ -192,17 +192,26 @@ public class EntitySqlGenerator implements Closeable {
 		this.writer.write("/* " + comment + " */\n");
 	}
 
-	private <E> void writeInsert(final E entity, final List<Object> postponedEntities,
-			final EntityClass<E> classDescription) throws IOException {
+	private <E> void writeInserts(final E entity, final List<Object> postponedEntities,
+			final EntityClass<E> classDescription, final String discriminator) throws IOException {
 		// Create the insert statement
 		final InsertStatement stmt = new InsertStatement(classDescription.getTable(), this.context.getDialect());
 
-		// First add the id
-		classDescription.getIdProperty().addInsertExpression(entity, stmt);
+		if (classDescription.getJoinedParentClass() != null) {
+			// Write the parent tables
+			writeInserts(entity, postponedEntities, classDescription.getJoinedParentClass(), discriminator);
 
-		// And the discriminator
-		if (classDescription.getDiscriminator() != null) {
-			stmt.addValue(classDescription.getDiscriminatorColumn(), classDescription.getDiscriminator());
+			// And add the id as foreign key column
+			stmt.addValue(classDescription.getPrimaryKeyJoinColumn(),
+					classDescription.getEntityReference(entity, null, false));
+		} else {
+			// Add the id
+			classDescription.getIdProperty().addInsertExpression(entity, stmt);
+
+			// And the discriminator
+			if (discriminator != null) {
+				stmt.addValue(classDescription.getDiscriminatorColumn(), discriminator);
+			}
 		}
 
 		// Now add all other properties
@@ -213,8 +222,13 @@ public class EntitySqlGenerator implements Closeable {
 		// Write the statement
 		writeStatement(stmt);
 
-		// And update the context
-		writePostInsertStatement(entity);
+		// And all postponed statements
+		final List<EntityStatement> updates = classDescription.createPostInsertStatements(entity);
+		if (!updates.isEmpty()) {
+			for (final EntityStatement update : updates) {
+				writeStatement(update);
+			}
+		}
 
 		for (final Property<E, ?> property : classDescription.getProperties().values()) {
 			// Write all missing entities, even those that have no column (because they are referencing us and
@@ -232,15 +246,6 @@ public class EntitySqlGenerator implements Closeable {
 		}
 	}
 
-	private <E> void writePostInsertStatement(final E entity) throws IOException {
-		final List<EntityStatement> updates = this.context.getDescription(entity).createPostInsertStatements(entity);
-		if (!updates.isEmpty()) {
-			for (final EntityStatement update : updates) {
-				writeStatement(update);
-			}
-		}
-	}
-
 	/**
 	 * Writes the given statement to the {@link #writer}. May be overridden, if the statements should be written
 	 * somewhere else (e.g. directly into a database).
@@ -254,12 +259,13 @@ public class EntitySqlGenerator implements Closeable {
 		this.writer.write(stmt.toString());
 	}
 
-	private <E> void writeTableEntities(final E entity, final List<Object> postponedEntities,
-			final Collection<Property<E, ?>> properties) throws IOException {
-		for (final Property<E, ?> property : properties) {
+	private <E, T> void writeTableEntities(final E entity, final List<Object> postponedEntities,
+			final Collection<Property<? super E, ?>> properties) throws IOException {
+		for (final Property<? super E, ?> property : properties) {
 			if (property instanceof EmbeddedProperty) {
-				writeTableEntities(property.getValue(entity), postponedEntities,
-						((EmbeddedProperty<E, Object>) property).getEmbeddedProperties().values());
+				final EmbeddedProperty<? super E, T> embeddedProperty = (EmbeddedProperty<? super E, T>) property;
+				this.<T, Object> writeTableEntities(embeddedProperty.getValue(entity), postponedEntities,
+						embeddedProperty.getEmbeddedProperties().values());
 			} else if (property.isTableColumn()) {
 				for (final Object value : property.findReferencedEntities(entity)) {
 					if (!postponedEntities.contains(value) || property.isRequired()) {

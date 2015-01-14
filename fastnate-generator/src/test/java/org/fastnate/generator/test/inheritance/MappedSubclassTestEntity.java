@@ -20,7 +20,7 @@ import lombok.Setter;
 @Entity
 @DiscriminatorColumn(discriminatorType = DiscriminatorType.INTEGER)
 @NoArgsConstructor
-public class MappedSubclassTestEntity extends MappedSuperclassTestEntity {
+public class MappedSubclassTestEntity extends MappedSuperclassTestEntity implements SuperclassEntity {
 
 	@Getter
 	@Setter

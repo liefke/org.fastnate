@@ -17,7 +17,7 @@ import lombok.Setter;
 @Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @NoArgsConstructor
-public class TablePerClassSuperclassTestEntity {
+public class TablePerClassSuperclassTestEntity implements SuperclassEntity {
 
 	@Getter
 	@Id
@@ -26,6 +26,11 @@ public class TablePerClassSuperclassTestEntity {
 	@Getter
 	@Setter
 	private String name;
+
+	// Just for convinience
+	@Getter
+	@Setter
+	private String superProperty;
 
 	/**
 	 * Creates a new instance of {@link TablePerClassSuperclassTestEntity}.

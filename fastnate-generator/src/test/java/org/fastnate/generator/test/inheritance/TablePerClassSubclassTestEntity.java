@@ -14,7 +14,7 @@ import lombok.Setter;
  */
 @Entity
 @NoArgsConstructor
-public class TablePerClassSubclassTestEntity extends TablePerClassSuperclassTestEntity {
+public class TablePerClassSubclassTestEntity extends TablePerClassSuperclassTestEntity implements SubclassEntity {
 
 	@Getter
 	@Setter

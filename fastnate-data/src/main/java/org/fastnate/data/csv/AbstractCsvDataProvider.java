@@ -258,16 +258,11 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	 */
 	protected void useTableColumns() {
 		final EntityClass<E> description = new GeneratorContext().getDescription(getEntityClass());
-		if (description.getIdProperty() instanceof SingularProperty) {
-			final SingularProperty<?, ?> property = (SingularProperty<?, ?>) description.getIdProperty();
-			this.columnProperties.put(property.getColumn(), property.getField().getName());
-		}
-		final Map<String, Property<E, ?>> properties = description.getProperties();
-		for (final Map.Entry<String, Property<E, ?>> entry : properties.entrySet()) {
-			if (entry.getValue() instanceof SingularProperty) {
-				final SingularProperty<?, ?> property = (SingularProperty<?, ?>) entry.getValue();
-				if (property.isTableColumn() && property.getColumn() != null) {
-					this.columnProperties.put(property.getColumn(), entry.getKey());
+		for (final Property<? super E, ?> property : description.getAllProperties()) {
+			if (property instanceof SingularProperty) {
+				final SingularProperty<?, ?> singularProperty = (SingularProperty<?, ?>) property;
+				if (singularProperty.isTableColumn() && singularProperty.getColumn() != null) {
+					this.columnProperties.put(singularProperty.getColumn(), singularProperty.getField().getName());
 				}
 			}
 		}

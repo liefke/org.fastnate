@@ -16,7 +16,7 @@ import lombok.Setter;
 @Entity
 @NoArgsConstructor
 @DiscriminatorValue(value = "2")
-public class SingleTableSubclassTestEntity extends MappedSubclassTestEntity {
+public class SingleTableSubclassTestEntity extends MappedSubclassTestEntity implements SubclassEntity {
 
 	@Getter
 	@Setter

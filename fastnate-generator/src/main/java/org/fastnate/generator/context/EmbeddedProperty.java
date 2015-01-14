@@ -14,16 +14,16 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 
+import lombok.Getter;
+
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
 
-import lombok.Getter;
-
 /**
  * Handling of properties defined in {@link Embeddable}s.
- * 
+ *
  * @author Tobias Liefke
- * 
+ *
  * @param <E>
  *            The type of the container class (the entity)
  * @param <T>
@@ -35,16 +35,16 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	/**
 	 * The properties within the embedded object.
 	 */
-	private final Map<String, Property<T, ?>> embeddedProperties = new TreeMap<>();
+	private final Map<String, Property<? super T, ?>> embeddedProperties = new TreeMap<>();
 
 	private final boolean id;
 
 	/**
 	 * Instantiates a new embedded property.
-	 * 
+	 *
 	 * @param entityClass
 	 *            the class of the entity
-	 * 
+	 *
 	 * @param entityField
 	 *            the field that contains the embedded object
 	 */
@@ -73,7 +73,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	public void addInsertExpression(final E entity, final InsertStatement statement) {
 		final T value = getValue(entity);
 		if (value != null) {
-			for (final Property<T, ?> property : this.embeddedProperties.values()) {
+			for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
 				property.addInsertExpression(value, statement);
 			}
 		} else {
@@ -85,7 +85,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	public List<EntityStatement> buildAdditionalStatements(final E entity) {
 		final T value = getValue(entity);
 		final List<EntityStatement> result = new ArrayList<>();
-		for (final Property<T, ?> property : this.embeddedProperties.values()) {
+		for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
 			result.addAll(property.buildAdditionalStatements(value));
 		}
 
@@ -96,7 +96,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	public Collection<?> findReferencedEntities(final E entity) {
 		final T value = getValue(entity);
 		final Set<Object> result = new HashSet<>();
-		for (final Property<T, ?> property : this.embeddedProperties.values()) {
+		for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
 			result.addAll(property.findReferencedEntities(value));
 		}
 
@@ -110,7 +110,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 		}
 		final StringBuilder result = new StringBuilder().append('(');
 		final T value = getValue(entity);
-		for (final Property<T, ?> property : this.embeddedProperties.values()) {
+		for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
 			if (result.length() > 1) {
 				result.append(" AND ");
 			}
@@ -124,7 +124,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 		if (this.id) {
 			return true;
 		}
-		for (final Property<T, ?> property : this.embeddedProperties.values()) {
+		for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
 			if (property.isRequired()) {
 				return true;
 			}

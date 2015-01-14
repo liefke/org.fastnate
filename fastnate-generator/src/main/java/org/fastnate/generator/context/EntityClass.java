@@ -1,6 +1,5 @@
 package org.fastnate.generator.context;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
+import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -52,7 +52,7 @@ import org.hibernate.annotations.Formula;
  *            The described class
  */
 @Getter
-public class EntityClass<E> {
+public final class EntityClass<E> {
 
 	/**
 	 * Helper object to use as key in the state map, if we have a {@link GeneratedIdProperty}.
@@ -135,45 +135,9 @@ public class EntityClass<E> {
 				&& field.getAnnotation(Transient.class) == null && field.getAnnotation(Formula.class) == null;
 	}
 
-	private static final SequenceGenerator DEFAULT_SEQUENCE_GENERATOR = new SequenceGenerator() {
-
-		private static final int DEFAULT_ALLOCATION_SIZE = 50;
-
-		@Override
-		public int allocationSize() {
-			return DEFAULT_ALLOCATION_SIZE;
-		}
-
-		@Override
-		public Class<? extends Annotation> annotationType() {
-			return SequenceGenerator.class;
-		}
-
-		@Override
-		public String catalog() {
-			return "";
-		}
-
-		@Override
-		public int initialValue() {
-			return 1;
-		}
-
-		@Override
-		public String name() {
-			return "";
-		}
-
-		@Override
-		public String schema() {
-			return "";
-		}
-
-		@Override
-		public String sequenceName() {
-			return "hibernate_sequence";
-		}
-	};
+	/** Contains the default values for a sequence generator, if none is given. */
+	private static final SequenceGenerator DEFAULT_SEQUENCE_GENERATOR = AnnotationDefaults
+			.create(SequenceGenerator.class);
 
 	/** The current context. */
 	private final GeneratorContext context;
@@ -191,22 +155,53 @@ public class EntityClass<E> {
 	private String table;
 
 	/**
+	 * The inheritance type of this class.
+	 *
+	 * {@code null} if no subclass is known and no inhertance is indicated (using one of the inheritance annotations).
+	 */
+	private InheritanceType inheritanceType;
+
+	/**
+	 * Only used during {@link #build} to find the joinedParentClass even if that one references our class.
+	 */
+	private Class<? super E> parentEntityClass;
+
+	/**
+	 * The description of the next entity class that has {@link InheritanceType#JOINED}, if any.
+	 */
+	private EntityClass<? super E> joinedParentClass;
+
+	/**
+	 * The description of the entity class that is the root of the current inheritance hierarchy.
+	 */
+	private EntityClass<? super E> hierarchyRoot;
+
+	/**
 	 * The SQL expression that is used for the disciminator column of this class.
 	 *
-	 * {@code null} if {@link InheritanceType#TABLE_PER_CLASS} is used or no subclass is known
+	 * {@code null} if no discriminator is used
 	 */
 	private String discriminator;
 
 	/**
 	 * The column for {@link #discriminator}.
 	 *
-	 * {@code null} if discriminator type is {@code null}
+	 * {@code null} if this class does not belong to a table that contains a discriminator column
 	 */
 	private String discriminatorColumn;
 
-	/** The property that contains the id for the entity. */
-	@NotNull
-	private Property<E, ?> idProperty;
+	/**
+	 * The column that contains the id of this entity if {@link #joinedParentClass} is not {@code null}.
+	 */
+	private String primaryKeyJoinColumn;
+
+	/**
+	 * The property that contains the id for the entity.
+	 *
+	 * If a {@link #joinedParentClass} exists, this property is the id property of the parent class.
+	 */
+	@Nullable
+	private Property<? super E, ?> idProperty;
 
 	/** The properties that make up an additional unique identifier for the entity. */
 	@Nullable
@@ -215,20 +210,23 @@ public class EntityClass<E> {
 	/** Indicates the quality of {@link #uniqueProperties}. */
 	private UniquePropertyQuality uniquePropertiesQuality;
 
-	/** Mapping from the name list of persistent properties (except the {@link #idProperty}). */
+	/**
+	 * Mapping from the name list of persistent properties (except the {@link #idProperty}) and properties from
+	 * {@link #joinedParentClass}.
+	 */
 	private final Map<String, Property<E, ?>> properties = new TreeMap<>();
+
+	/** All properties of this entity, including {@link #idProperty} and properties from {@link #joinedParentClass}. */
+	private final List<Property<? super E, ?>> allProperties = new ArrayList<>();
 
 	/** Mapping from a {@link SequenceGenerator#name()} to the generator itself. */
 	private final Map<String, SequenceGenerator> sequences = new HashMap<>();
 
-	/**
-	 * The states of written entities. Only interesting for pending updates and if the ID is not generated. Contains the
-	 * ID
-	 */
+	/** The states of written entities. Only interesting for pending updates and if the ID is not generated. */
 	private final Map<Object, GenerationState> entityStates;
 
-	/** All attribute overriddes of this class - only used during {@link #build()}. */
-	private Map<String, AttributeOverride> attributeOverrides;
+	/** All attribute overriddes of this class and the parent classes. */
+	private final Map<String, AttributeOverride> attributeOverrides = new HashMap<>();
 
 	/**
 	 * Creates a new description of an entity class.
@@ -249,7 +247,7 @@ public class EntityClass<E> {
 	/**
 	 * Reads the metadata from {@link #entityClass} and fills all other properties.
 	 *
-	 * Not done in the constructor to prevent endless loops.
+	 * Not done in the constructor to prevent endless loops (when we reference an entity class that references us).
 	 */
 	void build() {
 		// Find the (initial) table name
@@ -257,21 +255,37 @@ public class EntityClass<E> {
 		this.table = tableMetadata == null || tableMetadata.name().length() == 0 ? this.entityName : tableMetadata
 				.name();
 
-		// Build the attribute overrides of the class
-		buildAttributeOverrides();
+		// Build the attribute overrides of this class
+		buildAttributeOverrides(this.entityClass);
 
 		// Now build the sequences (referenced from GeneratedIdProperty)
 		this.sequences.put("", DEFAULT_SEQUENCE_GENERATOR);
 		buildSequences(this.entityClass);
 
-		// Find the ID property
-		buildIdProperty(this.entityClass);
-		if (this.idProperty == null) {
-			throw new IllegalStateException("No id found for " + this.entityClass);
-		}
+		// Build the inheritance and discriminator properties
+		buildInheritance();
 
-		// And all other properties
-		buildProperties(this.entityClass);
+		// Build the discriminator, if necessary
+		buildDiscriminator();
+
+		// Find the ID property unless we have a joined parent class - which contains our id
+		if (this.joinedParentClass == null) {
+			buildIdProperty(this.entityClass);
+			if (this.idProperty == null) {
+				throw new IllegalStateException("No id found for " + this.entityClass);
+			}
+			this.allProperties.add(this.idProperty);
+
+			// Add all other properties
+			buildProperties(this.entityClass, Object.class);
+		} else {
+			this.idProperty = this.joinedParentClass.getIdProperty();
+			this.allProperties.add(this.idProperty);
+			this.allProperties.add(this.joinedParentClass.getIdProperty());
+
+			// Add all other properties
+			buildProperties(this.entityClass, this.joinedParentClass.entityClass);
+		}
 
 		// And inspect unique constraints
 		if (tableMetadata != null && this.uniqueProperties == null) {
@@ -280,55 +294,38 @@ public class EntityClass<E> {
 
 	}
 
-	private void buildAttributeOverrides() {
-		final Collection<AttributeOverride> config = new ArrayList<>();
+	private void buildAttributeOverrides(final Class<? super E> inspectedClass) {
+		if (inspectedClass.getSuperclass() != null) {
+			buildAttributeOverrides(inspectedClass.getSuperclass());
+		}
 
 		// Multi annotation
 		final AttributeOverrides multiOverride = this.entityClass.getAnnotation(AttributeOverrides.class);
 		if (multiOverride != null) {
-			config.addAll(Arrays.asList(multiOverride.value()));
+			for (final AttributeOverride override : multiOverride.value()) {
+				this.attributeOverrides.put(override.name(), override);
+			}
 		}
 
 		// Single annotion
 		final AttributeOverride singleOverride = this.entityClass.getAnnotation(AttributeOverride.class);
 		if (singleOverride != null) {
-			config.add(singleOverride);
-		}
-
-		this.attributeOverrides = new HashMap<>();
-		for (final AttributeOverride override : config) {
-			this.attributeOverrides.put(override.name(), override);
+			this.attributeOverrides.put(singleOverride.name(), singleOverride);
 		}
 	}
 
-	private void buildDiscriminator(final Class<?> c) {
-		if (this.discriminator == null) {
-			// TODO (functional) We scan only classes that we are about to write
-			// So we don't know, that there is a subclass entity - until we find one
-			// This could be to late for InheritanceType.SINGLE_TABLE - the defaault type
-			// That's why we build a discriminator, if one of the inheritance annotations exists
-			final Inheritance inheritance = c.getAnnotation(Inheritance.class);
-			final DiscriminatorColumn column = c.getAnnotation(DiscriminatorColumn.class);
-			final DiscriminatorValue value = c.getAnnotation(DiscriminatorValue.class);
-			final boolean inspectingSuperclass = c != this.entityClass;
-			if (inheritance == null ? inspectingSuperclass || column != null || value != null
-					: inheritance.strategy() != InheritanceType.TABLE_PER_CLASS) {
+	private void buildDiscriminator() {
+		if (this.inheritanceType == InheritanceType.SINGLE_TABLE || this.inheritanceType == InheritanceType.JOINED) {
+			final DiscriminatorColumn column = this.hierarchyRoot.entityClass.getAnnotation(DiscriminatorColumn.class);
+			if (column != null || this.inheritanceType != InheritanceType.JOINED
+					|| this.context.getProvider().isJoinedDiscriminatorNeeded()) {
 				this.discriminatorColumn = column == null ? "DTYPE" : column.name();
-				this.discriminator = buildDiscriminator(this, column,
-						this.entityClass.getAnnotation(DiscriminatorValue.class));
-				if (inspectingSuperclass) {
-					final EntityClass<?> description = this.context.getDescription(c);
-					this.table = description.table;
-					if (description.discriminator == null) {
-						description.discriminator = buildDiscriminator(description, column, value);
-					}
-				}
+				this.discriminator = buildDiscriminator(this, column);
 			}
 		}
 	}
 
-	private String buildDiscriminator(final EntityClass<?> c, final DiscriminatorColumn column,
-			final DiscriminatorValue value) {
+	private String buildDiscriminator(final EntityClass<?> c, final DiscriminatorColumn column) {
 		DiscriminatorType type;
 		int maxLength;
 		if (column == null) {
@@ -339,6 +336,8 @@ public class EntityClass<E> {
 			type = column.discriminatorType();
 			maxLength = column.length();
 		}
+
+		final DiscriminatorValue value = this.entityClass.getAnnotation(DiscriminatorValue.class);
 		if (type == DiscriminatorType.INTEGER) {
 			return value == null ? String.valueOf(c.getEntityName().hashCode()) : value.value();
 		}
@@ -360,34 +359,71 @@ public class EntityClass<E> {
 	 * @param c
 	 *            the currently inspected class
 	 */
-	private void buildIdProperty(final Class<?> c) {
-		// Find ID properties of super classes
-		if (c.getSuperclass() != null) {
-			buildIdProperty(c.getSuperclass());
-		}
+	private void buildIdProperty(final Class<? super E> c) {
+		// TODO (functional) Support @IdClass
 
 		// Find the Entity / MappedSuperclass annotation
-		if (c.getAnnotation(Entity.class) != null) {
-			// As we are already here - inspect the discriminator type of the entity
-			buildDiscriminator(c);
-		} else if (c.getAnnotation(MappedSuperclass.class) == null) {
-			return;
-		}
-
-		// And now find the id property of this class
-		for (final Field field : c.getDeclaredFields()) {
-			if (field.getAnnotation(EmbeddedId.class) != null) {
-				this.idProperty = new EmbeddedProperty<>(this, field);
-			} else if (field.getAnnotation(Id.class) != null) {
-				if (field.getAnnotation(GeneratedValue.class) != null) {
-					registerSequence(field.getAnnotation(SequenceGenerator.class));
-					this.idProperty = new GeneratedIdProperty<>(this, field, getColumnAnnotation(field));
-				} else {
-					this.idProperty = buildProperty(field, getColumnAnnotation(field), null);
+		if (c.getAnnotation(Entity.class) != null || c.getAnnotation(MappedSuperclass.class) != null) {
+			// And now find the id property of this class
+			for (final Field field : c.getDeclaredFields()) {
+				if (field.getAnnotation(EmbeddedId.class) != null) {
+					this.idProperty = new EmbeddedProperty<>(this, field);
+				} else if (field.getAnnotation(Id.class) != null) {
+					if (field.getAnnotation(GeneratedValue.class) != null) {
+						registerSequence(field.getAnnotation(SequenceGenerator.class));
+						this.idProperty = new GeneratedIdProperty<>(this, field, getColumnAnnotation(field));
+					} else {
+						this.idProperty = buildProperty(field, getColumnAnnotation(field), null);
+					}
 				}
 			}
 		}
 
+		// Find ID properties of super classes
+		if (c.getSuperclass() != null) {
+			buildIdProperty(c.getSuperclass());
+		}
+	}
+
+	/**
+	 * Determine the inheritance type and discriminator properties.
+	 */
+	private void buildInheritance() {
+		// Check, if we've got an explicit inheritance type
+		final Inheritance inheritance = this.entityClass.getAnnotation(Inheritance.class);
+		if (inheritance != null) {
+			this.inheritanceType = inheritance.strategy();
+		}
+
+		// Find the root of our hierarchy
+		this.hierarchyRoot = this;
+		findHierarchyRoot(this.entityClass.getSuperclass());
+
+		// We scan only classes that we are about to write
+		// So we don't know, that there is a subclass entity - until we find one
+		// This could be to late for InheritanceType.SINGLE_TABLE - the defaault type
+		// That's why we build a discriminator, if one of the inheritance annotations exists
+		if (this.inheritanceType == null && this.entityClass.getAnnotation(DiscriminatorColumn.class) != null
+				|| this.entityClass.getAnnotation(DiscriminatorValue.class) != null) {
+			this.inheritanceType = InheritanceType.SINGLE_TABLE;
+		}
+
+		buildDiscriminator();
+	}
+
+	private void buildPrimaryKeyJoinColumn() {
+		if (this.joinedParentClass.getIdProperty() instanceof SingularProperty) {
+			final PrimaryKeyJoinColumn pkColumn = this.entityClass.getAnnotation(PrimaryKeyJoinColumn.class);
+			if (pkColumn == null || StringUtils.isEmpty(pkColumn.name())) {
+				this.primaryKeyJoinColumn = ((SingularProperty<? super E, ?>) this.joinedParentClass.getIdProperty())
+						.getColumn();
+			} else {
+				this.primaryKeyJoinColumn = pkColumn.name();
+			}
+		} else {
+			throw new IllegalArgumentException(
+					"JOINED inheritance strategy is currently only supported with singular ID properties.");
+		}
 	}
 
 	/**
@@ -395,11 +431,13 @@ public class EntityClass<E> {
 	 *
 	 * @param c
 	 *            the currently inspected class
+	 * @param stopClass
+	 *            the class in the hierarchy to stop inspecting
 	 */
-	private void buildProperties(final Class<?> c) {
-		// Fill properties of super classes
-		if (c.getSuperclass() != null) {
-			buildProperties(c.getSuperclass());
+	private void buildProperties(final Class<?> c, final Class<?> stopClass) {
+		// Fill properties of super classes (at least until we find the joined parent class)
+		if (c.getSuperclass() != null && c.getSuperclass() != stopClass) {
+			buildProperties(c.getSuperclass(), stopClass);
 		}
 
 		// And now fill the properties of this class
@@ -409,6 +447,7 @@ public class EntityClass<E> {
 					final Property<E, ?> property = buildProperty(field, getColumnAnnotation(field), null);
 					if (property != null) {
 						this.properties.put(field.getName(), property);
+						this.allProperties.add(property);
 						if (property instanceof SingularProperty) {
 							buildUniqueProperty((SingularProperty<E, ?>) property);
 						}
@@ -496,6 +535,37 @@ public class EntityClass<E> {
 		return Collections.emptyList();
 	}
 
+	private void findHierarchyRoot(final Class<? super E> inspectedClass) {
+		if (inspectedClass != null) {
+			if (inspectedClass.getAnnotation(Entity.class) == null) {
+				findHierarchyRoot(inspectedClass.getSuperclass());
+			} else {
+				this.parentEntityClass = inspectedClass;
+				final EntityClass<? super E> parentDescription = this.context.getDescription(inspectedClass);
+				if (parentDescription.inheritanceType == null) {
+					parentDescription.inheritanceType = InheritanceType.SINGLE_TABLE;
+					parentDescription.buildDiscriminator();
+				}
+				if (this.inheritanceType == null) {
+					this.inheritanceType = parentDescription.inheritanceType;
+					this.hierarchyRoot = parentDescription.hierarchyRoot;
+				} else if (parentDescription.inheritanceType != InheritanceType.TABLE_PER_CLASS) {
+					this.hierarchyRoot = parentDescription.hierarchyRoot;
+				}
+				if (parentDescription.getInheritanceType() == InheritanceType.JOINED) {
+					this.joinedParentClass = parentDescription;
+					buildPrimaryKeyJoinColumn();
+				} else {
+					if (parentDescription.getInheritanceType() == InheritanceType.SINGLE_TABLE) {
+						this.table = parentDescription.table;
+					}
+					this.joinedParentClass = parentDescription.joinedParentClass;
+					this.primaryKeyJoinColumn = parentDescription.primaryKeyJoinColumn;
+				}
+			}
+		}
+	}
+
 	private Column getColumnAnnotation(final Field field) {
 		final AttributeOverride override = this.attributeOverrides.get(field.getName());
 		return override != null ? override.column() : field.getAnnotation(Column.class);
@@ -514,10 +584,13 @@ public class EntityClass<E> {
 	 *         {@link #getIdProperty() id} of the entity
 	 */
 	public String getEntityReference(final E entity, final String idField, final boolean whereExpression) {
+		if (this.joinedParentClass != null) {
+			return this.joinedParentClass.getEntityReference(entity, idField, whereExpression);
+		}
 		if (this.idProperty instanceof GeneratedIdProperty) {
 			return getGeneratedIdReference(entity, whereExpression);
 		}
-		Property<E, ?> property = this.idProperty;
+		Property<? super E, ?> property = this.idProperty;
 		if (this.idProperty instanceof EmbeddedProperty) {
 			final Map<String, ?> embeddedProperties = ((EmbeddedProperty<E, ?>) this.idProperty)
 					.getEmbeddedProperties();
@@ -573,25 +646,6 @@ public class EntityClass<E> {
 	}
 
 	/**
-	 * Resolves the column for the {@link #idProperty id property}.
-	 *
-	 * @param required
-	 *            indicates to throw a {@link IllegalStateException} if the id property is not a
-	 *            {@link SingularProperty}
-	 * @return the column or {@code null} if the id property is not a {@link SingularProperty} and {@code required} is
-	 *         {@code false}
-	 */
-	public String getIdColumn(final boolean required) {
-		if (this.idProperty instanceof SingularProperty) {
-			return ((SingularProperty<E, ?>) this.idProperty).getColumn();
-		}
-		if (required) {
-			throw new IllegalStateException("ID is not a singular property for " + this.entityClass);
-		}
-		return null;
-	}
-
-	/**
 	 * Resolves the column for the {@link #getIdProperty() id property} of this entity class.
 	 *
 	 * @param field
@@ -601,7 +655,7 @@ public class EntityClass<E> {
 	 * @throws IllegalStateException
 	 *             if the id property is not singular and no MapsId is given
 	 */
-	final String getIdColumn(final Field field) {
+	String getIdColumn(final Field field) {
 		if (this.idProperty instanceof SingularProperty) {
 			return ((SingularProperty<?, ?>) this.idProperty).getColumn();
 		}
