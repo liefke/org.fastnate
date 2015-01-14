@@ -15,6 +15,8 @@ import lombok.Setter;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.dialect.H2Dialect;
+import org.fastnate.generator.provider.HibernateProvider;
+import org.fastnate.generator.provider.JpaProvider;
 
 /**
  * Represents the configuration and state for one or more {@link EntitySqlGenerator}s.
@@ -27,6 +29,9 @@ public class GeneratorContext {
 
 	/** The settings key for the {@link #dialect}. */
 	public static final String DIALECT_KEY = "fastnate.generator.dialect";
+
+	/** The settings key for the {@link #provider}. */
+	public static final String PROVIDER_KEY = "fastnate.generator.jpa.provider";
 
 	/** The settings key for {@link #writeNullValues}. */
 	public static final String NULL_VALUES_KEY = "fastnate.generator.null.values";
@@ -53,6 +58,11 @@ public class GeneratorContext {
 	 * Identifies the SQL dialect for generating SQL statements. Encapsulates the database specifica.
 	 */
 	private GeneratorDialect dialect;
+
+	/**
+	 * Identifies the JPA provider to indicate implementation specific details.
+	 */
+	private JpaProvider provider;
 
 	/**
 	 * The maximum count of columns that are used when referencing an entity using it's unique properties.
@@ -108,6 +118,7 @@ public class GeneratorContext {
 	 */
 	public GeneratorContext(final GeneratorDialect dialect) {
 		this.dialect = dialect;
+		this.provider = new HibernateProvider();
 		this.settings = new Properties();
 	}
 
@@ -125,9 +136,20 @@ public class GeneratorContext {
 		}
 		try {
 			this.dialect = (GeneratorDialect) Class.forName(dialectName).newInstance();
-		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
 			throw new IllegalArgumentException("Can't instantiate dialect: " + dialectName, e);
 		}
+
+		String providerName = settings.getProperty(PROVIDER_KEY, "HibernateProvider");
+		if (providerName.indexOf('.') < 0) {
+			providerName = JpaProvider.class.getPackage().getName() + '.' + providerName;
+		}
+		try {
+			this.provider = (JpaProvider) Class.forName(providerName).newInstance();
+		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
+			throw new IllegalArgumentException("Can't instantiate provider: " + providerName, e);
+		}
+
 		this.explicitIds = Boolean
 				.parseBoolean(settings.getProperty(EXPLICIT_IDS_KEY, String.valueOf(this.explicitIds)));
 		this.writeNullValues = Boolean.parseBoolean(settings.getProperty(NULL_VALUES_KEY,
