@@ -1,6 +1,5 @@
 package org.fastnate.generator.context;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -9,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.persistence.Access;
 import javax.persistence.AttributeOverride;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
@@ -44,25 +44,34 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	 *
 	 * @param entityClass
 	 *            the class of the entity
-	 *
-	 * @param entityField
-	 *            the field that contains the embedded object
+	 * @param accessor
+	 *            the property that contains the embedded object
 	 */
-	public EmbeddedProperty(final EntityClass<?> entityClass, final Field entityField) {
-		super(entityField);
+	public EmbeddedProperty(final EntityClass<?> entityClass, final PropertyAccessor accessor) {
+		super(accessor);
 
-		this.id = entityField.getAnnotation(EmbeddedId.class) != null;
+		this.id = accessor.hasAnnotation(EmbeddedId.class);
 
-		final Class<?> type = entityField.getType();
-		if (type.getAnnotation(Embeddable.class) == null) {
-			throw new IllegalArgumentException(entityField + " does reference " + type + " which is not embeddable.");
+		final Class<?> type = accessor.getType();
+		if (!type.isAnnotationPresent(Embeddable.class)) {
+			throw new IllegalArgumentException(accessor + " does reference " + type + " which is not embeddable.");
 		}
-		final Map<String, AttributeOverride> attributeOverrides = EntityClass.getAttributeOverrides(entityField);
-		for (final Field field : type.getDeclaredFields()) {
+
+		// Determine the access style
+		AccessStyle accessStyle;
+		final Access accessType = type.getAnnotation(Access.class);
+		if (accessType != null) {
+			accessStyle = AccessStyle.getStyle(accessType.value());
+		} else {
+			accessStyle = accessor.getAccessStyle();
+		}
+
+		final Map<String, AttributeOverride> attributeOverrides = EntityClass.getAttributeOverrides(accessor);
+		for (final PropertyAccessor field : accessStyle.getDeclaredProperties(type)) {
 			final AttributeOverride attrOveride = attributeOverrides.get(field.getName());
 			final Property<T, ?> property = entityClass.buildProperty(field, attrOveride != null ? attrOveride.column()
 					: field.getAnnotation(Column.class),
-					EntityClass.getAccociationOverrides(entityField).get(field.getName()));
+					EntityClass.getAccociationOverrides(accessor).get(field.getName()));
 			if (property != null) {
 				this.embeddedProperties.put(field.getName(), property);
 			}

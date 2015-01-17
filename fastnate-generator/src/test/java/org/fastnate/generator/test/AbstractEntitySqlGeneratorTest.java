@@ -1,18 +1,7 @@
 package org.fastnate.generator.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.IOException;
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -42,110 +31,6 @@ public class AbstractEntitySqlGeneratorTest {
 
 	@Getter(AccessLevel.PROTECTED)
 	private EntitySqlGenerator generator;
-
-	private static final int UNINTERESTING_FIELDS = Modifier.STATIC | Modifier.TRANSIENT;
-
-	private static final List<Class<? extends Serializable>> PRIMITIVE_TYPES = Arrays.asList(String.class,
-			Number.class, Boolean.class, Date.class);
-
-	private <E> void assertCollectionsEquals(final Collection<E> writtenValue, final Collection<E> foundValue,
-			final Collection<Object> inspected) {
-		if (writtenValue == null || writtenValue.isEmpty()) {
-			assertThat(foundValue).isNullOrEmpty();
-		} else {
-			assertThat(foundValue).hasSameSizeAs(writtenValue);
-			for (final Iterator<E> writtenIt = writtenValue.iterator(), foundIt = foundValue.iterator(); writtenIt
-					.hasNext();) {
-				assertSingleValueEquals(writtenIt.next(), foundIt.next(), inspected);
-			}
-		}
-	}
-
-	/**
-	 * Tests that a written entity is the same as a found one.
-	 *
-	 * @param written
-	 *            the entity that was written using the EntitySqlGenerator
-	 * @param found
-	 *            the entity that was found in the EntityManager
-	 */
-	protected <E> void assertEntitiesEquals(final E written, final E found) {
-		assertEntitiesEquals(written, found, new HashSet<Object>(Arrays.asList(written, found)));
-	}
-
-	private <E> void assertEntitiesEquals(final E written, final E found, final Collection<Object> inspected) {
-		if (written == null) {
-			assertThat(found).isNull();
-		} else {
-			assertThat(found).isNotNull();
-			assertThat(found).isInstanceOf(written.getClass());
-			if (inspected.add(written) || inspected.add(found)) {
-				assertEntitiesEquals(written, found, inspected, written.getClass());
-			}
-		}
-	}
-
-	private <E> void assertEntitiesEquals(final E written, final E found, final Collection<Object> inspected,
-			final Class<?> inspectedClass) {
-		if (inspectedClass.getSuperclass() != null) {
-			assertEntitiesEquals(written, found, inspected, inspectedClass.getSuperclass());
-		}
-		for (final Field field : inspectedClass.getDeclaredFields()) {
-			if ((field.getModifiers() & UNINTERESTING_FIELDS) == 0) {
-				assertFieldEquals(field, written, found, inspected);
-			}
-		}
-	}
-
-	private <K, E> void assertFieldEquals(final Field field, final E written, final E found,
-			final Collection<Object> inspected) {
-		try {
-			field.setAccessible(true);
-			final Object writtenValue = field.get(written);
-			final Object foundValue = field.get(written);
-			if (Collection.class.isAssignableFrom(field.getType())) {
-				assertCollectionsEquals((Collection<E>) writtenValue, (Collection<E>) foundValue, inspected);
-			} else if (Map.class.equals(foundValue)) {
-				assertMapsEquals((Map<K, E>) writtenValue, (Map<K, E>) foundValue, inspected);
-			} else {
-				assertSingleValueEquals(written, found, inspected);
-			}
-		} catch (final IllegalArgumentException | IllegalAccessException e) {
-			throw new AssertionError("Can't access field " + field, e);
-		}
-	}
-
-	private <K, V> void assertMapsEquals(final Map<K, V> writtenValue, final Map<K, V> foundValue,
-			final Collection<Object> inspected) {
-		if (writtenValue == null || writtenValue.isEmpty()) {
-			assertThat(foundValue).isNullOrEmpty();
-		} else {
-			assertThat(foundValue).hasSameSizeAs(writtenValue);
-			for (final Map.Entry<K, V> entry : writtenValue.entrySet()) {
-				assertSingleValueEquals(entry.getValue(), foundValue.get(entry.getKey()), inspected);
-			}
-		}
-	}
-
-	private <E> void assertSingleValueEquals(final E writtenValue, final E foundValue,
-			final Collection<Object> inspected) {
-		if (writtenValue == null) {
-			assertThat(foundValue).isNull();
-		} else {
-			assertThat(foundValue).isNotNull();
-			if (foundValue.getClass().isPrimitive()) {
-				assertThat(foundValue).isEqualTo(writtenValue);
-			} else {
-				for (final Class<?> primitiveClass : PRIMITIVE_TYPES) {
-					if (primitiveClass.isInstance(writtenValue)) {
-						assertThat(foundValue).isEqualTo(writtenValue);
-						return;
-					}
-				}
-				assertEntitiesEquals(writtenValue, foundValue, inspected);
-			}
-		}
-	}
 
 	/**
 	 * Finds all entities of the given entity class.

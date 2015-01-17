@@ -1,13 +1,12 @@
 package org.fastnate.generator.converter;
 
-import java.lang.reflect.Field;
-
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.MapKeyEnumerated;
 
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.context.PropertyAccessor;
 
 /**
  * Describes a enum property of an {@link EntityClass}.
@@ -25,23 +24,23 @@ public class EnumConverter<E extends Enum<E>> extends AbstractValueConverter<E> 
 	/**
 	 * Creates a new instance of this {@link EnumConverter}.
 	 *
-	 * @param field
-	 *            the inspected field
+	 * @param property
+	 *            the inspected property
 	 * @param targetType
 	 *            the type of the enum
 	 * @param mapKey
 	 *            indicates that the converter is for the key of a map
 	 */
-	public EnumConverter(final Field field, final Class<E> targetType, final boolean mapKey) {
+	public EnumConverter(final PropertyAccessor property, final Class<E> targetType, final boolean mapKey) {
 		this.targetType = targetType;
 		EnumType enumType = EnumType.ORDINAL;
 		if (mapKey) {
-			final MapKeyEnumerated enumerated = field.getAnnotation(MapKeyEnumerated.class);
+			final MapKeyEnumerated enumerated = property.getAnnotation(MapKeyEnumerated.class);
 			if (enumerated != null) {
 				enumType = enumerated.value();
 			}
 		} else {
-			final Enumerated enumerated = field.getAnnotation(Enumerated.class);
+			final Enumerated enumerated = property.getAnnotation(Enumerated.class);
 			if (enumerated != null) {
 				enumType = enumerated.value();
 			}

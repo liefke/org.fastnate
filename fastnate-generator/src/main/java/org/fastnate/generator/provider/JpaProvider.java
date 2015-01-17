@@ -1,5 +1,6 @@
 package org.fastnate.generator.provider;
 
+
 /**
  * Encapsulates details specific to the current JPA implementation.
  *
@@ -17,8 +18,9 @@ public interface JpaProvider {
 
 	/**
 	 * The name of the default sequence, if none was specified for a sequence generator.
-	 * 
+	 *
 	 * @return the default sequence name
 	 */
 	String getDefaultSequence();
+
 }

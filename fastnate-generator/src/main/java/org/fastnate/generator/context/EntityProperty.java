@@ -1,6 +1,5 @@
 package org.fastnate.generator.context;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,7 +28,7 @@ import org.hibernate.annotations.MetaValue;
 
 /**
  * Describes a property of an {@link EntityClass} that references another entity.
- * 
+ *
  * @author Tobias Liefke
  * @param <E>
  *            The type of the container entity
@@ -51,28 +50,29 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 
 		private final String anyMetaColumn;
 
-		public MappingInformation(final Field field) {
-			final OneToOne oneToOne = field.getAnnotation(OneToOne.class);
-			final NotNull notNull = field.getAnnotation(NotNull.class);
+		public MappingInformation(final PropertyAccessor accessor) {
+			final OneToOne oneToOne = accessor.getAnnotation(OneToOne.class);
+			final NotNull notNull = accessor.getAnnotation(NotNull.class);
 			if (oneToOne != null) {
 				this.optional = oneToOne.optional() && notNull == null;
 				this.mappedBy = oneToOne.mappedBy();
 				this.anyMetaColumn = null;
 			} else {
 				this.mappedBy = "";
-				final ManyToOne manyToOne = field.getAnnotation(ManyToOne.class);
+				final ManyToOne manyToOne = accessor.getAnnotation(ManyToOne.class);
 				if (manyToOne != null) {
 					this.optional = manyToOne.optional() && notNull == null;
 					this.anyMetaColumn = null;
 				} else {
-					final Any any = field.getAnnotation(Any.class);
+					final Any any = accessor.getAnnotation(Any.class);
 					if (any != null) {
 						this.optional = any.optional() && notNull == null;
 						this.anyMetaColumn = any.metaColumn().name();
 					} else {
-						final ManyToAny manyToAny = field.getAnnotation(ManyToAny.class);
+						final ManyToAny manyToAny = accessor.getAnnotation(ManyToAny.class);
 						if (manyToAny == null) {
-							throw new IllegalArgumentException(field + " is neither declared as OneToOne nor ManyToOne");
+							throw new IllegalArgumentException(accessor
+									+ " is neither declared as OneToOne nor ManyToOne");
 						}
 						this.optional = notNull == null;
 						this.anyMetaColumn = manyToAny.metaColumn().name();
@@ -83,15 +83,15 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	}
 
 	/**
-	 * Indicates that the given field references an entity and may be used by an {@link EntityProperty}.
-	 * 
-	 * @param field
-	 *            the field to check
-	 * @return {@code true} if an {@link EntityProperty} may be created for the given field
+	 * Indicates that the given property references an entity and may be used by an {@link EntityProperty}.
+	 *
+	 * @param accessor
+	 *            accessor of the property to check
+	 * @return {@code true} if an {@link EntityProperty} may be created for the given property
 	 */
-	static boolean isEntityField(final Field field) {
-		return field.getAnnotation(OneToOne.class) != null || field.getAnnotation(ManyToOne.class) != null
-				|| field.getAnnotation(Any.class) != null || field.getAnnotation(ManyToAny.class) != null;
+	static boolean isEntityProperty(final PropertyAccessor accessor) {
+		return accessor.hasAnnotation(OneToOne.class) || accessor.hasAnnotation(ManyToOne.class)
+				|| accessor.hasAnnotation(Any.class) || accessor.hasAnnotation(ManyToAny.class);
 	}
 
 	/** The current context. */
@@ -117,38 +117,39 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 
 	/**
 	 * Creates a new instance of {@link EntityProperty}.
-	 * 
+	 *
 	 * @param context
 	 *            the generator context.
-	 * @param field
-	 *            the field
+	 * @param accessor
+	 *            the accessor
 	 * @param override
 	 *            optional {@link AttributeOverride} configuration.
 	 */
-	public EntityProperty(final GeneratorContext context, final Field field,
+	public EntityProperty(final GeneratorContext context, final PropertyAccessor accessor,
 			@Nullable final AssociationOverride override) {
-		super(field);
+		super(accessor);
 		this.context = context;
 
 		// Initialize the target class description
 		@SuppressWarnings("unchecked")
-		final EntityClass<T> targetClass = context.getDescription((Class<T>) field.getType());
+		final EntityClass<T> targetClass = context.getDescription((Class<T>) accessor.getType());
 
 		// Initialize according to the *ToOne annotations
-		final MappingInformation mapping = new MappingInformation(field);
+		final MappingInformation mapping = new MappingInformation(accessor);
 		this.required = !mapping.isOptional();
 		this.mappedBy = mapping.getMappedBy().length() == 0 ? null : mapping.getMappedBy();
-		final MapsId mapsId = field.getAnnotation(MapsId.class);
+		final MapsId mapsId = accessor.getAnnotation(MapsId.class);
 		this.idField = mapsId != null ? mapsId.value() : null;
 
 		// Initialize the column name
 		if (this.mappedBy == null) {
 			final JoinColumn joinColumn = override != null && override.joinColumns().length > 0 ? override
-					.joinColumns()[0] : field.getAnnotation(JoinColumn.class);
+					.joinColumns()[0] : accessor.getAnnotation(JoinColumn.class);
 			if (joinColumn != null && joinColumn.name().length() > 0) {
 				this.column = joinColumn.name();
 			} else {
-				this.column = field.getName() + "_" + (targetClass == null ? "id" : targetClass.getIdColumn(field));
+				this.column = accessor.getName() + "_"
+						+ (targetClass == null ? "id" : targetClass.getIdColumn(accessor));
 			}
 		} else {
 			this.column = null;
@@ -157,7 +158,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		// Initialize ANY meta information
 		this.anyColumn = mapping.getAnyMetaColumn();
 		if (this.anyColumn != null) {
-			fillMetaDefs(field);
+			fillMetaDefs(accessor);
 		}
 	}
 
@@ -192,10 +193,10 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		}
 	}
 
-	private void fillMetaDefs(final Field field) {
-		final AnyMetaDef metaDef = field.getAnnotation(AnyMetaDef.class);
+	private void fillMetaDefs(final PropertyAccessor accessor) {
+		final AnyMetaDef metaDef = accessor.getAnnotation(AnyMetaDef.class);
 		if (metaDef == null) {
-			throw new IllegalArgumentException("Missing AnyMetaDef for " + field);
+			throw new IllegalArgumentException("Missing AnyMetaDef for " + accessor);
 		}
 		for (final MetaValue metaValue : metaDef.metaValues()) {
 			this.anyClasses.put(metaValue.targetEntity(), "'" + metaValue.value() + "'");
@@ -206,7 +207,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		final String desc = this.anyClasses.get(entity.getClass());
 		if (desc == null) {
 			throw new IllegalArgumentException("Can'f find meta description for " + entity.getClass() + " on "
-					+ getField());
+					+ getAccessor());
 		}
 		return desc;
 	}
@@ -226,8 +227,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			throw new IllegalStateException("Entity can't be referenced: " + writtenEntity);
 		}
 		final EntityClass<E> entityClass = this.context.getDescription(entity);
-		final UpdateStatement stmt = new UpdateStatement(entityClass.getTable(), entityClass.getIdColumn(getField()),
-				entityClass.getEntityReference(entity, this.idField, true));
+		final UpdateStatement stmt = new UpdateStatement(entityClass.getTable(),
+				entityClass.getIdColumn(getAccessor()), entityClass.getEntityReference(entity, this.idField, true));
 		stmt.addValue(this.column, expression);
 		return Collections.<EntityStatement> singletonList(stmt);
 	}

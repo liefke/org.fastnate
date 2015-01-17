@@ -1,12 +1,12 @@
 package org.fastnate.generator.context;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.Access;
 import javax.persistence.AssociationOverride;
 import javax.persistence.AttributeOverride;
 import javax.persistence.CollectionTable;
@@ -17,13 +17,13 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.MapsId;
 
-import org.fastnate.generator.statements.InsertStatement;
-
 import lombok.Getter;
+
+import org.fastnate.generator.statements.InsertStatement;
 
 /**
  * Base class for {@link MapProperty} and {@link CollectionProperty}.
- * 
+ *
  * @author Tobias Liefke
  * @param <E>
  *            The type of the container class
@@ -36,10 +36,10 @@ import lombok.Getter;
 public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	/**
-	 * Builds the name of the column that contains the ID of the entity for the given field.
-	 * 
-	 * @param field
-	 *            the inspected field
+	 * Builds the name of the column that contains the ID of the entity for the given property.
+	 *
+	 * @param accessor
+	 *            the accessor for the inspected property
 	 * @param override
 	 *            contains optional override options
 	 * @param collectionMetadata
@@ -48,15 +48,15 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            the default name for the column, if {@code joinColumn} is empty or {@code null}
 	 * @return the column name
 	 */
-	protected static String buildIdColumn(final Field field, final AssociationOverride override,
+	protected static String buildIdColumn(final PropertyAccessor accessor, final AssociationOverride override,
 			final CollectionTable collectionMetadata, final String defaultIdColumn) {
-		return buildIdColumn(field, override, collectionMetadata != null ? collectionMetadata.joinColumns() : null,
+		return buildIdColumn(accessor, override, collectionMetadata != null ? collectionMetadata.joinColumns() : null,
 				defaultIdColumn);
 	}
 
 	/**
 	 * Builds the name of the column that contains the ID of the entity for the given field.
-	 * 
+	 *
 	 * @param field
 	 *            the inspected field
 	 * @param override
@@ -67,7 +67,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            the default name for the column, if {@code joinColumn} is empty or {@code null}
 	 * @return the column name
 	 */
-	private static String buildIdColumn(final Field field, final AssociationOverride override,
+	private static String buildIdColumn(final PropertyAccessor field, final AssociationOverride override,
 			final JoinColumn[] joinColumns, final String defaultIdColumn) {
 		if (override != null && override.joinColumns().length > 0) {
 			final JoinColumn joinColumn = override.joinColumns()[0];
@@ -89,7 +89,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	/**
 	 * Builds the name of the column that contains the ID of the entity for the given field.
-	 * 
+	 *
 	 * @param field
 	 *            the inspected field
 	 * @param override
@@ -100,7 +100,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            the default name for the column, if {@code joinColumn} is empty or {@code null}
 	 * @return the column name
 	 */
-	protected static String buildIdColumn(final Field field, final AssociationOverride override,
+	protected static String buildIdColumn(final PropertyAccessor field, final AssociationOverride override,
 			final JoinTable tableMetadata, final String defaultIdColumn) {
 		return buildIdColumn(field, override, tableMetadata != null ? tableMetadata.joinColumns() : null,
 				defaultIdColumn);
@@ -108,7 +108,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	/**
 	 * Builds the name of the table of the association for the given field.
-	 * 
+	 *
 	 * @param tableMetadata
 	 *            the current metadata of the field
 	 * @param defaultTableName
@@ -121,19 +121,19 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	/**
 	 * Builds the name of the table of the association for the given field.
-	 * 
+	 *
 	 * @param field
 	 *            the inspected field
 	 * @param override
 	 *            contains optional override options
 	 * @param tableMetadata
 	 *            the optional metadata of the table
-	 * 
+	 *
 	 * @param defaultTableName
 	 *            the default name for the table
 	 * @return the table name
 	 */
-	protected static String buildTableName(final Field field, final AssociationOverride override,
+	protected static String buildTableName(final PropertyAccessor field, final AssociationOverride override,
 			final JoinTable tableMetadata, final String defaultTableName) {
 		if (override != null) {
 			final JoinTable joinTable = override.joinTable();
@@ -146,14 +146,14 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	/**
 	 * Builds the name of the column that contains the value for the collection / map.
-	 * 
+	 *
 	 * @param field
 	 *            the inspected field
 	 * @param defaultValueColumn
 	 *            the default name
 	 * @return the column name
 	 */
-	protected static String buildValueColumn(final Field field, final String defaultValueColumn) {
+	protected static String buildValueColumn(final PropertyAccessor field, final String defaultValueColumn) {
 		final JoinTable tableMetadata = field.getAnnotation(JoinTable.class);
 		if (tableMetadata != null && tableMetadata.inverseJoinColumns().length > 0
 				&& tableMetadata.inverseJoinColumns()[0].name().length() > 0) {
@@ -168,7 +168,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	/**
 	 * Inspects the given field and searches for a generic type argument.
-	 * 
+	 *
 	 * @param field
 	 *            the field to inspect
 	 * @param explicitClass
@@ -178,7 +178,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 * @return the found class
 	 */
 	@SuppressWarnings("unchecked")
-	protected static <T> Class<T> getFieldArgument(final Field field, final Class<T> explicitClass,
+	protected static <T> Class<T> getPropertyArgument(final PropertyAccessor field, final Class<T> explicitClass,
 			final int argumentIndex) {
 		if (explicitClass != void.class) {
 			// Explict target class
@@ -211,23 +211,23 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/** Contains all properties of an embedded element collection. */
 	private List<SingularProperty<T, ?>> embeddedProperties;
 
-	/** The field to use, if an id is embedded. */
-	private final String idField;
+	/** The property to use, if an id is embedded. */
+	private final String mappedId;
 
 	/**
 	 * Creates a new property.
-	 * 
+	 *
 	 * @param context
 	 *            the current context
 	 * @param field
 	 *            the field
 	 */
-	public PluralProperty(final GeneratorContext context, final Field field) {
+	public PluralProperty(final GeneratorContext context, final PropertyAccessor field) {
 		super(field);
 		this.context = context;
 
 		final MapsId mapsId = field.getAnnotation(MapsId.class);
-		this.idField = mapsId == null || mapsId.value().length() == 0 ? null : mapsId.value();
+		this.mappedId = mapsId == null || mapsId.value().length() == 0 ? null : mapsId.value();
 	}
 
 	@Override
@@ -237,19 +237,28 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	/**
 	 * Builds the embedded properties of this property.
-	 * 
+	 *
 	 * @param targetType
 	 *            the target type
 	 */
 	protected void buildEmbeddedProperties(final Class<?> targetType) {
-		if (targetType.getAnnotation(Embeddable.class) != null) {
+		if (targetType.isAnnotationPresent(Embeddable.class)) {
+			// Determine the access style
+			AccessStyle accessStyle;
+			final Access accessType = targetType.getAnnotation(Access.class);
+			if (accessType != null) {
+				accessStyle = AccessStyle.getStyle(accessType.value());
+			} else {
+				accessStyle = getAccessor().getAccessStyle();
+			}
+
 			this.embeddedProperties = new ArrayList<>();
-			final Map<String, AttributeOverride> attributeOverrides = EntityClass.getAttributeOverrides(getField());
-			for (final Field field : targetType.getDeclaredFields()) {
+			final Map<String, AttributeOverride> attributeOverrides = EntityClass.getAttributeOverrides(getAccessor());
+			for (final PropertyAccessor field : accessStyle.getDeclaredProperties(targetType)) {
 				final AttributeOverride attributeOveride = attributeOverrides.get(field.getName());
 				final Column columnMetadata = attributeOveride != null ? attributeOveride.column() : field
 						.getAnnotation(Column.class);
-				final AssociationOverride assocOverride = EntityClass.getAccociationOverrides(getField()).get(
+				final AssociationOverride assocOverride = EntityClass.getAccociationOverrides(getAccessor()).get(
 						field.getName());
 				final SingularProperty<T, ?> property = buildProperty(field, columnMetadata, assocOverride);
 				if (property != null) {
@@ -259,46 +268,46 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		}
 	}
 
-	private SingularProperty<T, ?> buildProperty(final Field field, final Column columnMetadata,
+	private SingularProperty<T, ?> buildProperty(final PropertyAccessor accessor, final Column columnMetadata,
 			final AssociationOverride override) {
 		// Ignore static, transient and generated fields
-		if (EntityClass.isPersistentField(field)) {
-			if (CollectionProperty.isCollectionField(field) || MapProperty.isMapField(field)) {
+		if (accessor.isPersistentProperty()) {
+			if (CollectionProperty.isCollectionProperty(accessor) || MapProperty.isMapProperty(accessor)) {
 				throw new IllegalArgumentException("Plural attributes not allowed for embedded element collection: "
-						+ field);
+						+ accessor);
 			}
-			if (EntityProperty.isEntityField(field)) {
-				return new EntityProperty<>(this.context, field, override);
+			if (EntityProperty.isEntityProperty(accessor)) {
+				return new EntityProperty<>(this.context, accessor, override);
 			}
-			return new PrimitiveProperty<>(this.context, getTable(), field, columnMetadata);
+			return new PrimitiveProperty<>(this.context, getTable(), accessor, columnMetadata);
 		}
 		return null;
 	}
 
 	/**
 	 * The name of the column that contains the ID of the entity that contains this collection.
-	 * 
+	 *
 	 * @return the name of the ID column
 	 */
 	public abstract String getIdColumn();
 
 	/**
 	 * The name of the table of this property, if any.
-	 * 
+	 *
 	 * @return the name of the table
 	 */
 	public abstract String getTable();
 
 	/**
 	 * The name of the column that contains the values of the collection.
-	 * 
+	 *
 	 * @return the name of the value column or {@code null} if {@link #isEmbedded() embedded}
 	 */
 	public abstract String getValueColumn();
 
 	/**
 	 * Indicates that this propery is a {@link ElementCollection} that references {@link Embeddable}s.
-	 * 
+	 *
 	 * @return true if {@link #getEmbeddedProperties()} returns a list of properties
 	 */
 	public boolean isEmbedded() {

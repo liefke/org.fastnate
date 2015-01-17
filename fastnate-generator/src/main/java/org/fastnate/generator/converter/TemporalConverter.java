@@ -1,6 +1,5 @@
 package org.fastnate.generator.converter;
 
-import java.lang.reflect.Field;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -8,13 +7,14 @@ import javax.persistence.MapKeyTemporal;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import org.fastnate.generator.context.EntityClass;
-import org.fastnate.generator.context.GeneratorContext;
-
 import lombok.RequiredArgsConstructor;
 
+import org.fastnate.generator.context.EntityClass;
+import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.context.PropertyAccessor;
+
 /**
- * Base class of description of a temporal property of an {@link EntityClass}.
+ * Base class for converting a temporal property of an {@link EntityClass}.
  *
  * @author Andreas Penski
  * @author Heiko Schefter
@@ -29,20 +29,20 @@ public abstract class TemporalConverter<T> extends AbstractValueConverter<T> {
 	/**
 	 * Creates a new instance of this {@link TemporalConverter}.
 	 *
-	 * @param field
-	 *            the inspected field
+	 * @param property
+	 *            the inspected property
 	 * @param mapKey
-	 *            indicates that the converter is used for the key of a map field
+	 *            indicates that the converter is used for the key of a map property
 	 */
-	public TemporalConverter(final Field field, final boolean mapKey) {
+	public TemporalConverter(final PropertyAccessor property, final boolean mapKey) {
 		TemporalType temporalType = TemporalType.TIMESTAMP;
 		if (mapKey) {
-			final MapKeyTemporal temporal = field.getAnnotation(MapKeyTemporal.class);
+			final MapKeyTemporal temporal = property.getAnnotation(MapKeyTemporal.class);
 			if (temporal != null) {
 				temporalType = temporal.value();
 			}
 		} else {
-			final Temporal temporal = field.getAnnotation(Temporal.class);
+			final Temporal temporal = property.getAnnotation(Temporal.class);
 			if (temporal != null) {
 				temporalType = temporal.value();
 			}

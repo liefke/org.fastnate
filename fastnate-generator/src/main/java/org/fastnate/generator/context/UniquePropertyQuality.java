@@ -1,6 +1,7 @@
 package org.fastnate.generator.context;
 
 
+
 /**
  * Possible values for {@link GeneratorContext#setUniquePropertyQuality}.
  */

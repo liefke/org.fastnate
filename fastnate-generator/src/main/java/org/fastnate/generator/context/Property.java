@@ -1,18 +1,17 @@
 package org.fastnate.generator.context;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
+
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
 
-import lombok.Getter;
-
 /**
  * Base class for the description of properties of an {@link EntityClass}.
- * 
+ *
  * @author Tobias Liefke
  * @param <E>
  *            The type of the container class
@@ -22,23 +21,23 @@ import lombok.Getter;
 @Getter
 public abstract class Property<E, T> {
 
-	/** The represented field of the class. */
-	private final Field field;
+	/** Used to access the value of the property. */
+	private final PropertyAccessor accessor;
 
 	/**
 	 * Creates a new instance of a property.
-	 * 
-	 * @param field
-	 *            the represented field of the class
+	 *
+	 * @param accessor
+	 *            the accessor of the property
 	 */
-	protected Property(final Field field) {
-		this.field = field;
+	protected Property(final PropertyAccessor accessor) {
+		this.accessor = accessor;
 	}
 
 	/**
 	 * Adds an expression according to the current value of the property for the given entity to an SQL insert
 	 * statement.
-	 * 
+	 *
 	 * @param entity
 	 *            the inspected entity
 	 * @param statement
@@ -50,7 +49,7 @@ public abstract class Property<E, T> {
 
 	/**
 	 * Creates additional SQL insert statements (e.g. for mapping tables) for the values of the current property.
-	 * 
+	 *
 	 * @param entity
 	 *            the inspected entity
 	 * @return the list of addition insert statements
@@ -64,13 +63,13 @@ public abstract class Property<E, T> {
 	 */
 	protected void failIfRequired() {
 		if (isRequired()) {
-			throw new IllegalArgumentException("Required field " + getField() + " was not set.");
+			throw new IllegalArgumentException("Required property " + this + " was not set.");
 		}
 	}
 
 	/**
 	 * Finds all entities in the current property, that are referenced.
-	 * 
+	 *
 	 * @param entity
 	 *            the inspected entity
 	 * @return all referenced entities
@@ -81,9 +80,9 @@ public abstract class Property<E, T> {
 
 	/**
 	 * Generates the update statements for an entity that are required after another entity was generated.
-	 * 
+	 *
 	 * Only called, if {@link EntityClass#markPendingUpdates} was called before for {@code writtenEntity}
-	 * 
+	 *
 	 * @param entity
 	 *            the entity that needs to be updated
 	 * @param writtenEntity
@@ -99,7 +98,7 @@ public abstract class Property<E, T> {
 
 	/**
 	 * Creates the expression for the current value of the given entity in SQL.
-	 * 
+	 *
 	 * @param entity
 	 *            the entity
 	 * @param whereExpression
@@ -111,10 +110,20 @@ public abstract class Property<E, T> {
 	}
 
 	/**
+	 * The name of this property.
+	 *
+	 * @return the name
+	 */
+	public String getName() {
+		return this.accessor.getName();
+
+	}
+
+	/**
 	 * Creates an SQL predicate that references all entities that have the same value as the given entity.
-	 * 
+	 *
 	 * Used to reference entites by their (unique) properties or ids.
-	 * 
+	 *
 	 * @param entity
 	 *            the entity
 	 * @return the predicate for the value of that entity or {@code null} if no such expression is available
@@ -125,30 +134,19 @@ public abstract class Property<E, T> {
 
 	/**
 	 * Resolves the current value for this property on the given entity.
-	 * 
+	 *
 	 * @param entity
 	 *            the entity to inspect
 	 * @return the value, {@code null} if entity is {@code null}
 	 */
-	@SuppressWarnings("unchecked")
 	public T getValue(final E entity) {
-		if (entity == null) {
-			return null;
-		}
-		if (!this.field.isAccessible()) {
-			this.field.setAccessible(true);
-		}
-		try {
-			return (T) this.field.get(entity);
-		} catch (final IllegalArgumentException | IllegalAccessException e) {
-			throw new IllegalStateException(e);
-		}
+		return this.accessor.getValue(entity);
 	}
 
 	/**
 	 * Indicates if this property is an required field in the database (needs to exist when the insert statement is
 	 * written).
-	 * 
+	 *
 	 * @return {@code true} if the field is required
 	 */
 	public boolean isRequired() {
@@ -157,7 +155,7 @@ public abstract class Property<E, T> {
 
 	/**
 	 * Indicates that this property maps to a column from the parent table.
-	 * 
+	 *
 	 * @return {@code true} if {@link #addInsertExpression(Object, InsertStatement)} will add the corresponding value to
 	 *         the given statement
 	 */
@@ -165,26 +163,19 @@ public abstract class Property<E, T> {
 
 	/**
 	 * Sets a new value for this property on the given entity.
-	 * 
+	 *
 	 * @param entity
 	 *            the entity to inspect
 	 * @param value
 	 *            the new value
 	 */
 	protected void setValue(final E entity, final T value) {
-		if (!this.field.isAccessible()) {
-			this.field.setAccessible(true);
-		}
-		try {
-			this.field.set(entity, value);
-		} catch (final IllegalArgumentException | IllegalAccessException e) {
-			throw new IllegalStateException(e);
-		}
+		this.accessor.setValue(entity, value);
 	}
 
 	@Override
 	public String toString() {
-		return this.field.toString();
+		return this.accessor.getName();
 	}
 
 }

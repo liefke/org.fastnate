@@ -1,7 +1,5 @@
 package org.fastnate.generator.context;
 
-import java.lang.reflect.Field;
-
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -34,14 +32,14 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	 *
 	 * @param entityClass
 	 *            the entity class
-	 * @param field
-	 *            the id field
+	 * @param accessor
+	 *            the accessor of the id property
 	 * @param column
 	 *            the column annotation
 	 */
-	public GeneratedIdProperty(final EntityClass<E> entityClass, final Field field, final Column column) {
-		super(entityClass.getContext(), entityClass.getTable(), field, column);
-		final GeneratedValue generation = field.getAnnotation(GeneratedValue.class);
+	public GeneratedIdProperty(final EntityClass<E> entityClass, final PropertyAccessor accessor, final Column column) {
+		super(entityClass.getContext(), entityClass.getTable(), accessor, column);
+		final GeneratedValue generation = accessor.getAnnotation(GeneratedValue.class);
 		GenerationType strategy = generation.strategy();
 		if (strategy == GenerationType.AUTO) {
 			strategy = entityClass.getContext().getDialect().getAutoGenerationType();

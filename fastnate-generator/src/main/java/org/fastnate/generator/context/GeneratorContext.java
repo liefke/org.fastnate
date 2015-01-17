@@ -249,7 +249,7 @@ public class GeneratorContext {
 		// Lookup description
 		EntityClass<E> description = (EntityClass<E>) this.descriptions.get(entityClass);
 		if (description == null) {
-			if (entityClass.getAnnotation(Entity.class) != null) {
+			if (entityClass.isAnnotationPresent(Entity.class)) {
 				// Description not build up to now
 
 				// Create the description

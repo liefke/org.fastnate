@@ -1,14 +1,14 @@
 package org.fastnate.generator.converter;
 
-import java.lang.reflect.Field;
 import java.util.Date;
 
 import javax.persistence.TemporalType;
 
 import org.fastnate.generator.context.EntityClass;
+import org.fastnate.generator.context.PropertyAccessor;
 
 /**
- * Describes a date property of an {@link EntityClass}.
+ * Converts a date property of an {@link EntityClass} to SQL.
  *
  * @author Andreas Penski
  */
@@ -17,13 +17,13 @@ public class DateConverter extends TemporalConverter<Date> {
 	/**
 	 * Creates a new instance of {@link DateConverter}.
 	 *
-	 * @param field
-	 *            the inspected field
+	 * @param property
+	 *            the inspected property
 	 * @param mapKey
-	 *            indicates that the converter is used for the key of a map field
+	 *            indicates that the converter is used for the key of a map property
 	 */
-	public DateConverter(final Field field, final boolean mapKey) {
-		super(field, mapKey);
+	public DateConverter(final PropertyAccessor property, final boolean mapKey) {
+		super(property, mapKey);
 	}
 
 	/**
