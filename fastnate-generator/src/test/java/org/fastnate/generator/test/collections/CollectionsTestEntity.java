@@ -30,7 +30,7 @@ import org.fastnate.generator.test.SimpleTestEntity;
 @Entity
 @Getter
 @Setter
-public class TestPluralEntity extends BaseTestEntity {
+public class CollectionsTestEntity extends BaseTestEntity {
 
 	@ElementCollection
 	private Set<String> stringSet = new HashSet<>();
@@ -47,7 +47,7 @@ public class TestPluralEntity extends BaseTestEntity {
 	@ElementCollection
 	@Embedded
 	@OrderColumn
-	private List<TestPluralEntityProperty> embeddedList = new ArrayList<>();
+	private List<CollectionsTestEntityProperty> embeddedList = new ArrayList<>();
 
 	@ManyToMany
 	private Set<SimpleTestEntity> entitySet = new HashSet<>();

@@ -72,6 +72,9 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	/** The class of the key of the map. */
 	private final Class<K> keyClass;
 
+	/** The description of the key class, {@code null} if not an entity. */
+	private final EntityClass<K> keyEntityClass;
+
 	/** The converter for the target value, {@code null} if not a primitive value. */
 	private final ValueConverter<K> keyConverter;
 
@@ -115,7 +118,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 		final MapKeyClass keyClassAnnotation = accessor.getAnnotation(MapKeyClass.class);
 		this.keyClass = getPropertyArgument(accessor, keyClassAnnotation != null ? keyClassAnnotation.value()
 				: void.class, 0);
-		if (sourceClass.getContext().getDescription(this.keyClass) != null) {
+		this.keyEntityClass = sourceClass.getContext().getDescription(this.keyClass);
+		if (this.keyEntityClass != null) {
 			// Entity key
 			this.keyConverter = null;
 			this.keyColumn = buildKeyColumn(accessor.getAnnotation(MapKeyJoinColumn.class), accessor.getName() + "_KEY");
@@ -186,10 +190,11 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			} else {
 				// Unidirectional and we need a mapping table
 				final JoinTable joinTable = accessor.getAnnotation(JoinTable.class);
-				this.table = buildTableName(accessor, override, joinTable, sourceClass.getTable() + '_'
-						+ this.valueEntityClass.getTable());
-				this.idColumn = buildIdColumn(accessor, override, joinTable,
-						sourceClass.getTable() + '_' + sourceClass.getIdColumn(accessor));
+				final CollectionTable collectionTable = accessor.getAnnotation(CollectionTable.class);
+				this.table = buildTableName(accessor, override, joinTable, collectionTable, sourceClass.getTable()
+						+ '_' + this.valueEntityClass.getTable());
+				this.idColumn = buildIdColumn(accessor, override, joinTable, collectionTable, sourceClass.getTable()
+						+ '_' + sourceClass.getIdColumn(accessor));
 				this.valueColumn = buildValueColumn(accessor,
 						accessor.getName() + '_' + this.valueEntityClass.getIdColumn(accessor));
 			}
@@ -208,6 +213,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			String key;
 			if (entry.getKey() == null) {
 				key = "null";
+			} else if (this.keyEntityClass != null) {
+				key = EntityConverter.getEntityReference(entry.getKey(), getMappedId(), getContext(), false);
 			} else {
 				key = this.keyConverter.getExpression(entry.getKey(), getContext());
 			}
@@ -264,19 +271,31 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 
 	@Override
 	public Collection<?> findReferencedEntities(final E entity) {
+		Collection<?> keyEntities = Collections.emptyList();
+		Collection<?> valueEntities = Collections.emptyList();
+		if (this.keyEntityClass != null) {
+			keyEntities = getValue(entity).keySet();
+		}
 		if (this.valueEntityClass != null) {
-			return getValue(entity).values();
+			valueEntities = getValue(entity).values();
 		} else if (isEmbedded()) {
-			final List<Object> result = new ArrayList<>();
+			final ArrayList<Object> entities = new ArrayList<>();
 			for (final T value : getValue(entity).values()) {
 				for (final Property<T, ?> property : getEmbeddedProperties()) {
-					result.addAll(property.findReferencedEntities(value));
+					entities.addAll(property.findReferencedEntities(value));
 				}
 			}
-			return result;
+			valueEntities = entities;
 		}
-
-		return Collections.emptySet();
+		if (keyEntities.isEmpty()) {
+			return valueEntities;
+		} else if (valueEntities.isEmpty()) {
+			return keyEntities;
+		}
+		final ArrayList<Object> entities = new ArrayList<>(keyEntities.size() + valueEntities.size());
+		entities.addAll(keyEntities);
+		entities.addAll(valueEntities);
+		return entities;
 	}
 
 	@Override

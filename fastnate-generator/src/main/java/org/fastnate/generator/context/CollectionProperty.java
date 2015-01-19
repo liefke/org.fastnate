@@ -111,6 +111,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 		this.orderColumn = buildOrderColumn(accessor);
 
 		// Check if we are OneToMany or ManyToMany or ElementCollection and initialize accordingly
+		final CollectionTable collectionTable = accessor.getAnnotation(CollectionTable.class);
 		final ElementCollection values = accessor.getAnnotation(ElementCollection.class);
 		if (values != null) {
 			// We are the owning side of the mapping
@@ -118,7 +119,6 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 			this.useTargetTable = false;
 
 			// Initialize the table and id column name
-			final CollectionTable collectionTable = accessor.getAnnotation(CollectionTable.class);
 			this.table = buildTableName(collectionTable, sourceClass.getEntityName() + '_' + accessor.getName());
 			this.idColumn = buildIdColumn(accessor, override, collectionTable, sourceClass.getEntityName() + '_'
 					+ sourceClass.getIdColumn(accessor));
@@ -173,16 +173,16 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 			} else if (this.useTargetTable) {
 				// Unidirectional and join column is in the table of the target class
 				this.table = this.targetEntityClass.getTable();
-				this.idColumn = buildIdColumn(accessor, override, (JoinTable) null, accessor.getName() + '_'
-						+ sourceClass.getIdColumn(accessor));
+				this.idColumn = buildIdColumn(accessor, override, null, null,
+						accessor.getName() + '_' + sourceClass.getIdColumn(accessor));
 				this.valueColumn = buildValueColumn(accessor, this.targetEntityClass.getIdColumn(accessor));
 			} else {
 				// Unidirectional and we need a mapping table
 				final JoinTable joinTable = accessor.getAnnotation(JoinTable.class);
-				this.table = buildTableName(accessor, override, joinTable, sourceClass.getTable() + '_'
-						+ this.targetEntityClass.getTable());
-				this.idColumn = buildIdColumn(accessor, override, joinTable,
-						sourceClass.getTable() + '_' + sourceClass.getIdColumn(accessor));
+				this.table = buildTableName(accessor, override, joinTable, collectionTable, sourceClass.getTable()
+						+ '_' + this.targetEntityClass.getTable());
+				this.idColumn = buildIdColumn(accessor, override, joinTable, collectionTable, sourceClass.getTable()
+						+ '_' + sourceClass.getIdColumn(accessor));
 				this.valueColumn = buildValueColumn(accessor,
 						accessor.getName() + '_' + this.targetEntityClass.getIdColumn(accessor));
 			}

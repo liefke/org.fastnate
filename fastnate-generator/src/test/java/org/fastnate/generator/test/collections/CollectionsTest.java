@@ -33,11 +33,11 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testPlural() throws IOException {
-		final TestPluralEntity testEntity = new TestPluralEntity();
+		final CollectionsTestEntity testEntity = new CollectionsTestEntity();
 		testEntity.getStringSet().add("Test1");
 		testEntity.getStringSet().add("Test2");
 
-		final TestPluralEntity otherEntity = new TestPluralEntity();
+		final CollectionsTestEntity otherEntity = new CollectionsTestEntity();
 		otherEntity.getStringSet().add("Test2");
 		otherEntity.getStringSet().add("Test3");
 
@@ -48,8 +48,8 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 		testEntity.getOrderedStringList().add("Z");
 		testEntity.getOrderedStringList().add("M");
 
-		testEntity.getEmbeddedList().add(new TestPluralEntityProperty("Test desc", otherEntity));
-		testEntity.getEmbeddedList().add(new TestPluralEntityProperty("Test desc 2", otherEntity));
+		testEntity.getEmbeddedList().add(new CollectionsTestEntityProperty("Test desc", otherEntity));
+		testEntity.getEmbeddedList().add(new CollectionsTestEntityProperty("Test desc 2", otherEntity));
 
 		final SimpleTestEntity testChild1 = new SimpleTestEntity("Plural test child 1");
 		final SimpleTestEntity testChild2 = new SimpleTestEntity("Plural test child 2");
@@ -66,8 +66,9 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 
 		write(testEntity);
 
-		final TestPluralEntity result = findSingleResult(
-				"SELECT e FROM TestPluralEntity e JOIN e.stringSet s WHERE s = 'Test1'", TestPluralEntity.class);
+		final CollectionsTestEntity result = findSingleResult(
+				"SELECT e FROM CollectionsTestEntity e JOIN e.stringSet s WHERE s = 'Test1'",
+				CollectionsTestEntity.class);
 
 		assertThat(result.getStringSet()).containsOnly("Test1", "Test2");
 		assertThat(result.getStringList()).containsOnly("list1", "list2");

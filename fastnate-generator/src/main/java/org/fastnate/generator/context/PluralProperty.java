@@ -94,16 +94,18 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            the inspected field
 	 * @param override
 	 *            contains optional override options
+	 * @param joinTable
+	 *            the optional join table date
 	 * @param tableMetadata
-	 *            the default join column
+	 *            the optional
 	 * @param defaultIdColumn
 	 *            the default name for the column, if {@code joinColumn} is empty or {@code null}
 	 * @return the column name
 	 */
 	protected static String buildIdColumn(final PropertyAccessor field, final AssociationOverride override,
-			final JoinTable tableMetadata, final String defaultIdColumn) {
-		return buildIdColumn(field, override, tableMetadata != null ? tableMetadata.joinColumns() : null,
-				defaultIdColumn);
+			final JoinTable joinTable, final CollectionTable tableMetadata, final String defaultIdColumn) {
+		return buildIdColumn(field, override, joinTable != null ? joinTable.joinColumns()
+				: tableMetadata != null ? tableMetadata.joinColumns() : null, defaultIdColumn);
 	}
 
 	/**
@@ -122,26 +124,33 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/**
 	 * Builds the name of the table of the association for the given field.
 	 *
-	 * @param field
+	 * @param attribute
 	 *            the inspected field
 	 * @param override
 	 *            contains optional override options
-	 * @param tableMetadata
+	 * @param joinTable
+	 *            the optional join table
+	 * @param collectionTable
 	 *            the optional metadata of the table
-	 *
 	 * @param defaultTableName
 	 *            the default name for the table
 	 * @return the table name
 	 */
-	protected static String buildTableName(final PropertyAccessor field, final AssociationOverride override,
-			final JoinTable tableMetadata, final String defaultTableName) {
+	protected static String buildTableName(final PropertyAccessor attribute, final AssociationOverride override,
+			final JoinTable joinTable, final CollectionTable collectionTable, final String defaultTableName) {
 		if (override != null) {
-			final JoinTable joinTable = override.joinTable();
-			if (joinTable != null && joinTable.name().length() > 0) {
-				return joinTable.name();
+			final JoinTable joinTableOverride = override.joinTable();
+			if (joinTableOverride != null && joinTableOverride.name().length() > 0) {
+				return joinTableOverride.name();
 			}
 		}
-		return tableMetadata != null && tableMetadata.name().length() > 0 ? tableMetadata.name() : defaultTableName;
+		if (joinTable != null && joinTable.name().length() > 0) {
+			return joinTable.name();
+		}
+		if (collectionTable != null && collectionTable.name().length() > 0) {
+			return collectionTable.name();
+		}
+		return defaultTableName;
 	}
 
 	/**

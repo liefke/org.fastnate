@@ -18,10 +18,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class TestPluralEntityProperty {
+public class CollectionsTestEntityProperty {
 
 	private String description;
 
 	@ManyToOne
-	private TestPluralEntity otherEntity;
+	private CollectionsTestEntity otherEntity;
 }
