@@ -39,12 +39,11 @@ public class AccessTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testImplicitAccess() throws IOException {
-		final ImplicitAccessTestEntity entity = new ImplicitAccessTestEntity(0, "Explicit");
+		final ImplicitAccessTestEntity entity = new ImplicitAccessTestEntity("Explicit");
 
 		write(entity);
 
 		final ImplicitAccessTestEntity result = findSingleResult(ImplicitAccessTestEntity.class);
-		assertThat(result.getId()).isEqualTo(entity.getId());
 		assertThat(result.getName()).isEqualTo(entity.getName());
 	}
 

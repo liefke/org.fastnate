@@ -1,10 +1,11 @@
 package org.fastnate.generator.test.access;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 /**
@@ -13,13 +14,22 @@ import lombok.NoArgsConstructor;
  * @author Tobias Liefke
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Entity
 public class ImplicitAccessTestEntity {
 
-	private long id;
+	private Long id;
 
 	private String label;
+
+	/**
+	 * Creates a new instance of {@link ImplicitAccessTestEntity}.
+	 *
+	 * @param name
+	 *            the name of the entity
+	 */
+	public ImplicitAccessTestEntity(final String name) {
+		this.label = name;
+	}
 
 	/**
 	 * The id of this {@link ImplicitAccessTestEntity}.
@@ -27,7 +37,8 @@ public class ImplicitAccessTestEntity {
 	 * @return the id
 	 */
 	@Id
-	public long getId() {
+	@GeneratedValue
+	public Long getId() {
 		return this.id;
 	}
 
@@ -38,6 +49,7 @@ public class ImplicitAccessTestEntity {
 	 *
 	 * @return the name
 	 */
+	@Column(name = "someName")
 	public String getName() {
 		return this.label;
 	}
@@ -48,7 +60,7 @@ public class ImplicitAccessTestEntity {
 	 * @param id
 	 *            the new id to set
 	 */
-	protected void setId(final long id) {
+	protected void setId(final Long id) {
 		this.id = id;
 	}
 

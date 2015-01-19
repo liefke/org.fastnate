@@ -564,16 +564,19 @@ public final class EntityClass<E> {
 	}
 
 	private boolean findIdProperty(final Iterable<PropertyAccessor> declaredProperties) {
-		for (final PropertyAccessor field : declaredProperties) {
-			if (field.hasAnnotation(EmbeddedId.class)) {
-				this.idProperty = new EmbeddedProperty<>(this, field);
+		for (final PropertyAccessor attribute : declaredProperties) {
+			if (attribute.hasAnnotation(EmbeddedId.class)) {
+				this.idProperty = new EmbeddedProperty<>(this, attribute);
 				return true;
-			} else if (field.hasAnnotation(Id.class)) {
-				if (field.hasAnnotation(GeneratedValue.class)) {
-					registerSequence(field.getAnnotation(SequenceGenerator.class));
-					this.idProperty = new GeneratedIdProperty<>(this, field, getColumnAnnotation(field));
+			} else if (attribute.hasAnnotation(Id.class)) {
+				if (attribute.hasAnnotation(GeneratedValue.class)) {
+					if (attribute.getType().isPrimitive()) {
+						throw new IllegalArgumentException("Generated ID must not be of primitive type.");
+					}
+					registerSequence(attribute.getAnnotation(SequenceGenerator.class));
+					this.idProperty = new GeneratedIdProperty<>(this, attribute, getColumnAnnotation(attribute));
 				} else {
-					this.idProperty = buildProperty(field, getColumnAnnotation(field), null);
+					this.idProperty = buildProperty(attribute, getColumnAnnotation(attribute), null);
 				}
 				return true;
 			}

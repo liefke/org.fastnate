@@ -198,8 +198,20 @@ public enum AccessStyle {
 			public <E, T> void setValue(final E entity, final T value) {
 				try {
 					if (this.setter == null) {
-						this.setter = this.method.getDeclaringClass().getMethod(
-								"set" + StringUtils.capitalize(this.name), this.method.getReturnType());
+						final String setterName = "set" + StringUtils.capitalize(this.name);
+						final Class<?> paramType = this.method.getReturnType();
+						for (final Method m : this.method.getDeclaringClass().getDeclaredMethods()) {
+							if (m.getName().equals(setterName) && m.getParameterTypes().length == 1
+									&& m.getParameterTypes()[0] == paramType) {
+								this.setter = m;
+								break;
+							}
+						}
+						if (this.setter == null) {
+							throw new IllegalStateException("Can't find setter: " + this.method.getDeclaringClass()
+									+ '.' + setterName + '(' + paramType + ')');
+						}
+
 						if (!this.setter.isAccessible()) {
 							this.setter.setAccessible(true);
 						}
