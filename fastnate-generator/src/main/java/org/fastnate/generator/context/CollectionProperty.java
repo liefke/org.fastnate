@@ -38,28 +38,28 @@ import com.google.common.base.Preconditions;
 @Getter
 public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T> {
 
-	private static String buildOrderColumn(final PropertyAccessor accessor) {
-		final OrderColumn orderColumnDef = accessor.getAnnotation(OrderColumn.class);
-		return orderColumnDef == null ? null : orderColumnDef.name().length() == 0 ? accessor.getName() + "_order"
+	private static String buildOrderColumn(final AttributeAccessor attribute) {
+		final OrderColumn orderColumnDef = attribute.getAnnotation(OrderColumn.class);
+		return orderColumnDef == null ? null : orderColumnDef.name().length() == 0 ? attribute.getName() + "_order"
 				: orderColumnDef.name();
 	}
 
 	/**
-	 * Indicates that the given accessor references a collection and may be used by an {@link CollectionProperty}.
+	 * Indicates that the given attribute references a collection and may be used by an {@link CollectionProperty}.
 	 *
-	 * @param accessor
-	 *            the accessor to check
-	 * @return {@code true} if an {@link CollectionProperty} may be created for the given accessor
+	 * @param attribute
+	 *            the attribute to check
+	 * @return {@code true} if an {@link CollectionProperty} may be created for the given attribute
 	 */
-	static boolean isCollectionProperty(final PropertyAccessor accessor) {
-		return (accessor.hasAnnotation(OneToMany.class) || accessor.hasAnnotation(ManyToMany.class) || accessor
-				.hasAnnotation(ElementCollection.class)) && Collection.class.isAssignableFrom(accessor.getType());
+	static boolean isCollectionProperty(final AttributeAccessor attribute) {
+		return (attribute.hasAnnotation(OneToMany.class) || attribute.hasAnnotation(ManyToMany.class) || attribute
+				.hasAnnotation(ElementCollection.class)) && Collection.class.isAssignableFrom(attribute.getType());
 	}
 
-	private static boolean useTargetTable(final PropertyAccessor accessor, final AssociationOverride override) {
+	private static boolean useTargetTable(final AttributeAccessor attribute, final AssociationOverride override) {
 		final JoinColumn joinColumn = override != null && override.joinColumns().length > 0 ? override.joinColumns()[0]
-				: accessor.getAnnotation(JoinColumn.class);
-		final JoinTable joinTable = override != null && override.joinTable() != null ? override.joinTable() : accessor
+				: attribute.getAnnotation(JoinColumn.class);
+		final JoinTable joinTable = override != null && override.joinTable() != null ? override.joinTable() : attribute
 				.getAnnotation(JoinTable.class);
 		return joinColumn != null && joinTable == null;
 
@@ -97,34 +97,34 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	 *
 	 * @param sourceClass
 	 *            the description of the current inspected class of the accessor
-	 * @param accessor
-	 *            accessor to the represented property
+	 * @param attribute
+	 *            accessor to the represented attribute
 	 * @param override
 	 *            the configured assocation override
 	 */
 	@SuppressWarnings("unchecked")
-	public CollectionProperty(final EntityClass<?> sourceClass, final PropertyAccessor accessor,
+	public CollectionProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
 			final AssociationOverride override) {
-		super(sourceClass.getContext(), accessor);
+		super(sourceClass.getContext(), attribute);
 
 		// Read a potentially defined order column
-		this.orderColumn = buildOrderColumn(accessor);
+		this.orderColumn = buildOrderColumn(attribute);
 
 		// Check if we are OneToMany or ManyToMany or ElementCollection and initialize accordingly
-		final CollectionTable collectionTable = accessor.getAnnotation(CollectionTable.class);
-		final ElementCollection values = accessor.getAnnotation(ElementCollection.class);
+		final CollectionTable collectionTable = attribute.getAnnotation(CollectionTable.class);
+		final ElementCollection values = attribute.getAnnotation(ElementCollection.class);
 		if (values != null) {
 			// We are the owning side of the mapping
 			this.mappedBy = null;
 			this.useTargetTable = false;
 
 			// Initialize the table and id column name
-			this.table = buildTableName(collectionTable, sourceClass.getEntityName() + '_' + accessor.getName());
-			this.idColumn = buildIdColumn(accessor, override, collectionTable, sourceClass.getEntityName() + '_'
-					+ sourceClass.getIdColumn(accessor));
+			this.table = buildTableName(collectionTable, sourceClass.getEntityName() + '_' + attribute.getName());
+			this.idColumn = buildIdColumn(attribute, override, collectionTable, sourceClass.getEntityName() + '_'
+					+ sourceClass.getIdColumn(attribute));
 
 			// Initialize the target description and columns
-			this.targetClass = getPropertyArgument(accessor, values.targetClass(), 0);
+			this.targetClass = getPropertyArgument(attribute, values.targetClass(), 0);
 			if (this.targetClass.isAnnotationPresent(Embeddable.class)) {
 				buildEmbeddedProperties(this.targetClass);
 				this.targetEntityClass = null;
@@ -133,32 +133,32 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 			} else {
 				this.targetEntityClass = sourceClass.getContext().getDescription(this.targetClass);
 				// Check for primitive value
-				this.targetConverter = this.targetEntityClass == null ? PrimitiveProperty.createConverter(accessor,
+				this.targetConverter = this.targetEntityClass == null ? PrimitiveProperty.createConverter(attribute,
 						this.targetClass, false) : null;
-				this.valueColumn = buildValueColumn(accessor, accessor.getName());
+				this.valueColumn = buildValueColumn(attribute, attribute.getName());
 			}
 		} else {
 			// Entity mapping, either OneToMany or ManyToMany
 
-			final OneToMany oneToMany = accessor.getAnnotation(OneToMany.class);
+			final OneToMany oneToMany = attribute.getAnnotation(OneToMany.class);
 			if (oneToMany == null) {
-				final ManyToMany manyToMany = accessor.getAnnotation(ManyToMany.class);
-				Preconditions.checkArgument(manyToMany != null, accessor
+				final ManyToMany manyToMany = attribute.getAnnotation(ManyToMany.class);
+				Preconditions.checkArgument(manyToMany != null, attribute
 						+ " is neither declared as OneToMany nor ManyToMany nor ElementCollection");
-				this.targetClass = getPropertyArgument(accessor, manyToMany.targetEntity(), 0);
+				this.targetClass = getPropertyArgument(attribute, manyToMany.targetEntity(), 0);
 				this.mappedBy = manyToMany.mappedBy().length() == 0 ? null : manyToMany.mappedBy();
 				this.useTargetTable = false;
 			} else {
-				this.targetClass = getPropertyArgument(accessor, oneToMany.targetEntity(), 0);
+				this.targetClass = getPropertyArgument(attribute, oneToMany.targetEntity(), 0);
 				this.mappedBy = oneToMany.mappedBy().length() == 0 ? null : oneToMany.mappedBy();
-				this.useTargetTable = useTargetTable(accessor, override);
+				this.useTargetTable = useTargetTable(attribute, override);
 			}
 
 			// Resolve the target entity class
 			this.targetEntityClass = sourceClass.getContext().getDescription(this.targetClass);
 
 			// An entity mapping needs an entity class
-			Preconditions.checkArgument(this.targetEntityClass != null, "Collection accessor " + accessor
+			Preconditions.checkArgument(this.targetEntityClass != null, "Collection accessor " + attribute
 					+ " needs an entity type");
 
 			// No primitive value
@@ -173,18 +173,18 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 			} else if (this.useTargetTable) {
 				// Unidirectional and join column is in the table of the target class
 				this.table = this.targetEntityClass.getTable();
-				this.idColumn = buildIdColumn(accessor, override, null, null,
-						accessor.getName() + '_' + sourceClass.getIdColumn(accessor));
-				this.valueColumn = buildValueColumn(accessor, this.targetEntityClass.getIdColumn(accessor));
+				this.idColumn = buildIdColumn(attribute, override, null, null,
+						attribute.getName() + '_' + sourceClass.getIdColumn(attribute));
+				this.valueColumn = buildValueColumn(attribute, this.targetEntityClass.getIdColumn(attribute));
 			} else {
 				// Unidirectional and we need a mapping table
-				final JoinTable joinTable = accessor.getAnnotation(JoinTable.class);
-				this.table = buildTableName(accessor, override, joinTable, collectionTable, sourceClass.getTable()
+				final JoinTable joinTable = attribute.getAnnotation(JoinTable.class);
+				this.table = buildTableName(attribute, override, joinTable, collectionTable, sourceClass.getTable()
 						+ '_' + this.targetEntityClass.getTable());
-				this.idColumn = buildIdColumn(accessor, override, joinTable, collectionTable, sourceClass.getTable()
-						+ '_' + sourceClass.getIdColumn(accessor));
-				this.valueColumn = buildValueColumn(accessor,
-						accessor.getName() + '_' + this.targetEntityClass.getIdColumn(accessor));
+				this.idColumn = buildIdColumn(attribute, override, joinTable, collectionTable, sourceClass.getTable()
+						+ '_' + sourceClass.getIdColumn(attribute));
+				this.valueColumn = buildValueColumn(attribute,
+						attribute.getName() + '_' + this.targetEntityClass.getIdColumn(attribute));
 			}
 		}
 	}

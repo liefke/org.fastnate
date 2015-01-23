@@ -2,8 +2,8 @@ package org.fastnate.generator.converter;
 
 import lombok.RequiredArgsConstructor;
 
+import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.GeneratorContext;
-import org.fastnate.generator.context.PropertyAccessor;
 
 /**
  * Converter used for all types that we can't convert.
@@ -16,11 +16,11 @@ import org.fastnate.generator.context.PropertyAccessor;
 @RequiredArgsConstructor
 public class UnsupportedTypeConverter extends AbstractValueConverter<Object> {
 
-	private final PropertyAccessor property;
+	private final AttributeAccessor attribute;
 
 	@Override
 	public String getExpression(final Object value, final GeneratorContext context) {
-		throw new IllegalArgumentException("Unsupported type for property: " + this.property);
+		throw new IllegalArgumentException("Unsupported type for property: " + this.attribute);
 	}
 
 }

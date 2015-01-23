@@ -55,15 +55,15 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	}
 
 	/**
-	 * Indicates that the given property references a map and may be used by an {@link MapProperty}.
+	 * Indicates that the given attribute references a map and may be used by an {@link MapProperty}.
 	 *
-	 * @param property
-	 *            the property to check
-	 * @return {@code true} if an {@link MapProperty} may be created for the given field
+	 * @param attribute
+	 *            the attribute to check
+	 * @return {@code true} if an {@link MapProperty} may be created for the given attribute
 	 */
-	static boolean isMapProperty(final PropertyAccessor property) {
-		return (property.hasAnnotation(OneToMany.class) || property.hasAnnotation(ManyToMany.class) || property
-				.hasAnnotation(ElementCollection.class)) && Map.class.isAssignableFrom(property.getType());
+	static boolean isMapProperty(final AttributeAccessor attribute) {
+		return (attribute.hasAnnotation(OneToMany.class) || attribute.hasAnnotation(ManyToMany.class) || attribute
+				.hasAnnotation(ElementCollection.class)) && Map.class.isAssignableFrom(attribute.getType());
 	}
 
 	/** Indicates that this property is defined by another property on the target type. */
@@ -104,47 +104,48 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	 *
 	 * @param sourceClass
 	 *            the description of the current inspected class of the field
-	 * @param accessor
-	 *            the represented property
+	 * @param attribute
+	 *            the accessor of the represented attribute
 	 * @param override
 	 *            the configured assocation override
 	 */
 	@SuppressWarnings("unchecked")
-	public MapProperty(final EntityClass<?> sourceClass, final PropertyAccessor accessor,
+	public MapProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
 			final AssociationOverride override) {
-		super(sourceClass.getContext(), accessor);
+		super(sourceClass.getContext(), attribute);
 
 		// Initialize the key description
-		final MapKeyClass keyClassAnnotation = accessor.getAnnotation(MapKeyClass.class);
-		this.keyClass = getPropertyArgument(accessor, keyClassAnnotation != null ? keyClassAnnotation.value()
+		final MapKeyClass keyClassAnnotation = attribute.getAnnotation(MapKeyClass.class);
+		this.keyClass = getPropertyArgument(attribute, keyClassAnnotation != null ? keyClassAnnotation.value()
 				: void.class, 0);
 		this.keyEntityClass = sourceClass.getContext().getDescription(this.keyClass);
 		if (this.keyEntityClass != null) {
 			// Entity key
 			this.keyConverter = null;
-			this.keyColumn = buildKeyColumn(accessor.getAnnotation(MapKeyJoinColumn.class), accessor.getName() + "_KEY");
+			this.keyColumn = buildKeyColumn(attribute.getAnnotation(MapKeyJoinColumn.class), attribute.getName()
+					+ "_KEY");
 		} else {
 			// Primitive key
-			this.keyConverter = PrimitiveProperty.createConverter(accessor, this.keyClass, true);
-			this.keyColumn = buildKeyColumn(accessor.getAnnotation(MapKeyColumn.class), accessor.getName() + "_KEY");
+			this.keyConverter = PrimitiveProperty.createConverter(attribute, this.keyClass, true);
+			this.keyColumn = buildKeyColumn(attribute.getAnnotation(MapKeyColumn.class), attribute.getName() + "_KEY");
 		}
 
 		// Initialize the value description
 
 		// Check if we are OneToMany or ManyToMany or ElementCollection and initialize accordingly
-		final ElementCollection values = accessor.getAnnotation(ElementCollection.class);
+		final ElementCollection values = attribute.getAnnotation(ElementCollection.class);
 		if (values != null) {
 			// We are the owning side of the mapping
 			this.mappedBy = null;
 
 			// Initialize the table and id column name
-			final CollectionTable collectionTable = accessor.getAnnotation(CollectionTable.class);
-			this.table = buildTableName(collectionTable, sourceClass.getEntityName() + '_' + accessor.getName());
-			this.idColumn = buildIdColumn(accessor, override, collectionTable, sourceClass.getEntityName() + '_'
-					+ sourceClass.getIdColumn(accessor));
+			final CollectionTable collectionTable = attribute.getAnnotation(CollectionTable.class);
+			this.table = buildTableName(collectionTable, sourceClass.getEntityName() + '_' + attribute.getName());
+			this.idColumn = buildIdColumn(attribute, override, collectionTable, sourceClass.getEntityName() + '_'
+					+ sourceClass.getIdColumn(attribute));
 
 			// Initialize the target class description and columns
-			this.valueClass = getPropertyArgument(accessor, values.targetClass(), 1);
+			this.valueClass = getPropertyArgument(attribute, values.targetClass(), 1);
 			if (this.valueClass.isAnnotationPresent(Embeddable.class)) {
 				buildEmbeddedProperties(this.valueClass);
 				this.valueEntityClass = null;
@@ -153,22 +154,22 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			} else {
 				this.valueEntityClass = sourceClass.getContext().getDescription(this.valueClass);
 				// Check for primitive value
-				this.valueConverter = this.valueEntityClass == null ? PrimitiveProperty.createConverter(accessor,
+				this.valueConverter = this.valueEntityClass == null ? PrimitiveProperty.createConverter(attribute,
 						this.valueClass, false) : null;
-				this.valueColumn = buildValueColumn(accessor, accessor.getName());
+				this.valueColumn = buildValueColumn(attribute, attribute.getName());
 			}
 		} else {
 			// Entity mapping, either OneToMany or ManyToMany
 
-			final OneToMany oneToMany = accessor.getAnnotation(OneToMany.class);
+			final OneToMany oneToMany = attribute.getAnnotation(OneToMany.class);
 			if (oneToMany == null) {
-				final ManyToMany manyToMany = accessor.getAnnotation(ManyToMany.class);
-				Preconditions.checkArgument(manyToMany != null, accessor
+				final ManyToMany manyToMany = attribute.getAnnotation(ManyToMany.class);
+				Preconditions.checkArgument(manyToMany != null, attribute
 						+ " is neither declared as OneToMany nor ManyToMany nor ElementCollection");
-				this.valueClass = getPropertyArgument(accessor, manyToMany.targetEntity(), 1);
+				this.valueClass = getPropertyArgument(attribute, manyToMany.targetEntity(), 1);
 				this.mappedBy = manyToMany.mappedBy().length() == 0 ? null : manyToMany.mappedBy();
 			} else {
-				this.valueClass = getPropertyArgument(accessor, oneToMany.targetEntity(), 1);
+				this.valueClass = getPropertyArgument(attribute, oneToMany.targetEntity(), 1);
 				this.mappedBy = oneToMany.mappedBy().length() == 0 ? null : oneToMany.mappedBy();
 			}
 
@@ -176,7 +177,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			this.valueEntityClass = sourceClass.getContext().getDescription(this.valueClass);
 
 			// An entity mapping needs an entity class
-			Preconditions.checkArgument(this.valueClass != null, "Map field " + accessor + " needs an entity as value");
+			Preconditions
+					.checkArgument(this.valueClass != null, "Map field " + attribute + " needs an entity as value");
 
 			// No primitive value
 			this.valueConverter = null;
@@ -189,14 +191,14 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 				this.valueColumn = null;
 			} else {
 				// Unidirectional and we need a mapping table
-				final JoinTable joinTable = accessor.getAnnotation(JoinTable.class);
-				final CollectionTable collectionTable = accessor.getAnnotation(CollectionTable.class);
-				this.table = buildTableName(accessor, override, joinTable, collectionTable, sourceClass.getTable()
+				final JoinTable joinTable = attribute.getAnnotation(JoinTable.class);
+				final CollectionTable collectionTable = attribute.getAnnotation(CollectionTable.class);
+				this.table = buildTableName(attribute, override, joinTable, collectionTable, sourceClass.getTable()
 						+ '_' + this.valueEntityClass.getTable());
-				this.idColumn = buildIdColumn(accessor, override, joinTable, collectionTable, sourceClass.getTable()
-						+ '_' + sourceClass.getIdColumn(accessor));
-				this.valueColumn = buildValueColumn(accessor,
-						accessor.getName() + '_' + this.valueEntityClass.getIdColumn(accessor));
+				this.idColumn = buildIdColumn(attribute, override, joinTable, collectionTable, sourceClass.getTable()
+						+ '_' + sourceClass.getIdColumn(attribute));
+				this.valueColumn = buildValueColumn(attribute,
+						attribute.getName() + '_' + this.valueEntityClass.getIdColumn(attribute));
 			}
 		}
 	}

@@ -19,29 +19,29 @@ import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.Formula;
 
 /**
- * Indicates how persistent properties are accessed.
+ * Indicates how persistent attributes are accessed.
  *
  * @author Tobias Liefke
  */
 public enum AccessStyle {
-	/** The persistent properties are read using field access. */
+	/** The persistent attributes are read using field access. */
 	FIELD {
 
-		final class Accessor implements PropertyAccessor {
+		final class Accessor implements AttributeAccessor {
 
-			/** The field of the property. */
+			/** The field of the attribute. */
 			@Getter
 			private final Field field;
 
-			/** The name of the property, inherited from {@link #field}. */
+			/** The name of the attribute, inherited from {@link #field}. */
 			@Getter
 			private final String name;
 
 			/**
-			 * Creates a new instance of a property with field access.
+			 * Creates a new instance of a attribute with field access.
 			 *
 			 * @param field
-			 *            the field of the property
+			 *            the field of the attribute
 			 */
 			Accessor(final Field field) {
 				this.field = field;
@@ -110,8 +110,8 @@ public enum AccessStyle {
 		}
 
 		@Override
-		public <E> Iterable<PropertyAccessor> getDeclaredProperties(final Class<E> inspectedClass) {
-			final List<PropertyAccessor> result = new ArrayList<>();
+		public <E> Iterable<AttributeAccessor> getDeclaredAttributes(final Class<E> inspectedClass) {
+			final List<AttributeAccessor> result = new ArrayList<>();
 			for (final Field field : inspectedClass.getDeclaredFields()) {
 				if (!Modifier.isStatic(field.getModifiers())) {
 					result.add(new Accessor(field));
@@ -121,10 +121,10 @@ public enum AccessStyle {
 		}
 
 	},
-	/** The persistent properties are read using method access. */
+	/** The persistent attributes are read using method access. */
 	METHOD {
 
-		final class Accessor implements PropertyAccessor {
+		final class Accessor implements AttributeAccessor {
 
 			/** The getter of the property. */
 			private final Method method;
@@ -132,7 +132,7 @@ public enum AccessStyle {
 			/** The setter of the property. */
 			private Method setter;
 
-			/** The name of the property, inherited from {@link #method}. */
+			/** The name of the attribute, inherited from {@link #method}. */
 			@Getter
 			private final String name;
 
@@ -225,8 +225,8 @@ public enum AccessStyle {
 		}
 
 		@Override
-		public <E> Iterable<PropertyAccessor> getDeclaredProperties(final Class<E> inspectedClass) {
-			final List<PropertyAccessor> result = new ArrayList<>();
+		public <E> Iterable<AttributeAccessor> getDeclaredAttributes(final Class<E> inspectedClass) {
+			final List<AttributeAccessor> result = new ArrayList<>();
 			for (final Method method : inspectedClass.getDeclaredMethods()) {
 				if (!Modifier.isStatic(method.getModifiers())) {
 					final String name = method.getName();
@@ -252,12 +252,12 @@ public enum AccessStyle {
 	}
 
 	/**
-	 * Finds all properties of the current access type that are referenced in the given class.
+	 * Finds all attributes of the current access type that are referenced in the given class.
 	 *
 	 * @param inspectedClass
 	 *            the class to inspect
-	 * @return all non static properties found in the given class
+	 * @return all non static attributes found in the given class
 	 */
-	public abstract <E> Iterable<PropertyAccessor> getDeclaredProperties(final Class<E> inspectedClass);
+	public abstract <E> Iterable<AttributeAccessor> getDeclaredAttributes(final Class<E> inspectedClass);
 
 }

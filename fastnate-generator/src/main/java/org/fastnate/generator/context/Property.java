@@ -22,16 +22,16 @@ import org.fastnate.generator.statements.InsertStatement;
 public abstract class Property<E, T> {
 
 	/** Used to access the value of the property. */
-	private final PropertyAccessor accessor;
+	private final AttributeAccessor attribute;
 
 	/**
 	 * Creates a new instance of a property.
 	 *
-	 * @param accessor
-	 *            the accessor of the property
+	 * @param attribute
+	 *            the accessor of the target attribute
 	 */
-	protected Property(final PropertyAccessor accessor) {
-		this.accessor = accessor;
+	protected Property(final AttributeAccessor attribute) {
+		this.attribute = attribute;
 	}
 
 	/**
@@ -115,7 +115,7 @@ public abstract class Property<E, T> {
 	 * @return the name
 	 */
 	public String getName() {
-		return this.accessor.getName();
+		return this.attribute.getName();
 
 	}
 
@@ -140,7 +140,7 @@ public abstract class Property<E, T> {
 	 * @return the value, {@code null} if entity is {@code null}
 	 */
 	public T getValue(final E entity) {
-		return this.accessor.getValue(entity);
+		return this.attribute.getValue(entity);
 	}
 
 	/**
@@ -170,12 +170,12 @@ public abstract class Property<E, T> {
 	 *            the new value
 	 */
 	protected void setValue(final E entity, final T value) {
-		this.accessor.setValue(entity, value);
+		this.attribute.setValue(entity, value);
 	}
 
 	@Override
 	public String toString() {
-		return this.accessor.getName();
+		return this.attribute.getName();
 	}
 
 }

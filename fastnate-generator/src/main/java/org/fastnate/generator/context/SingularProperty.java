@@ -15,11 +15,11 @@ public abstract class SingularProperty<E, T> extends Property<E, T> {
 	/**
 	 * Creates a new instance of a SingularProperty.
 	 *
-	 * @param accessor
-	 *            access to the represented property
+	 * @param attribute
+	 *            access to the represented attribute
 	 */
-	public SingularProperty(final PropertyAccessor accessor) {
-		super(accessor);
+	public SingularProperty(final AttributeAccessor attribute) {
+		super(attribute);
 	}
 
 	/**

@@ -76,17 +76,17 @@ public final class EntityClass<E> {
 
 	}
 
-	static Map<String, AssociationOverride> getAccociationOverrides(final PropertyAccessor property) {
+	static Map<String, AssociationOverride> getAccociationOverrides(final AttributeAccessor attribute) {
 		final Collection<AssociationOverride> config = new ArrayList<>();
 
 		// Multi annotation
-		final AssociationOverrides multiOverride = property.getAnnotation(AssociationOverrides.class);
+		final AssociationOverrides multiOverride = attribute.getAnnotation(AssociationOverrides.class);
 		if (multiOverride != null) {
 			config.addAll(Arrays.asList(multiOverride.value()));
 		}
 
 		// Single annotion
-		final AssociationOverride singleOverride = property.getAnnotation(AssociationOverride.class);
+		final AssociationOverride singleOverride = attribute.getAnnotation(AssociationOverride.class);
 		if (singleOverride != null) {
 			config.add(singleOverride);
 		}
@@ -98,17 +98,17 @@ public final class EntityClass<E> {
 		return attributeOverrides;
 	}
 
-	static Map<String, AttributeOverride> getAttributeOverrides(final PropertyAccessor property) {
+	static Map<String, AttributeOverride> getAttributeOverrides(final AttributeAccessor attribute) {
 		final Collection<AttributeOverride> config = new ArrayList<>();
 
 		// Multi annotation
-		final AttributeOverrides multiOverride = property.getAnnotation(AttributeOverrides.class);
+		final AttributeOverrides multiOverride = attribute.getAnnotation(AttributeOverrides.class);
 		if (multiOverride != null) {
 			config.addAll(Arrays.asList(multiOverride.value()));
 		}
 
 		// Single annotion
-		final AttributeOverride singleOverride = property.getAnnotation(AttributeOverride.class);
+		final AttributeOverride singleOverride = attribute.getAnnotation(AttributeOverride.class);
 		if (singleOverride != null) {
 			config.add(singleOverride);
 		}
@@ -367,15 +367,15 @@ public final class EntityClass<E> {
 
 			// And now find the id property of this class
 			if (this.accessStyle == null) {
-				if (findIdProperty(AccessStyle.FIELD.getDeclaredProperties(c))) {
+				if (findIdProperty(AccessStyle.FIELD.getDeclaredAttributes(c))) {
 					this.accessStyle = AccessStyle.FIELD;
-				} else if (findIdProperty(AccessStyle.METHOD.getDeclaredProperties(c))) {
+				} else if (findIdProperty(AccessStyle.METHOD.getDeclaredAttributes(c))) {
 					this.accessStyle = AccessStyle.METHOD;
 				}
 			} else if (this.accessStyle == AccessStyle.FIELD) {
-				findIdProperty(AccessStyle.FIELD.getDeclaredProperties(c));
+				findIdProperty(AccessStyle.FIELD.getDeclaredAttributes(c));
 			} else {
-				findIdProperty(AccessStyle.METHOD.getDeclaredProperties(c));
+				findIdProperty(AccessStyle.METHOD.getDeclaredAttributes(c));
 			}
 		}
 	}
@@ -437,7 +437,7 @@ public final class EntityClass<E> {
 
 		// And now fill the properties of this class
 		if (c.isAnnotationPresent(MappedSuperclass.class) || c.isAnnotationPresent(Entity.class)) {
-			for (final PropertyAccessor field : this.accessStyle.getDeclaredProperties(c)) {
+			for (final AttributeAccessor field : this.accessStyle.getDeclaredAttributes(c)) {
 				if (!field.hasAnnotation(EmbeddedId.class) && !field.hasAnnotation(Id.class)) {
 					final Property<E, ?> property = buildProperty(field, getColumnAnnotation(field), null);
 					if (property != null) {
@@ -453,19 +453,19 @@ public final class EntityClass<E> {
 
 	}
 
-	<X> Property<X, ?> buildProperty(final PropertyAccessor accessor, final Column columnMetadata,
+	<X> Property<X, ?> buildProperty(final AttributeAccessor attribute, final Column columnMetadata,
 			final AssociationOverride override) {
-		if (accessor.isPersistentProperty()) {
-			if (CollectionProperty.isCollectionProperty(accessor)) {
-				return new CollectionProperty<>(this, accessor, override);
-			} else if (MapProperty.isMapProperty(accessor)) {
-				return new MapProperty<>(this, accessor, override);
-			} else if (EntityProperty.isEntityProperty(accessor)) {
-				return new EntityProperty<>(this.context, accessor, override);
-			} else if (accessor.hasAnnotation(Embedded.class)) {
-				return new EmbeddedProperty<>(this, accessor);
+		if (attribute.isPersistentProperty()) {
+			if (CollectionProperty.isCollectionProperty(attribute)) {
+				return new CollectionProperty<>(this, attribute, override);
+			} else if (MapProperty.isMapProperty(attribute)) {
+				return new MapProperty<>(this, attribute, override);
+			} else if (EntityProperty.isEntityProperty(attribute)) {
+				return new EntityProperty<>(this.context, attribute, override);
+			} else if (attribute.hasAnnotation(Embedded.class)) {
+				return new EmbeddedProperty<>(this, attribute);
 			} else {
-				return new PrimitiveProperty<>(this.context, this.table, accessor, columnMetadata);
+				return new PrimitiveProperty<>(this.context, this.table, attribute, columnMetadata);
 			}
 		}
 		return null;
@@ -497,7 +497,7 @@ public final class EntityClass<E> {
 
 	private void buildUniqueProperty(final SingularProperty<E, ?> property) {
 		if (this.context.getMaxUniqueProperties() > 0) {
-			final Column column = property.getAccessor().getAnnotation(Column.class);
+			final Column column = property.getAttribute().getAnnotation(Column.class);
 			if (column != null && column.unique()) {
 				final UniquePropertyQuality propertyQuality = UniquePropertyQuality.getMatchingQuality(property);
 				if (propertyQuality != null && isBetterUniquePropertyQuality(propertyQuality)) {
@@ -563,8 +563,8 @@ public final class EntityClass<E> {
 		}
 	}
 
-	private boolean findIdProperty(final Iterable<PropertyAccessor> declaredProperties) {
-		for (final PropertyAccessor attribute : declaredProperties) {
+	private boolean findIdProperty(final Iterable<AttributeAccessor> declaredAttributes) {
+		for (final AttributeAccessor attribute : declaredAttributes) {
 			if (attribute.hasAnnotation(EmbeddedId.class)) {
 				this.idProperty = new EmbeddedProperty<>(this, attribute);
 				return true;
@@ -584,9 +584,9 @@ public final class EntityClass<E> {
 		return false;
 	}
 
-	private Column getColumnAnnotation(final PropertyAccessor field) {
-		final AttributeOverride override = this.attributeOverrides.get(field.getName());
-		return override != null ? override.column() : field.getAnnotation(Column.class);
+	private Column getColumnAnnotation(final AttributeAccessor attribute) {
+		final AttributeOverride override = this.attributeOverrides.get(attribute.getName());
+		return override != null ? override.column() : attribute.getAnnotation(Column.class);
 	}
 
 	/**
@@ -666,25 +666,25 @@ public final class EntityClass<E> {
 	/**
 	 * Resolves the column for the {@link #getIdProperty() id property} of this entity class.
 	 *
-	 * @param property
-	 *            the referencing property (for evaluating annotations)
+	 * @param attribute
+	 *            the referencing attribute (for evaluating annotations)
 	 *
 	 * @return the column name
 	 * @throws IllegalStateException
 	 *             if the id property is not singular and no MapsId is given
 	 */
-	String getIdColumn(final PropertyAccessor property) {
+	String getIdColumn(final AttributeAccessor attribute) {
 		if (this.idProperty instanceof SingularProperty) {
 			return ((SingularProperty<?, ?>) this.idProperty).getColumn();
 		}
 		if (this.idProperty instanceof EmbeddedProperty) {
-			final MapsId mapsId = property.getAnnotation(MapsId.class);
+			final MapsId mapsId = attribute.getAnnotation(MapsId.class);
 			if (mapsId != null && mapsId.value().length() > 0) {
 				((EmbeddedProperty<E, ?>) this.idProperty).getEmbeddedProperties().get(mapsId.value());
 			}
-			throw new IllegalStateException(property + " misses MapId annotation");
+			throw new IllegalStateException(attribute + " misses MapId annotation");
 		}
-		throw new IllegalStateException(property + " does not reference an ID column in " + this.entityClass);
+		throw new IllegalStateException(attribute + " does not reference an ID column in " + this.entityClass);
 	}
 
 	/**

@@ -66,8 +66,8 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 	 *            the generic type
 	 * @param <E>
 	 *            the element type
-	 * @param property
-	 *            the accessor for the property that contains the value, not nessecarily of the target type
+	 * @param attribute
+	 *            the accessor for the attribute that contains the value, not nessecarily of the target type
 	 * @param targetType
 	 *            the primitive type
 	 * @param mapKey
@@ -75,14 +75,14 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 	 * @return the converter or {@code null} if no converter is available
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T, E extends Enum<E>> ValueConverter<T> createConverter(final PropertyAccessor property,
+	public static <T, E extends Enum<E>> ValueConverter<T> createConverter(final AttributeAccessor attribute,
 			final Class<T> targetType, final boolean mapKey) {
-		if (property.hasAnnotation(Lob.class)) {
+		if (attribute.hasAnnotation(Lob.class)) {
 			return (ValueConverter<T>) new LobConverter();
 		}
 		final Class<T> type = ClassUtils.primitiveToWrapper(targetType);
 		if (String.class == type) {
-			return (ValueConverter<T>) new StringConverter(property, mapKey);
+			return (ValueConverter<T>) new StringConverter(attribute, mapKey);
 		} else if (Character.class == type) {
 			return (ValueConverter<T>) new CharConverter();
 		} else if (Boolean.class == type) {
@@ -90,22 +90,22 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 		} else if (Number.class.isAssignableFrom(type)) {
 			return (ValueConverter<T>) new NumberConverter();
 		} else if (Date.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new DateConverter(property, mapKey);
+			return (ValueConverter<T>) new DateConverter(attribute, mapKey);
 		} else if (Calendar.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new CalendarConverter(property, mapKey);
+			return (ValueConverter<T>) new CalendarConverter(attribute, mapKey);
 		} else if (Enum.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new EnumConverter<>(property, (Class<E>) type, mapKey);
+			return (ValueConverter<T>) new EnumConverter<>(attribute, (Class<E>) type, mapKey);
 		} else if (Serializable.class.isAssignableFrom(type)) {
 			return (ValueConverter<T>) new SerializableConverter();
 		} else {
-			return (ValueConverter<T>) new UnsupportedTypeConverter(property);
+			return (ValueConverter<T>) new UnsupportedTypeConverter(attribute);
 		}
 	}
 
-	private static boolean isRequired(final PropertyAccessor field) {
-		final Basic basic = field.getAnnotation(Basic.class);
-		return basic != null && !basic.optional() || field.hasAnnotation(NotNull.class)
-				|| field.getType().isPrimitive();
+	private static boolean isRequired(final AttributeAccessor attribute) {
+		final Basic basic = attribute.getAnnotation(Basic.class);
+		return basic != null && !basic.optional() || attribute.hasAnnotation(NotNull.class)
+				|| attribute.getType().isPrimitive();
 	}
 
 	/** The current context. */
@@ -133,26 +133,26 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 	 *            the current context
 	 * @param table
 	 *            the table that the column belongs to
-	 * @param field
-	 *            the field
+	 * @param attribute
+	 *            the attribute of the property
 	 * @param columnMetadata
 	 *            the column metadata
 	 */
 	@SuppressWarnings("unchecked")
-	public PrimitiveProperty(final GeneratorContext context, final String table, final PropertyAccessor field,
+	public PrimitiveProperty(final GeneratorContext context, final String table, final AttributeAccessor attribute,
 			final Column columnMetadata) {
-		super(field);
+		super(attribute);
 
 		this.context = context;
 		this.table = table;
 
-		this.column = columnMetadata == null || columnMetadata.name().length() == 0 ? field.getName() : columnMetadata
-				.name();
-		this.required = columnMetadata != null && !columnMetadata.nullable() || isRequired(field);
+		this.column = columnMetadata == null || columnMetadata.name().length() == 0 ? attribute.getName()
+				: columnMetadata.name();
+		this.required = columnMetadata != null && !columnMetadata.nullable() || isRequired(attribute);
 
-		this.converter = createConverter(field, (Class<T>) field.getType(), false);
+		this.converter = createConverter(attribute, (Class<T>) attribute.getType(), false);
 
-		final DefaultValue defaultValueAnnotation = field.getAnnotation(DefaultValue.class);
+		final DefaultValue defaultValueAnnotation = attribute.getAnnotation(DefaultValue.class);
 		if (defaultValueAnnotation != null) {
 			this.defaultValue = defaultValueAnnotation.value();
 		} else {

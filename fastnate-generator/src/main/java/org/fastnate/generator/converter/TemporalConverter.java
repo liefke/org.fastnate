@@ -9,9 +9,9 @@ import javax.persistence.TemporalType;
 
 import lombok.RequiredArgsConstructor;
 
+import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
-import org.fastnate.generator.context.PropertyAccessor;
 
 /**
  * Base class for converting a temporal property of an {@link EntityClass}.
@@ -29,20 +29,20 @@ public abstract class TemporalConverter<T> extends AbstractValueConverter<T> {
 	/**
 	 * Creates a new instance of this {@link TemporalConverter}.
 	 *
-	 * @param property
-	 *            the inspected property
+	 * @param attribute
+	 *            the inspected attribute
 	 * @param mapKey
 	 *            indicates that the converter is used for the key of a map property
 	 */
-	public TemporalConverter(final PropertyAccessor property, final boolean mapKey) {
+	public TemporalConverter(final AttributeAccessor attribute, final boolean mapKey) {
 		TemporalType temporalType = TemporalType.TIMESTAMP;
 		if (mapKey) {
-			final MapKeyTemporal temporal = property.getAnnotation(MapKeyTemporal.class);
+			final MapKeyTemporal temporal = attribute.getAnnotation(MapKeyTemporal.class);
 			if (temporal != null) {
 				temporalType = temporal.value();
 			}
 		} else {
-			final Temporal temporal = property.getAnnotation(Temporal.class);
+			final Temporal temporal = attribute.getAnnotation(Temporal.class);
 			if (temporal != null) {
 				temporalType = temporal.value();
 			}
