@@ -30,6 +30,7 @@ import org.codehaus.plexus.util.Scanner;
 import org.fastnate.data.DataProvider;
 import org.fastnate.data.EntityImporter;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.context.ModelException;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
 /**
@@ -265,7 +266,7 @@ public class ImportDataMojo extends AbstractMojo {
 					final Object importer = importerClass.getConstructor(settings.getClass()).newInstance(settings);
 					importerClass.getMethod("importData", Writer.class).invoke(importer, writer);
 				} catch (final IOException | IllegalArgumentException | IllegalStateException
-						| ReflectiveOperationException e) {
+						| ReflectiveOperationException | ModelException e) {
 					throw new MojoExecutionException("Could not generate SQL file: " + this.sqlFile, e);
 				}
 			}

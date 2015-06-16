@@ -259,9 +259,7 @@ public final class EntityClass<E> {
 		// Find the ID property unless we have a joined parent class - which contains our id
 		if (this.joinedParentClass == null) {
 			buildIdProperty(this.entityClass);
-			if (this.idProperty == null) {
-				throw new IllegalStateException("No id found for " + this.entityClass);
-			}
+			ModelException.test(this.idProperty != null, "No id found for " + this.entityClass);
 			this.allProperties.add(this.idProperty);
 
 			// Add all other properties
@@ -613,21 +611,18 @@ public final class EntityClass<E> {
 			final Map<String, ?> embeddedProperties = ((EmbeddedProperty<E, ?>) this.idProperty)
 					.getEmbeddedProperties();
 			if (idField == null) {
-				if (embeddedProperties.size() > 1) {
-					throw new IllegalStateException("Missing MapsId annotation for access to " + this.idProperty);
-				}
+				ModelException.test(embeddedProperties.size() != 1, "Missing MapsId annotation for access to "
+						+ this.idProperty);
 				property = (Property<E, ?>) embeddedProperties.values().iterator().next();
 			} else {
 				property = (Property<E, ?>) embeddedProperties.get(idField);
-				if (property == null) {
-					throw new IllegalStateException("MapsId reference " + idField + " not found in " + this.idProperty);
-				}
+				ModelException.test(property != null, "MapsId reference " + idField + " not found in "
+						+ this.idProperty);
 			}
 		}
+		@SuppressWarnings("null")
 		final String expression = property.getExpression(entity, whereExpression);
-		if (expression == null) {
-			throw new IllegalStateException("Can't find any id in " + this.idProperty + " for " + entity);
-		}
+		ModelException.test(expression != null, "Can't find any id in " + this.idProperty + " for " + entity);
 		return expression;
 	}
 
@@ -680,11 +675,15 @@ public final class EntityClass<E> {
 		if (this.idProperty instanceof EmbeddedProperty) {
 			final MapsId mapsId = attribute.getAnnotation(MapsId.class);
 			if (mapsId != null && mapsId.value().length() > 0) {
-				((EmbeddedProperty<E, ?>) this.idProperty).getEmbeddedProperties().get(mapsId.value());
+				final Property<?, ?> property = ((EmbeddedProperty<E, ?>) this.idProperty).getEmbeddedProperties().get(
+						mapsId.value());
+				if (property instanceof SingularProperty) {
+					return ((SingularProperty<?, ?>) this.idProperty).getColumn();
+				}
 			}
-			throw new IllegalStateException(attribute + " misses MapId annotation");
+			throw new ModelException(attribute + " misses MapId for a singular property in " + this.entityClass);
 		}
-		throw new IllegalStateException(attribute + " does not reference an ID column in " + this.entityClass);
+		throw new ModelException(attribute + " does not reference an ID column in " + this.entityClass);
 	}
 
 	/**

@@ -21,6 +21,7 @@ import org.fastnate.data.DataProvider;
 import org.fastnate.data.util.ClassUtil;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.context.ModelException;
 import org.fastnate.generator.context.Property;
 import org.fastnate.generator.context.SingularProperty;
 
@@ -199,7 +200,7 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 		} catch (final InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			throw new IllegalStateException(e);
 		} catch (final NoSuchMethodException e) {
-			throw new IllegalStateException("Could not find public no-arg constructor for " + getEntityClass(), e);
+			throw new ModelException("Could not find public no-arg constructor for " + getEntityClass(), e);
 		}
 	}
 

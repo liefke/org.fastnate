@@ -46,9 +46,7 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 		}
 		if (strategy == GenerationType.SEQUENCE) {
 			this.generator = entityClass.getSequences().get(generation.generator());
-			if (this.generator == null) {
-				throw new IllegalStateException("Missing sequence generator: " + generation.generator());
-			}
+			ModelException.test(this.generator != null, "Missing sequence generator: " + generation.generator());
 			this.sequenceName = StringUtils.isEmpty(this.generator.sequenceName()) ? getContext().getProvider()
 					.getDefaultSequence() : this.generator.sequenceName();
 		} else {
@@ -60,7 +58,7 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	@Override
 	public void addInsertExpression(final E entity, final InsertStatement statement) {
 		if (!isNew(entity)) {
-			throw new IllegalStateException("Tried to create entity twice: " + entity);
+			throw new IllegalArgumentException("Tried to create entity twice: " + entity);
 		}
 		final GeneratorContext context = getContext();
 		if (context.isExplicitIds()) {
