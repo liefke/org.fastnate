@@ -455,7 +455,7 @@ public final class EntityClass<E> {
 
 	<X> Property<X, ?> buildProperty(final AttributeAccessor attribute, final Column columnMetadata,
 			final AssociationOverride override) {
-		if (attribute.isPersistentProperty()) {
+		if (attribute.isPersistent()) {
 			if (CollectionProperty.isCollectionProperty(attribute)) {
 				return new CollectionProperty<>(this, attribute, override);
 			} else if (MapProperty.isMapProperty(attribute)) {

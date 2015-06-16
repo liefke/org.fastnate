@@ -52,7 +52,7 @@ public interface AttributeAccessor {
 	 *
 	 * @return {@code true} if the represented attribute is neither static, nor transient, nor generated.
 	 */
-	boolean isPersistentProperty();
+	boolean isPersistent();
 
 	/**
 	 * Sets a new value for the attribute on the given entity.

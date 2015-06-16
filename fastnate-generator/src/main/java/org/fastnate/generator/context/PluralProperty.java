@@ -280,7 +280,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	private SingularProperty<T, ?> buildProperty(final AttributeAccessor attribute, final Column columnMetadata,
 			final AssociationOverride override) {
 		// Ignore static, transient and generated fields
-		if (attribute.isPersistentProperty()) {
+		if (attribute.isPersistent()) {
 			if (CollectionProperty.isCollectionProperty(attribute) || MapProperty.isMapProperty(attribute)) {
 				throw new IllegalArgumentException("Plural attributes not allowed for embedded element collection: "
 						+ attribute);

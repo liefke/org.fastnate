@@ -89,7 +89,7 @@ public enum AccessStyle {
 			}
 
 			@Override
-			public boolean isPersistentProperty() {
+			public boolean isPersistent() {
 				final int modifiers = this.field.getModifiers();
 				return !Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)
 						&& !hasAnnotation(Transient.class) && !hasAnnotation(Formula.class);
@@ -188,7 +188,7 @@ public enum AccessStyle {
 			}
 
 			@Override
-			public boolean isPersistentProperty() {
+			public boolean isPersistent() {
 				final int modifiers = this.method.getModifiers();
 				return !Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)
 						&& !hasAnnotation(Transient.class) && !hasAnnotation(Formula.class);
