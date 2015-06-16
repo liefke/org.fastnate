@@ -221,7 +221,7 @@ public class GeneratorContext {
 		final String columnId = property.getTable() + "." + property.getColumn();
 		final Long currentId = this.ids.get(columnId);
 		if (currentId == null) {
-			throw new IllegalStateException("No current value for: " + columnId);
+			throw new IllegalArgumentException("No current value for: " + columnId);
 		}
 		return currentId;
 	}

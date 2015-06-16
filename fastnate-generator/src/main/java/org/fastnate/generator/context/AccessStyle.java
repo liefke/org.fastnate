@@ -208,8 +208,8 @@ public enum AccessStyle {
 							}
 						}
 						if (this.setter == null) {
-							throw new IllegalStateException("Can't find setter: " + this.method.getDeclaringClass()
-									+ '.' + setterName + '(' + paramType + ')');
+							throw new ModelException("Can't find setter: " + this.method.getDeclaringClass() + '.'
+									+ setterName + '(' + paramType + ')');
 						}
 
 						if (!this.setter.isAccessible()) {

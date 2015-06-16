@@ -264,8 +264,9 @@ public class ImportDataMojo extends AbstractMojo {
 							.loadClass("org.fastnate.data.EntityImporter");
 					final Object importer = importerClass.getConstructor(settings.getClass()).newInstance(settings);
 					importerClass.getMethod("importData", Writer.class).invoke(importer, writer);
-				} catch (final IOException | IllegalArgumentException | IllegalStateException
-						| ReflectiveOperationException e) {
+					// CHECKSTYLE OFF: IllegalCatch
+				} catch (final IOException | ReflectiveOperationException | RuntimeException e) {
+					// CHECKSTYLE ON: IllegalCatch
 					throw new MojoExecutionException("Could not generate SQL file: " + this.sqlFile, e);
 				}
 			}

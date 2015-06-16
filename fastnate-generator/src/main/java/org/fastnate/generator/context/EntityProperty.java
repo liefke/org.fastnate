@@ -224,7 +224,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		final String expression = this.context.getDescription(writtenEntity).getEntityReference(writtenEntity,
 				this.idField, false);
 		if (expression == null) {
-			throw new IllegalStateException("Entity can't be referenced: " + writtenEntity);
+			throw new ModelException("Entity can't be referenced: " + writtenEntity);
 		}
 		final EntityClass<E> entityClass = this.context.getDescription(entity);
 		final UpdateStatement stmt = new UpdateStatement(entityClass.getTable(),

@@ -103,8 +103,12 @@ public class AbstractEntitySqlGeneratorTest {
 	 */
 	@After
 	public void tearDown() {
-		this.em.close();
-		this.emf.close();
+		if (this.em != null) {
+			this.em.close();
+		}
+		if (this.emf != null) {
+			this.emf.close();
+		}
 	}
 
 	/**

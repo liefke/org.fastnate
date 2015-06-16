@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.context.ModelException;
 import org.reflections.Reflections;
 
 /**
@@ -289,9 +290,7 @@ public final class EntityImporter {
 					iterator.remove();
 				} else {
 					final Constructor<?>[] constructors = providerClass.getConstructors();
-					if (constructors.length == 0) {
-						throw new IllegalStateException("No public constructor found for " + providerClass);
-					}
+					ModelException.test(constructors.length > 0, "No public constructor found for " + providerClass);
 					for (final Constructor<?> constructor : constructors) {
 						final DataProvider provider = createProvider(constructor);
 						if (provider != null) {
@@ -304,10 +303,8 @@ public final class EntityImporter {
 			}
 
 			// Prevent endless loops
-			if (previousSize == providers.size()) {
-				throw new IllegalStateException("No matching data provider in dependencies of "
-						+ Arrays.toString(providers.toArray()));
-			}
+			ModelException.test(previousSize > providers.size(), "No matching data provider in dependencies of "
+					+ Arrays.toString(providers.toArray()));
 		}
 	}
 

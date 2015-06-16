@@ -196,7 +196,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 		// Inspect the type binding
 		if (!(attribute.getGenericType() instanceof ParameterizedType)) {
-			throw new IllegalArgumentException(attribute + " is not of generic type and has no defined entity class");
+			throw new ModelException(attribute + " is not of generic type and has no defined entity class");
 		}
 
 		final ParameterizedType type = (ParameterizedType) attribute.getGenericType();
@@ -210,7 +210,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				return (Class<T>) genericType;
 			}
 		}
-		throw new IllegalArgumentException(attribute + " has illegal generic type signature");
+		throw new ModelException(attribute + " has illegal generic type signature");
 
 	}
 
@@ -282,8 +282,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		// Ignore static, transient and generated fields
 		if (attribute.isPersistent()) {
 			if (CollectionProperty.isCollectionProperty(attribute) || MapProperty.isMapProperty(attribute)) {
-				throw new IllegalArgumentException("Plural attributes not allowed for embedded element collection: "
-						+ attribute);
+				throw new ModelException("Plural attributes not allowed for embedded element collection: " + attribute);
 			}
 			if (EntityProperty.isEntityProperty(attribute)) {
 				return new EntityProperty<>(this.context, attribute, override);
