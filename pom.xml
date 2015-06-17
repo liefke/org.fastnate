@@ -22,10 +22,17 @@
 		</license>
 	</licenses>
 
+	<distributionManagement>
+		<repository>
+			<id>fastnate-download</id>
+			<url>ftp://download.fastnate.org/repository</url>
+		</repository>
+	</distributionManagement>
+
 	<prerequisites>
 		<maven>3.0.4</maven>
 	</prerequisites>
-	
+
 	<modules>
 		<module>fastnate-base</module>
 		<module>fastnate-data</module>
@@ -33,5 +40,16 @@
 		<module>fastnate-maven-plugin</module>
 		<module>fastnate-maven-test</module>
 	</modules>
+
+	<build>
+		<extensions>
+			<!-- Enabling the use of FTP -->
+			<extension>
+				<groupId>org.apache.maven.wagon</groupId>
+				<artifactId>wagon-ftp</artifactId>
+				<version>2.9</version>
+			</extension>
+		</extensions>
+	</build>
 
 </project>
