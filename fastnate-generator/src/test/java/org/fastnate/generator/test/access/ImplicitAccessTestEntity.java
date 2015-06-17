@@ -1,5 +1,6 @@
 package org.fastnate.generator.test.access;
 
+import javax.persistence.Access;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -9,7 +10,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * An example entity that has an explicit {@Access} annotation.
+ * An example entity that has an explicit {@link Access} annotation.
  *
  * @author Tobias Liefke
  */

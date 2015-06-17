@@ -4,15 +4,16 @@
 
 	<name>FastNate Root</name>
 	<description>The FastNate root project</description>
+	<url>http://api.fastnate.org/latest</url>
 
 	<groupId>org.fastnate</groupId>
-	<artifactId>fastnate</artifactId>
+	<artifactId>fastnate-base</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<organization>
 		<name>fastnate.org</name>
-		<url>http://www.fastnate.org</url>
+		<url>http://fastnate.org</url>
 	</organization>
 
 	<licenses>
@@ -21,35 +22,271 @@
 			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
 		</license>
 	</licenses>
-
+	
 	<distributionManagement>
 		<repository>
 			<id>fastnate-download</id>
 			<url>ftp://download.fastnate.org/repository</url>
 		</repository>
+		<site>
+			<id>fastnate-api</id>
+			<url>ftp://api.fastnate.org/latest</url>
+		</site>
 	</distributionManagement>
+	
+	<scm>
+		<url>https://github.com/liefke/org.fastnate</url>
+		<connection>scm:git:git://github.com/liefke/org.fastnate.git</connection>
+		<developerConnection>scm:git:git@github.com:liefke/org.fastnate.git</developerConnection>
+	</scm>	
+	
+	<issueManagement>
+		<url>https://github.com/liefke/org.fastnate/issues</url>
+		<system>GitHub</system>
+	</issueManagement>
 
 	<prerequisites>
 		<maven>3.0.4</maven>
 	</prerequisites>
 
 	<modules>
-		<module>fastnate-base</module>
 		<module>fastnate-data</module>
 		<module>fastnate-generator</module>
 		<module>fastnate-maven-plugin</module>
 		<module>fastnate-maven-test</module>
 	</modules>
 
+	<properties>
+		<!-- Build specific properties -->
+		<build.number>Local</build.number>
+		<build.svnRevNumber>Unknown</build.svnRevNumber>
+		<maven.build.timestamp.format>yyyyMMdd'T'HHmmss</maven.build.timestamp.format>
+		<build.timestamp>${maven.build.timestamp}</build.timestamp>
+
+		<!-- Default encoding -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<!-- Versions -->
+		<supercsv.version>2.1.0</supercsv.version>
+		<lombok.version>1.14.8</lombok.version>
+		<slf4j.version>1.6.1</slf4j.version>
+		<commons.io.version>2.4</commons.io.version>
+		<commons.lang.version>2.6</commons.lang.version>
+		<jsr305.version>2.0.2</jsr305.version>
+		<validation.api.version>1.1.0.Final</validation.api.version>
+		<guava.version>17.0</guava.version>
+		<org.reflections.version>0.9.8</org.reflections.version>
+		<hibernate.version>4.2.0.CR1</hibernate.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+				<version>${lombok.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>commons-io</groupId>
+				<artifactId>commons-io</artifactId>
+				<version>${commons.io.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>commons-lang</groupId>
+				<artifactId>commons-lang</artifactId>
+				<version>${commons.lang.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.code.findbugs</groupId>
+				<artifactId>jsr305</artifactId>
+				<version>${jsr305.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>javax.validation</groupId>
+				<artifactId>validation-api</artifactId>
+				<version>${validation.api.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>${guava.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.sf.supercsv</groupId>
+				<artifactId>super-csv</artifactId>
+				<version>${supercsv.version}</version>
+			</dependency>
+			<!-- Reflections -->
+			<dependency>
+				<groupId>org.reflections</groupId>
+				<artifactId>reflections</artifactId>
+				<version>${org.reflections.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>dom4j</groupId>
+						<artifactId>dom4j</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+
+			<!-- This is just the JPA 2.0 standalone API (without hibernate) -->
+			<dependency>
+				<groupId>org.hibernate.javax.persistence</groupId>
+				<artifactId>hibernate-jpa-2.0-api</artifactId>
+				<version>1.0.1.Final</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- Hibernate dependencies -->
+			<dependency>
+				<groupId>org.hibernate</groupId>
+				<artifactId>hibernate-core</artifactId>
+				<version>${hibernate.version}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- Test dependencies -->
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.11</version>
+				<scope>test</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-jdk14</artifactId>
+				<version>1.6.1</version>
+				<scope>test</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.hibernate</groupId>
+				<artifactId>hibernate-entitymanager</artifactId>
+				<version>${hibernate.version}</version>
+				<scope>test</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.hibernate</groupId>
+				<artifactId>hibernate-validator</artifactId>
+				<version>4.3.1.Final</version>
+				<scope>test</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.h2database</groupId>
+				<artifactId>h2</artifactId>
+				<version>1.4.181</version>
+				<scope>test</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.assertj</groupId>
+				<artifactId>assertj-core</artifactId>
+				<version>1.7.0</version>
+				<scope>test</scope>
+			</dependency>
+			
+		</dependencies>
+	</dependencyManagement>
+
 	<build>
 		<extensions>
-			<!-- Enabling the use of FTP -->
+			<!-- Enabling the use of FTP for deployment -->
 			<extension>
 				<groupId>org.apache.maven.wagon</groupId>
 				<artifactId>wagon-ftp</artifactId>
 				<version>2.9</version>
 			</extension>
 		</extensions>
+		<plugins>
+			<!-- Define the default compiler settings. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.5.1</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+
+			<!-- We are open source - attach the sources. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.4</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Define the default manifest entries -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+						<manifest-entries>
+							<Implementation-Build>${build.number}</Implementation-Build>
+							<Implementation-Revision>${build.svnRevNumber}</Implementation-Revision>
+						</manifest-entries>
+					</archive>
+				</configuration>
+			</plugin>
+
+			<!-- Add Javadoc -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.3</version>
+				<executions>
+					<execution>
+						<id>make-javadoc</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- And generate documentation site. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>3.4</version>
+			</plugin>
+
+		</plugins>
 	</build>
 
+	<!-- Generate Javadoc for site -->
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.3</version>
+			</plugin>
+		</plugins>
+	</reporting>
+		
 </project>

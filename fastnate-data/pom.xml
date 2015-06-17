@@ -9,7 +9,7 @@
 		<groupId>org.fastnate</groupId>
 		<artifactId>fastnate-base</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
-		<relativePath>../fastnate-base/pom.xml</relativePath>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>fastnate-data</artifactId>

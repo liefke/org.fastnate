@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 /**
- * An example entity that has an explicit {@Access} annotation.
+ * An example entity that has an explicit {@link Access} annotation.
  *
  * @author Tobias Liefke
  */
