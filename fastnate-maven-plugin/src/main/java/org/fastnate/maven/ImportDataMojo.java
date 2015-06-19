@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -165,16 +166,21 @@ public class ImportDataMojo extends AbstractMojo {
 	}
 
 	private boolean detectFilePropertyChanges(final Properties properties, final String key, final File outputFile) {
-		final String fileName = properties.getProperty(key);
-		if (fileName == null || fileName.length() == 0) {
-			return false;
-		}
-		final File file = new File(fileName);
-		if (!file.isFile()) {
+		final String propertyValue = StringUtils.trimToNull(properties.getProperty(key));
+		if (propertyValue == null) {
 			return false;
 		}
 
-		return !this.context.isUptodate(outputFile, file);
+		if (propertyValue.endsWith(".sql")) {
+			final String[] fileNames = propertyValue.split("[\\n\\" + File.pathSeparatorChar + ",;]+");
+			for (final String fileName : fileNames) {
+				final File file = new File(fileName);
+				if (this.context.hasDelta(file) && !this.context.isUptodate(outputFile, file)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private boolean detectRelevantClassChanges() {
