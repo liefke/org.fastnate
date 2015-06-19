@@ -145,7 +145,7 @@
 						offline SQL script.</p>
 					<p>So Nate decided to write his own library on top of JPA. It should not replace any existing JPA
 						library, it was meant as an add-on.</p>
-					<p>And finally Nate managed it. And now he is ... the fast Nate.</p>
+					<p>And finally Nate managed it. And now he is ... the Fast Nate.</p>
 				</div>
 			</dd>
 			<dt></dt>
@@ -214,19 +214,27 @@
 			<li class="list-group-item"><a href="https://github.com/liefke/org.fastnate/wiki/FAQ">FAQ</a></li>
 		</ul>
 
-		<p>The Javadoc for the single Fastnate modules may be found here:</p>
+		<p>
+			The latest generated documentation of the project can be found <a href="http://api.fastnate.org/latest">in
+				the API section</a>.
+		</p>
+		<p>Some API documentation shortcuts:</p>
 		<ul class="list-group">
-			<li class="list-group-item"><a href="http://api.fastnate.org/latest/fastnate-data">Latest JavaDoc
-					for fastnate-data</a></li>
-			<li class="list-group-item"><a href="http://api.fastnate.org/latest/fastnate-generator">Latest
-					JavaDoc for fastnate-generator</a></li>
-			<li class="list-group-item"><a href="http://api.fastnate.org/latest/fastnate-maven-plugin">Latest
-					JavaDoc for fastnate-maven-plugin</a></li>
+			<li class="list-group-item"><a href="http://api.fastnate.org/latest/fastnate-data/apidocs">Latest
+					JavaDoc for <em>fastnate-data</em>
+			</a></li>
+			<li class="list-group-item"><a href="http://api.fastnate.org/latest/fastnate-generator/apidocs">Latest
+					JavaDoc for <em>fastnate-generator</em>
+			</a></li>
+			<li class="list-group-item"><a
+				href="http://api.fastnate.org/latest/fastnate-maven-plugin/import-data-mojo.html">Description of the
+					Maven goal <em>import-data</em>
+			</a></li>
 		</ul>
 
 		<p>Finally a small appetizer of how to use the Fastnate Data library:</p>
 		<div class="highlight">
-			<pre>public class TestData implements DataProvider {
+			<pre>public class TestData extends AbstractDataProvider {
 
     /** A list that contains all the created data. */
     @Getter
@@ -250,14 +258,18 @@
 		<p></p>
 		<h3>Latest stable version</h3>
 		<p>
-			<i>Until now there is now final stable version. But we are working on release 1.0 so stay tuned.</i>
+			<i>Until now there is no final stable version. But we are working on release 1.0 so stay tuned.</i>
 		</p>
 		<h3>Snapshot releases</h3>
-		<p>You can aquire Fastnate in different styles:</p>
+		<p>You can obtain Fastnate in different styles:</p>
 		<dl class="download">
 			<dt>Include Fastnate as Maven dependency:</dt>
 			<dd>
-				To add the latest Snapshot you need to add our repository to your <code>settings.xml</code> or <code>pom.xml</code>:
+				To add the latest Snapshot you need to add our repository to your
+				<code>settings.xml</code>
+				or
+				<code>pom.xml</code>
+				:
 				<div class="highlight">
 					<pre>&lt;repositories>
 	&lt;repository>
@@ -267,38 +279,62 @@
 			&lt;enabled>true&lt;/enabled>
 		&lt;/snapshots>
 	&lt;/repository>
-&lt;/repositories></pre>
+&lt;/repositories>
+&lt;-- To use the importData task: -->
+&lt;pluginRepositories>
+	&lt;pluginRepository>
+		&lt;id>fastnate.org&lt;/id>
+		&lt;url>http://download.fastnate.org/repository&lt;/url>
+		&lt;snapshots>
+			&lt;enabled>true&lt;/enabled>
+		&lt;/snapshots>
+	&lt;/pluginRepositories>
+&lt;/pluginRepositories></pre>
 				</div>
 				Now you can add the dependencies:
 				<div class="highlight">
-					<pre>&lt;!-- Use the DataProvider -->
-&lt;dependency>
-	&lt;groupId>org.fastnate&lt;/groupId>
-	&lt;artifactId>fastnate-data&lt;/artifactId>
-	&lt;version>1.0.0-SNAPSHOT&lt;/version>
-&lt;/dependency>
-&lt;!-- Or use the generator itself -->
-&lt;dependency>
-	&lt;groupId>org.fastnate&lt;/groupId>
-	&lt;artifactId>fastnate-generator&lt;/artifactId>
-	&lt;version>1.0.0-SNAPSHOT&lt;/version>
-&lt;/dependency></pre>
+					<pre>&lt;dependencies>
+	&lt;!-- Use the DataProvider -->
+	&lt;dependency>
+		&lt;groupId>org.fastnate&lt;/groupId>
+		&lt;artifactId>fastnate-data&lt;/artifactId>
+		&lt;version>1.0.0-SNAPSHOT&lt;/version>
+	&lt;/dependency>
+	&lt;!-- Or use the generator itself -->
+	&lt;dependency>
+		&lt;groupId>org.fastnate&lt;/groupId>
+		&lt;artifactId>fastnate-generator&lt;/artifactId>
+		&lt;version>1.0.0-SNAPSHOT&lt;/version>
+	&lt;/dependency>
+&lt;/dependencies></pre>
+				</div>
+				And use the importData task:
+				<div class="highlight">
+					<pre>&lt;build>
+	&lt;plugins>
+		&lt;plugin>
+			&lt;groupId>org.fastnate&lt;/groupId>
+			&lt;artifactId>fastnate-maven-plugin&lt;/artifactId>
+			&lt;version>1.0.0-SNAPSHOT&lt;/version>
+			&lt;executions>
+				&lt;execution>
+					&lt;goals>
+						&lt;goal>import-data&lt;/goal>
+					&lt;/goals>
+					&lt;configuration>
+						&lt;dialect>${target.db}&lt;/dialect>
+						...
+					&lt;/configuration>
+				&lt;/execution>
+			&lt;/executions>
+		&lt;/plugin>
+	&lt;/plugins>
+&lt;/build></pre>
+				</div>
 			</dd>
-			<dt>Download the snapshot binaries:</dt>
+			<dt>Download the packages from:</dt>
 			<dd>
-				<a
-					href="http://download.fastnate.org/repository/org/fastnate/fastnate-generator/1.0.0-SNAPSHOT/fastnate-generator-1.0.0-SNAPSHOT.jar">fastnate-generator-1.0.0-SNAPSHOT.jar</a>
-				(<a
-					href="http://download.fastnate.org/repository/org/fastnate/fastnate-generator/1.0.0-SNAPSHOT/fastnate-generator-1.0.0-SNAPSHOT-sources.jar">sources</a>,
-				<a
-					href="http://download.fastnate.org/repository/org/fastnate/fastnate-generator/1.0.0-SNAPSHOT/fastnate-generator-1.0.0-SNAPSHOT-javadoc.jar">javadoc</a>)
-				<br /> <a
-					href="http://download.fastnate.org/repository/org/fastnate/fastnate-data/1.0.0-SNAPSHOT/fastnate-data-1.0.0-SNAPSHOT.jar">fastnate-data-1.0.0-SNAPSHOT.jar</a>
-				(<a
-					href="http://download.fastnate.org/repository/org/fastnate/fastnate-data/1.0.0-SNAPSHOT/fastnate-data-1.0.0-SNAPSHOT-sources.jar">sources</a>,
-				<a
-					href="http://download.fastnate.org/repository/org/fastnate/fastnate-data/1.0.0-SNAPSHOT/fastnate-data-1.0.0-SNAPSHOT-javadoc.jar">javadoc</a>)
-				<br />
+				<a href="http://download.fastnate.org/repository/">Fastnate Repository</a>
 			</dd>
 			<dt>Download the latest sources:</dt>
 			<dd>
@@ -320,9 +356,6 @@
 				<p>
 					<a href="http://www.apache.org/licenses/LICENSE-2.0" target="_BLANK">http://www.apache.org/licenses/LICENSE-2.0</a>
 				</p>
-				<p>Unless required by applicable law or agreed to in writing, software distributed under the License is
-					distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-					See the License for the specific language governing permissions and limitations under the License.</p>
 			</div>
 		</div>
 
