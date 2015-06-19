@@ -1,7 +1,8 @@
 package org.fastnate.data;
 
 import java.io.IOException;
-import java.util.Collection;
+
+import org.fastnate.generator.EntitySqlGenerator;
 
 /**
  * Implementations of this class will automatically instantiated by the {@link EntityImporter}.
@@ -22,7 +23,7 @@ import java.util.Collection;
 public interface DataProvider {
 
 	/**
-	 * Builds the entities that are accessed later using {@link #getEntities()}.
+	 * Builds the entities that are accessed later using {@link #writeEntities(EntitySqlGenerator)}.
 	 *
 	 * @throws IOException
 	 *             if something happens during any possible import of the generated entities
@@ -30,10 +31,23 @@ public interface DataProvider {
 	void buildEntities() throws IOException;
 
 	/**
-	 * The list of entities for which INSERT SQL statements will be generated.
+	 * Adds all {@link #buildEntities() entities} to the SQL file using the given generator.
 	 *
-	 * @return list of entities
+	 * @param sqlGenerator
+	 *            the SQL file generator
+	 * @throws IOException
+	 *             if the generator throws one
 	 */
-	Collection<?> getEntities();
+	void writeEntities(final EntitySqlGenerator sqlGenerator) throws IOException;
+
+	/**
+	 * An additional helper to sort the output by its precedence.
+	 *
+	 * Providers with a smaller order criteria will write their data before providers with a higher order criteria,
+	 * except in the case that the first is depending on the second.
+	 *
+	 * @return the order criteria
+	 */
+	int getOrder();
 
 }

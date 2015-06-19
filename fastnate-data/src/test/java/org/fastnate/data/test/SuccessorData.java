@@ -7,7 +7,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import org.fastnate.data.DataProvider;
+import org.fastnate.data.AbstractDataProvider;
 import org.fastnate.data.EntityImporter;
 
 /**
@@ -17,7 +17,7 @@ import org.fastnate.data.EntityImporter;
  */
 @Getter
 @RequiredArgsConstructor
-public class SuccessorData implements DataProvider {
+public class SuccessorData extends AbstractDataProvider {
 
 	/** The preceding data provider that contains existing entities. */
 	private final TestData existingData;

@@ -5,14 +5,14 @@ import java.util.Collection;
 
 import lombok.Getter;
 
-import org.fastnate.data.DataProvider;
+import org.fastnate.data.AbstractDataProvider;
 
 /**
  * Data provider for the maven test.
  *
  * @author Tobias Liefke
  */
-public class MavenTestData implements DataProvider {
+public class MavenTestData extends AbstractDataProvider {
 
 	@Getter
 	private final Collection<MavenTestEntity> entities = new ArrayList<>();

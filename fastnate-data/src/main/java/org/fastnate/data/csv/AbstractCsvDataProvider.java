@@ -19,6 +19,7 @@ import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang.StringUtils;
 import org.fastnate.data.DataProvider;
 import org.fastnate.data.util.ClassUtil;
+import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.ModelException;
@@ -253,6 +254,14 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	}
 
 	/**
+	 * Defaults to 0.
+	 */
+	@Override
+	public int getOrder() {
+		return 0;
+	}
+
+	/**
 	 * Maps the table columns of the singular properties to the CSV columns.
 	 *
 	 * Useful if the CSV file is a database export.
@@ -267,5 +276,13 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 				}
 			}
 		}
+	}
+
+	/**
+	 * Writes all created entities.
+	 */
+	@Override
+	public void writeEntities(final EntitySqlGenerator sqlGenerator) throws IOException {
+		sqlGenerator.write(this.entities);
 	}
 }

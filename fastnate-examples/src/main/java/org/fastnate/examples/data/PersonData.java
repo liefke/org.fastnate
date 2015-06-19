@@ -6,7 +6,7 @@ import java.util.List;
 
 import lombok.Getter;
 
-import org.fastnate.data.DataProvider;
+import org.fastnate.data.AbstractDataProvider;
 import org.fastnate.examples.model.Person;
 
 /**
@@ -14,7 +14,7 @@ import org.fastnate.examples.model.Person;
  *
  * @author Tobias Liefke
  */
-public class PersonData implements DataProvider {
+public class PersonData extends AbstractDataProvider {
 
 	@Getter
 	private final List<Person> entities = new ArrayList<>();

@@ -7,7 +7,7 @@ import java.util.Map;
 
 import lombok.Getter;
 
-import org.fastnate.data.DataProvider;
+import org.fastnate.data.AbstractDataProvider;
 import org.fastnate.data.EntityImporter;
 
 /**
@@ -16,7 +16,7 @@ import org.fastnate.data.EntityImporter;
  * @author Tobias Liefke
  */
 @Getter
-public class TestData implements DataProvider {
+public class TestData extends AbstractDataProvider {
 
 	/**
 	 * A map to let further data providers access our entities.

@@ -133,6 +133,9 @@ public class GeneratorContext {
 		String dialectName = settings.getProperty(DIALECT_KEY, "H2Dialect");
 		if (dialectName.indexOf('.') < 0) {
 			dialectName = GeneratorDialect.class.getPackage().getName() + '.' + dialectName;
+			if (!dialectName.endsWith("Dialect")) {
+				dialectName += "Dialect";
+			}
 		}
 		try {
 			this.dialect = (GeneratorDialect) Class.forName(dialectName).newInstance();

@@ -89,11 +89,11 @@ public class ImportDataMojo extends AbstractMojo {
 	@Parameter(defaultValue = "UTF-8")
 	private String encoding;
 
-	/** The path to a prefix file, or the content of the prefix itself. */
+	/** The path to one or more SQL files, or an SQL snippet itself - to put that before the generated SQL. */
 	@Parameter
 	private String prefix;
 
-	/** The path to a postfix file, or the content of the postfix itself. */
+	/** The path to one or more SQL files, or an SQL snippet itself - to put that after the generated SQL. */
 	@Parameter
 	private String postfix;
 
@@ -267,6 +267,7 @@ public class ImportDataMojo extends AbstractMojo {
 					// CHECKSTYLE OFF: IllegalCatch
 				} catch (final IOException | ReflectiveOperationException | RuntimeException e) {
 					// CHECKSTYLE ON: IllegalCatch
+					getLog().error("Could not generate SQL file: " + this.sqlFile, e);
 					throw new MojoExecutionException("Could not generate SQL file: " + this.sqlFile, e);
 				}
 			}

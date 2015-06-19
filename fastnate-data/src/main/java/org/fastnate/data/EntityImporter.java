@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.ModelException;
@@ -109,7 +110,7 @@ public final class EntityImporter {
 
 	private final GeneratorContext context;
 
-	private final List<DataProvider> data = new ArrayList<>();
+	private final List<DataProvider> dataProviders = new ArrayList<>();
 
 	/**
 	 * Creates a new default instance of an EntityImporter.
@@ -146,13 +147,16 @@ public final class EntityImporter {
 	}
 
 	/**
-	 * Tries to create provider using the given constructor.
+	 * Tries to create a provider using the given constructor and add it to the {@link #dataProviders list of providers}
+	 * .
 	 *
 	 * @param constructor
 	 *            the constructor of the provider
-	 * @return the provider or {@code null} if the arguments were unknown
+	 * @return {@code true} if a valid provider was addedd
 	 */
-	private DataProvider createProvider(final Constructor<?> constructor) {
+	private boolean addProvider(final Constructor<?> constructor) {
+		// Remember the maximum order criteria of the parameters
+		int maxOrder = Integer.MIN_VALUE;
 		final Class<?>[] parameterTypes = constructor.getParameterTypes();
 		final Object[] params = new Object[parameterTypes.length];
 		for (int i = 0; i < parameterTypes.length; i++) {
@@ -164,13 +168,28 @@ public final class EntityImporter {
 			} else {
 				final DataProvider parameter = findProvider(parameterType);
 				if (parameter == null) {
-					return null;
+					// No matching data provider found -> this is not our constructor (at least up to now)
+					return false;
 				}
 				params[i] = parameter;
+				final int order = parameter.getOrder();
+				if (order > maxOrder) {
+					maxOrder = order;
+				}
 			}
 		}
 		try {
-			return (DataProvider) constructor.newInstance(params);
+			// Create the provider
+			final DataProvider provider = (DataProvider) constructor.newInstance(params);
+
+			// And add it after the first provider with the same or a smaller order criteria
+			final int order = Math.max(maxOrder, provider.getOrder());
+			int index = this.dataProviders.size();
+			while (index > 0 && this.dataProviders.get(index - 1).getOrder() > order) {
+				index--;
+			}
+			this.dataProviders.add(index, provider);
+			return true;
 		} catch (final InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			throw new IllegalArgumentException(e);
 		}
@@ -184,7 +203,7 @@ public final class EntityImporter {
 	 * @return the matching data provider or {@code null} if no such provider was added up to now
 	 */
 	private DataProvider findProvider(final Class<?> dataType) {
-		for (final DataProvider provider : this.data) {
+		for (final DataProvider provider : this.dataProviders) {
 			if (dataType.isInstance(provider)) {
 				return provider;
 			}
@@ -231,7 +250,7 @@ public final class EntityImporter {
 		try (EntitySqlGenerator generator = new EntitySqlGenerator(writer, this.context)) {
 			try {
 				log.info("Using {} for SQL generation.", this.context.getDialect().getClass().getSimpleName());
-				for (final DataProvider provider : this.data) {
+				for (final DataProvider provider : this.dataProviders) {
 					provider.buildEntities();
 				}
 
@@ -239,10 +258,10 @@ public final class EntityImporter {
 
 				writePropertyPart(generator, PREFIX_KEY);
 
-				for (final DataProvider provider : this.data) {
+				for (final DataProvider provider : this.dataProviders) {
 					generator.getWriter().write("\n");
 					generator.writeComment("Data from " + provider.getClass().getSimpleName());
-					generator.write(provider.getEntities());
+					provider.writeEntities(generator);
 					log.info("Generated SQL for {}", provider.getClass());
 				}
 
@@ -259,13 +278,13 @@ public final class EntityImporter {
 	}
 
 	/**
-	 * Fills the {@link #data} with matching providers found in the class path.
+	 * Fills the {@link #dataProviders} with matching providers found in the class path.
 	 */
 	private void setup() {
 		log.info("Searching for implementations of " + DataProvider.class.getSimpleName());
 
 		// Find providers
-		final String packages = EntityImporter.class.getPackage() + ";"
+		final String packages = EntityImporter.class.getPackage().getName() + ";"
 				+ this.settings.getProperty(PACKAGES_KEY, "").trim();
 		final Reflections reflections = new Reflections((Object[]) packages.split("[\\s;,:]+"));
 		final List<Class<? extends DataProvider>> providers = new ArrayList<>(
@@ -292,9 +311,7 @@ public final class EntityImporter {
 					final Constructor<?>[] constructors = providerClass.getConstructors();
 					ModelException.test(constructors.length > 0, "No public constructor found for " + providerClass);
 					for (final Constructor<?> constructor : constructors) {
-						final DataProvider provider = createProvider(constructor);
-						if (provider != null) {
-							this.data.add(provider);
+						if (addProvider(constructor)) {
 							iterator.remove();
 							break;
 						}
@@ -314,28 +331,34 @@ public final class EntityImporter {
 	 * @param generator
 	 *            the current generator
 	 * @param property
-	 *            the property to write, either empty, a file name, or SQL
+	 *            name of the property to write, contains either a list of file names (separated by ',' and ending with
+	 *            ".sql"), or an SQL statement
 	 * @throws IOException
 	 *             if the writer or reader throws one
 	 */
 	private void writePropertyPart(final EntitySqlGenerator generator, final String property) throws IOException {
-		final String propertyValue = this.settings.getProperty(property);
+		final String propertyValue = StringUtils.trimToNull(this.settings.getProperty(property));
 		if (propertyValue != null) {
 			generator.getWriter().write('\n');
-			final File sqlFile = new File(propertyValue);
-			if (sqlFile.isFile()) {
-				try (FileReader input = new FileReader(sqlFile)) {
-					generator.writeComment(propertyValue);
-					IOUtils.copy(input, generator.getWriter());
+			if (propertyValue.endsWith(".sql")) {
+				final String[] fileNames = propertyValue.split("[\\n\\" + File.pathSeparatorChar + ",;]+");
+				for (final String fileName : fileNames) {
+					final File sqlFile = new File(fileName);
+					if (sqlFile.isFile()) {
+						try (FileReader input = new FileReader(sqlFile)) {
+							generator.writeComment(fileName);
+							IOUtils.copy(input, generator.getWriter());
+						}
+					} else {
+						log.warn("Couldn't find file: " + fileName);
+						generator.writeComment("Missing file: " + fileName);
+					}
 				}
-			} else if (propertyValue.endsWith(".sql")) {
-				log.warn("Couldn't find file: " + propertyValue);
-				generator.writeComment("Couldn't find file: " + propertyValue);
 			} else {
 				generator.writeComment(property);
 				generator.getWriter().write(propertyValue);
+				generator.getWriter().write("\n");
 			}
-			generator.getWriter().write("\n");
 		}
 	}
 }
