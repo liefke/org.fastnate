@@ -83,6 +83,7 @@
 						</goals>
 						<configuration>
 							<packages>org.fastnate.maven.test</packages>
+							<changeDetector>org.fastnate.maven.test.TestDetector</changeDetector>
 						</configuration>
 					</execution>
 				</executions>

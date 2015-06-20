@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -15,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -28,6 +29,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.Scanner;
+import org.fastnate.data.DataChangeDetector;
 import org.fastnate.data.DataProvider;
 import org.fastnate.data.EntityImporter;
 import org.fastnate.generator.context.GeneratorContext;
@@ -55,6 +57,17 @@ public class ImportDataMojo extends AbstractMojo {
 			}
 		}
 		return false;
+	}
+
+	private static void removeObsoleteFiles(final Properties oldSettings, final Properties newSettings) {
+		final String oldOutputFile = oldSettings.getProperty(EntityImporter.OUTPUT_FILE_KEY);
+		if (oldOutputFile != null && !oldOutputFile.equals(newSettings.getProperty(EntityImporter.OUTPUT_FILE_KEY))) {
+			final File oldFile = new File(oldOutputFile);
+			if (oldFile.isFile()) {
+				oldFile.delete();
+			}
+		}
+
 	}
 
 	private static final String SETTINGS_KEY = ImportDataMojo.class.getName() + ".settings";
@@ -98,6 +111,13 @@ public class ImportDataMojo extends AbstractMojo {
 	@Parameter
 	private String postfix;
 
+	/**
+	 * The implementation class of {@link DataChangeDetector}, to check if a changed file is relevant for SQL
+	 * generation.
+	 */
+	@Parameter
+	private String changeDetector;
+
 	/** Any additional settings for the EntitySqlGenerator, see {@link GeneratorContext}. */
 	@Parameter
 	private Map<String, String> additionalSettings;
@@ -119,21 +139,24 @@ public class ImportDataMojo extends AbstractMojo {
 	}
 
 	private boolean detectChanges(final Properties newSettings, final File outputFile) {
-		// Check if the output file was deleted
-		if (!outputFile.isFile()) {
-			getLog().debug("detectChanges(): Missing output file");
-			return true;
-		}
-
 		// Check settings
 		final Properties oldSettings = (Properties) this.context.getValue(SETTINGS_KEY);
 		if (!newSettings.equals(oldSettings)) {
 			if (oldSettings != null) {
 				getLog().debug("detectChanges(): Changed settings");
+
+				// Remove any file that is obsolete now, because the settings have changed
+				removeObsoleteFiles(oldSettings, newSettings);
 			} else {
 				getLog().debug("detectChanges(): No previous run");
 			}
 			this.context.setValue(SETTINGS_KEY, newSettings.clone());
+			return true;
+		}
+
+		// Check if the output file was deleted
+		if (!outputFile.isFile()) {
+			getLog().debug("detectChanges(): Missing output file");
 			return true;
 		}
 
@@ -156,18 +179,19 @@ public class ImportDataMojo extends AbstractMojo {
 			}
 		}
 
-		// Find any changed entity of data provider class
-		if (detectRelevantClassChanges()) {
+		// Find any changed entity, data provider or other file
+		if (detectRelevantFileChanges()) {
 			return true;
 		}
 
+		// Nothing relevant changed
 		getLog().debug("detectChanges(): No changes detected");
 		return false;
 	}
 
 	private boolean detectFilePropertyChanges(final Properties properties, final String key, final File outputFile) {
-		final String propertyValue = StringUtils.trimToNull(properties.getProperty(key));
-		if (propertyValue == null) {
+		String propertyValue = properties.getProperty(key);
+		if (propertyValue == null || (propertyValue = propertyValue.trim()).length() == 0) {
 			return false;
 		}
 
@@ -183,7 +207,7 @@ public class ImportDataMojo extends AbstractMojo {
 		return false;
 	}
 
-	private boolean detectRelevantClassChanges() {
+	private boolean detectRelevantClassFileChanges() {
 		final File outputDirectory = new File(this.project.getBuild().getOutputDirectory());
 		final Scanner scanner = this.context.newScanner(outputDirectory);
 		scanner.setIncludes(new String[] { "**/*.class" });
@@ -231,10 +255,42 @@ public class ImportDataMojo extends AbstractMojo {
 		return false;
 	}
 
+	private boolean detectRelevantFileChanges() {
+		if (detectRelevantClassFileChanges()) {
+			return true;
+		}
+
+		if (this.changeDetector != null) {
+			final List<String> sourceRoots = this.project.getCompileSourceRoots();
+			for (final String sourceRoot : sourceRoots) {
+				final Scanner sourceFolderScanner = this.context.newScanner(new File(sourceRoot));
+				sourceFolderScanner.scan();
+				final String[] includedFiles = sourceFolderScanner.getIncludedFiles();
+				if (includedFiles.length > 0) {
+					try {
+						final Class<?> detectorClass = Thread.currentThread().getContextClassLoader()
+								.loadClass(this.changeDetector);
+						final Object detector = detectorClass.newInstance();
+						final Method isDataFile = detectorClass.getMethod("isDataFile", File.class);
+						for (final String file : includedFiles) {
+							if ((Boolean) isDataFile.invoke(detector, new File(file))) {
+								getLog().debug("detectChanges(): change detector fired for " + file);
+								return true;
+							}
+						}
+					} catch (final ReflectiveOperationException e) {
+						getLog().error("Could not execute DataChangeDetector: " + this.changeDetector, e);
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		// Install correct classpath
-		// We can't use the current class realm of our pluginDescription, as that one is cached in M2E
 		final ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
 		try (URLClassLoader classloader = buildClassLoader()) {
 			Thread.currentThread().setContextClassLoader(classloader);
@@ -257,6 +313,8 @@ public class ImportDataMojo extends AbstractMojo {
 			// Scan for changes
 			final File outputFile = new File(settings.getProperty(EntityImporter.OUTPUT_FILE_KEY, "data.sql"));
 			if (detectChanges(settings, outputFile)) {
+
+				// Build the SQL file
 				if (settings.getProperty(GeneratorContext.DIALECT_KEY) == null) {
 					getLog().warn("No explicit database dialect specified, using default: H2");
 					settings.setProperty(GeneratorContext.DIALECT_KEY, "H2Dialect");
@@ -270,11 +328,17 @@ public class ImportDataMojo extends AbstractMojo {
 							.loadClass("org.fastnate.data.EntityImporter");
 					final Object importer = importerClass.getConstructor(settings.getClass()).newInstance(settings);
 					importerClass.getMethod("importData", Writer.class).invoke(importer, writer);
+				} catch (final InvocationTargetException e) {
+					final Throwable target = e.getTargetException();
+					getLog().error("Could not generate SQL file: " + this.sqlFile, target);
+					throw new MojoExecutionException("Could not generate SQL file '" + this.sqlFile + "' due to "
+							+ target, target);
 					// CHECKSTYLE OFF: IllegalCatch
 				} catch (final IOException | ReflectiveOperationException | RuntimeException e) {
 					// CHECKSTYLE ON: IllegalCatch
 					getLog().error("Could not generate SQL file: " + this.sqlFile, e);
-					throw new MojoExecutionException("Could not generate SQL file: " + this.sqlFile, e);
+					throw new MojoExecutionException("Could not generate SQL file '" + this.sqlFile + "' due to " + e,
+							e);
 				}
 			}
 		} catch (final IOException e) {
