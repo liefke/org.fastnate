@@ -348,6 +348,7 @@ public final class EntityImporter {
 						try (FileReader input = new FileReader(sqlFile)) {
 							generator.writeComment(fileName);
 							IOUtils.copy(input, generator.getWriter());
+							generator.getWriter().write("\n");
 						}
 					} else {
 						log.warn("Couldn't find file: " + fileName);
