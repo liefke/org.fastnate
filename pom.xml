@@ -31,6 +31,17 @@
 		</developer>
 	</developers>
 
+	<distributionManagement>
+		<repository>
+			<id>fastnate-download</id>
+			<url>ftp://download.fastnate.org/repository</url>
+		</repository>
+		<site>
+			<id>fastnate-api</id>
+			<url>ftp://api.fastnate.org/latest</url>
+		</site>
+	</distributionManagement>
+
 	<scm>
 		<url>https://github.com/liefke/org.fastnate</url>
 		<connection>scm:git:git://github.com/liefke/org.fastnate.git</connection>
@@ -287,21 +298,6 @@
 	</reporting>
 
 	<profiles>
-		<!-- Deployment to fastnate.org -->
-		<profile>
-			<id>deploy-fastnate.org</id>
-			<distributionManagement>
-				<repository>
-					<id>fastnate-download</id>
-					<url>ftp://download.fastnate.org/repository</url>
-				</repository>
-				<site>
-					<id>fastnate-api</id>
-					<url>ftp://api.fastnate.org/latest</url>
-				</site>
-			</distributionManagement>
-		</profile>
-
 		<profile>
 			<!-- Sign everything -->
 			<id>sign</id>
