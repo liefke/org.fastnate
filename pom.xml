@@ -23,6 +23,14 @@
 		</license>
 	</licenses>
 	
+	<developers>
+		<developer>
+			<name>Tobias Liefke</name>
+			<email>liefke@fastnate.org</email>
+			<url>https://github.com/liefke</url>
+		</developer>
+	</developers>
+
 	<distributionManagement>
 		<repository>
 			<id>fastnate-download</id>
@@ -33,13 +41,13 @@
 			<url>ftp://api.fastnate.org/latest</url>
 		</site>
 	</distributionManagement>
-	
+
 	<scm>
 		<url>https://github.com/liefke/org.fastnate</url>
 		<connection>scm:git:git://github.com/liefke/org.fastnate.git</connection>
 		<developerConnection>scm:git:git@github.com:liefke/org.fastnate.git</developerConnection>
-	</scm>	
-	
+	</scm>
+
 	<issueManagement>
 		<url>https://github.com/liefke/org.fastnate/issues</url>
 		<system>GitHub</system>
@@ -193,7 +201,7 @@
 				<version>1.7.0</version>
 				<scope>test</scope>
 			</dependency>
-			
+
 		</dependencies>
 	</dependencyManagement>
 
@@ -268,11 +276,27 @@
 				</executions>
 			</plugin>
 
-			<!-- And generate documentation site. -->
+			<!-- Generate documentation for maven plugin(s). -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
 				<version>3.4</version>
+			</plugin>
+
+			<!-- Sign everything -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
 		</plugins>
@@ -288,5 +312,5 @@
 			</plugin>
 		</plugins>
 	</reporting>
-		
+
 </project>
