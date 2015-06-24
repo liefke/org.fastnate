@@ -83,7 +83,7 @@
 		<jsr305.version>2.0.2</jsr305.version>
 		<validation.api.version>1.1.0.Final</validation.api.version>
 		<guava.version>17.0</guava.version>
-		<org.reflections.version>0.9.8</org.reflections.version>
+		<org.reflections.version>0.9.10</org.reflections.version>
 		<hibernate.version>4.2.0.CR1</hibernate.version>
 	</properties>
 
