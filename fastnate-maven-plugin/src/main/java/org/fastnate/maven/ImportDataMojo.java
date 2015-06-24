@@ -135,7 +135,7 @@ public class ImportDataMojo extends AbstractMojo {
 		} catch (final DependencyResolutionRequiredException e) {
 			throw new MojoExecutionException("Could not find project dependencies", e);
 		}
-		return new URLClassLoader(projectClasspathList.toArray(new URL[0]), getClass().getClassLoader());
+		return new URLClassLoader(projectClasspathList.toArray(new URL[0]));
 	}
 
 	private boolean detectChanges(final Properties newSettings, final File outputFile) {
