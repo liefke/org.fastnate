@@ -370,10 +370,8 @@ public final class EntityClass<E> {
 				} else if (findIdProperty(AccessStyle.METHOD.getDeclaredAttributes(c))) {
 					this.accessStyle = AccessStyle.METHOD;
 				}
-			} else if (this.accessStyle == AccessStyle.FIELD) {
-				findIdProperty(AccessStyle.FIELD.getDeclaredAttributes(c));
 			} else {
-				findIdProperty(AccessStyle.METHOD.getDeclaredAttributes(c));
+				findIdProperty(this.accessStyle.getDeclaredAttributes(c));
 			}
 		}
 	}
