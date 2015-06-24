@@ -40,17 +40,6 @@
 			<artifactId>maven-artifact</artifactId>
 			<version>2.2.1</version>
 		</dependency>
-		<dependency>
-			<groupId>org.reflections</groupId>
-			<artifactId>reflections-maven</artifactId>
-			<version>0.9.9-RC2</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.jfrog.jade.plugins.common</groupId>
-					<artifactId>jade-plugin-common</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 
 		<!-- Fastnate dependencies -->
 		<dependency>
