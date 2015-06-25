@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,43 +42,6 @@ public abstract class AbstractCsvReader<R> {
 		return values.size() > 1 || values.size() == 1 && StringUtils.isNotBlank(values.get(0));
 	}
 
-	/**
-	 * Opens a CSV file.
-	 *
-	 * If the given file ends with "gz", then the file is decompressed before using a {@link GZIPInputStream}.
-	 *
-	 * @param importFile
-	 *            the csv file
-	 * @return a list reader
-	 * @throws IOException
-	 *             on io exception
-	 */
-	@SuppressWarnings("resource")
-	public static CsvListReader openCsvListReader(final File importFile) throws IOException {
-		// Open file
-		InputStream fileStream = new FileInputStream(importFile);
-
-		// Check for compressed file
-		if (importFile.getName().toLowerCase().endsWith(".gz")) {
-			fileStream = new GZIPInputStream(fileStream);
-		}
-
-		// Guess the encoding
-		final BOMInputStream inputStream = new BOMInputStream(fileStream, false, ByteOrderMark.UTF_8,
-				ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE);
-		String charset;
-		if (inputStream.hasBOM()) {
-			charset = inputStream.getBOMCharsetName();
-			log.info("BOM detected. Using {} as encoding", charset);
-		} else {
-			charset = Charsets.UTF_8.toString();
-			log.info("No BOM detected. Assuming {} as encoding", charset);
-		}
-		final Reader reader = new InputStreamReader(inputStream, charset);
-		return new CsvListReader(reader, new CsvPreference.Builder(CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE)
-				.skipComments(new CommentMatches("(//|/\\*|#|;).*")).build());
-	}
-
 	private final List<File> importFiles;
 
 	/**
@@ -106,6 +70,52 @@ public abstract class AbstractCsvReader<R> {
 	 * @return the list of entities from that row
 	 */
 	protected abstract Collection<? extends R> createEntities(final Map<String, String> row);
+
+	/**
+	 * Defines the default encoding for CSV files, if it can't be determined from the BOM.
+	 * 
+	 * @return the default encoding
+	 */
+	protected Charset getDefaultEncoding() {
+		return Charsets.UTF_8;
+	}
+
+	/**
+	 * Opens a CSV file.
+	 *
+	 * If the given file ends with "gz", then the file is decompressed before using a {@link GZIPInputStream}.
+	 *
+	 * @param importFile
+	 *            the csv file
+	 * @return a list reader
+	 * @throws IOException
+	 *             on io exception
+	 */
+	@SuppressWarnings("resource")
+	protected CsvListReader openCsvListReader(final File importFile) throws IOException {
+		// Open file
+		InputStream fileStream = new FileInputStream(importFile);
+
+		// Check for compressed file
+		if (importFile.getName().toLowerCase().endsWith(".gz")) {
+			fileStream = new GZIPInputStream(fileStream);
+		}
+
+		// Guess the encoding
+		final BOMInputStream inputStream = new BOMInputStream(fileStream, false, ByteOrderMark.UTF_8,
+				ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE);
+		String charset;
+		if (inputStream.hasBOM()) {
+			charset = inputStream.getBOMCharsetName();
+			log.info("BOM detected. Using {} as encoding", charset);
+		} else {
+			charset = getDefaultEncoding().toString();
+			log.info("No BOM detected. Assuming {} as encoding", charset);
+		}
+		final Reader reader = new InputStreamReader(inputStream, charset);
+		return new CsvListReader(reader, new CsvPreference.Builder(CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE)
+				.skipComments(new CommentMatches("(//|/\\*|#|;).*")).build());
+	}
 
 	/**
 	 * Reads the import files.
