@@ -1,4 +1,4 @@
-[Fastnate](http://fastnate.org)
+[Fastnate](http://fastnate.org)  <img align="right" src="http://fastnate.org/images/logo.png" alt="Logo">
 ============
 
 *The Offline SQL Generator*
