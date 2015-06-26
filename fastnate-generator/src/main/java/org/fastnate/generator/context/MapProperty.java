@@ -252,7 +252,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			}
 		}
 
-		final InsertStatement stmt = new InsertStatement(this.table, getContext().getDialect());
+		final InsertStatement stmt = new InsertStatement(this.table);
 		stmt.addValue(this.idColumn, sourceId);
 		stmt.addValue(this.keyColumn, key);
 		stmt.addValue(this.valueColumn, target);
@@ -260,7 +260,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	}
 
 	private InsertStatement createEmbeddedPropertiesStatement(final String sourceId, final String key, final T value) {
-		final InsertStatement stmt = new InsertStatement(this.table, getContext().getDialect());
+		final InsertStatement stmt = new InsertStatement(this.table);
 
 		stmt.addValue(this.idColumn, sourceId);
 		stmt.addValue(this.keyColumn, key);

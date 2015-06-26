@@ -195,7 +195,7 @@ public class EntitySqlGenerator implements Closeable {
 	private <E> void writeInserts(final E entity, final List<Object> postponedEntities,
 			final EntityClass<E> classDescription, final String discriminator) throws IOException {
 		// Create the insert statement
-		final InsertStatement stmt = new InsertStatement(classDescription.getTable(), this.context.getDialect());
+		final InsertStatement stmt = new InsertStatement(classDescription.getTable());
 
 		if (classDescription.getJoinedParentClass() != null) {
 			// Write the parent tables
@@ -256,7 +256,7 @@ public class EntitySqlGenerator implements Closeable {
 	 *             if the writer throws one
 	 */
 	protected void writeStatement(final EntityStatement stmt) throws IOException {
-		this.writer.write(stmt.toString());
+		this.writer.write(this.context.getDialect().createSql(stmt));
 	}
 
 	private <E, T> void writeTableEntities(final E entity, final List<Object> postponedEntities,

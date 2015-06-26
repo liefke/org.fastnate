@@ -246,7 +246,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 			stmt.addValue(this.idColumn, sourceId);
 			return stmt;
 		}
-		final InsertStatement stmt = new InsertStatement(this.table, getContext().getDialect());
+		final InsertStatement stmt = new InsertStatement(this.table);
 		stmt.addValue(this.idColumn, sourceId);
 		stmt.addValue(this.valueColumn, target);
 		if (this.orderColumn != null) {
@@ -256,7 +256,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	}
 
 	private InsertStatement createEmbeddedPropertiesStatement(final String sourceId, final int index, final T value) {
-		final InsertStatement stmt = new InsertStatement(this.table, getContext().getDialect());
+		final InsertStatement stmt = new InsertStatement(this.table);
 
 		stmt.addValue(this.idColumn, sourceId);
 		if (this.orderColumn != null) {

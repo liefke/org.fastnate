@@ -11,6 +11,8 @@ import javax.validation.constraints.NotNull;
 
 import lombok.Getter;
 
+import org.fastnate.generator.statements.EntityStatement;
+
 /**
  * Handles database specific conversions.
  *
@@ -155,6 +157,20 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * Creates an SQL statement from the given insert statement.
+	 *
+	 * Usually just {@link EntityStatement#toString()} is returned, but some dialects could change database specific
+	 * things.
+	 *
+	 * @param stmt
+	 *            contains the table and all column values
+	 * @return the SQL
+	 */
+	public String createSql(final EntityStatement stmt) {
+		return stmt.toString();
+	}
+
+	/**
 	 * Resolves the GenerationType used, if {@link GenerationType#AUTO} is set for a {@link GeneratedValue}.
 	 *
 	 * @return the replacement for {@link GenerationType#AUTO} for the current dialect in Hibernate.
@@ -172,16 +188,6 @@ public abstract class GeneratorDialect {
 	 */
 	public boolean isEmptyStringEqualToNull() {
 		return false;
-	}
-
-	/**
-	 * Indicates that a construct like {@code INSERT INTO t (c1, c2) VALUES (SELECT id - 1 FROM t, 'x')}.
-	 *
-	 * @return {@code true} if every table is supported in the select statement, {@code false} if we need to rewrite the
-	 *         statement to {@code INSERT INTO t (c) SELECT id - 1, 'x' FROM t}
-	 */
-	public boolean isInsertSelectSameTableSupported() {
-		return true;
 	}
 
 	/**
