@@ -13,10 +13,10 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Transient;
 
-import lombok.Getter;
-
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.Formula;
+
+import lombok.Getter;
 
 /**
  * Indicates how persistent attributes are accessed.
@@ -105,6 +105,11 @@ public enum AccessStyle {
 				} catch (final ReflectiveOperationException e) {
 					throw new IllegalStateException(e);
 				}
+			}
+
+			@Override
+			public String toString() {
+				return this.field.toString();
 			}
 
 		}
@@ -222,6 +227,10 @@ public enum AccessStyle {
 				}
 			}
 
+			@Override
+			public String toString() {
+				return this.method.toString();
+			}
 		}
 
 		@Override
