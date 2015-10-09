@@ -76,9 +76,6 @@
     </module>
     <module name="IllegalInstantiation"/>
     <module name="MagicNumber"/>
-    <module name="RedundantThrows">
-      <property name="suppressLoadErrors" value="true"/>
-    </module>
     <module name="SimplifyBooleanExpression"/>
     <module name="SimplifyBooleanReturn"/>
     <module name="FinalClass"/>

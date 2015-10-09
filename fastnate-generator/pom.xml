@@ -47,10 +47,10 @@
 			<artifactId>guava</artifactId>
 		</dependency>
 
-		<!-- This is just the JPA 2.0 standalone API (without hibernate) -->
+		<!-- This is just the JPA standalone API (without Hibernate) -->
 		<dependency>
 			<groupId>org.hibernate.javax.persistence</groupId>
-			<artifactId>hibernate-jpa-2.0-api</artifactId>
+			<artifactId>hibernate-jpa-2.1-api</artifactId>
 		</dependency>
 
 		<!-- Test dependencies -->
