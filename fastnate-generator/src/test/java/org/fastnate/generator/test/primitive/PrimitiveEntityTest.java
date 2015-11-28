@@ -18,6 +18,28 @@ import org.junit.Test;
 public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 
 	/**
+	 * Tests to write enum properties in an entity.
+	 *
+	 * @throws IOException
+	 *             if the generator throws one
+	 */
+	@Test
+	public void testEnumProperties() throws IOException {
+		final PrimitiveTestEntity testEntity = new PrimitiveTestEntity("Test Enums");
+
+		testEntity.setOrdinalEnum(TestEnum.one);
+
+		testEntity.setStringEnum(TestEnum.two);
+
+		write(testEntity);
+
+		// Test equalness
+		final PrimitiveTestEntity result = findSingleResult(PrimitiveTestEntity.class);
+		assertThat(result.getOrdinalEnum()).isSameAs(TestEnum.one);
+		assertThat(result.getStringEnum()).isSameAs(TestEnum.two);
+	}
+
+	/**
 	 * Tests to write BLOBs and CLOBs.
 	 *
 	 * @throws IOException
@@ -98,8 +120,8 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		// Test equalness
 		final PrimitiveTestEntity result = findSingleResult(PrimitiveTestEntity.class);
 		assertThat(result.getSerializale()).isEqualTo(testEntity.getSerializale());
-		assertThat(result.getSerializale().getStringProperty()).isEqualTo(
-				testEntity.getSerializale().getStringProperty());
+		assertThat(result.getSerializale().getStringProperty())
+				.isEqualTo(testEntity.getSerializale().getStringProperty());
 		assertThat(result.getSerializale().getIntProperty()).isEqualTo(testEntity.getSerializale().getIntProperty());
 	}
 
@@ -131,9 +153,9 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getTime()).isEqualTo(new Date(oneHour));
 
 		// Ignore the millis for timestamp comparison
-		assertThat(
-				new Date(result.getTimestamp().getTime() - result.getTimestamp().getTime()
-						% DateUtils.MILLIS_PER_SECOND)).isEqualTo(testEntity.getTimestamp());
+		assertThat(new Date(
+				result.getTimestamp().getTime() - result.getTimestamp().getTime() % DateUtils.MILLIS_PER_SECOND))
+						.isEqualTo(testEntity.getTimestamp());
 	}
 
 	/**

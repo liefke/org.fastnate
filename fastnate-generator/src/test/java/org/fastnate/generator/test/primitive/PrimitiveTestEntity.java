@@ -4,6 +4,8 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Lob;
@@ -85,6 +87,12 @@ public class PrimitiveTestEntity {
 
 	private SerializableTestObject serializale;
 
+	@Enumerated
+	private TestEnum ordinalEnum;
+
+	@Enumerated(EnumType.STRING)
+	private TestEnum stringEnum;
+
 	/**
 	 * Creates a new instance of {@link PrimitiveTestEntity}.
 	 *
@@ -97,8 +105,8 @@ public class PrimitiveTestEntity {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return this.id == null ? this == obj : obj instanceof PrimitiveTestEntity
-				&& this.id.equals(((PrimitiveTestEntity) obj).id);
+		return this.id == null ? this == obj
+				: obj instanceof PrimitiveTestEntity && this.id.equals(((PrimitiveTestEntity) obj).id);
 	}
 
 	@Override

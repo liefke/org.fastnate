@@ -10,17 +10,20 @@ import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.OrderColumn;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import org.fastnate.generator.test.BaseTestEntity;
 import org.fastnate.generator.test.SimpleTestEntity;
+import org.fastnate.generator.test.primitive.TestEnum;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * An entity for testing collections in SQL generation.
@@ -36,13 +39,18 @@ public class CollectionsTestEntity extends BaseTestEntity {
 	private Set<String> stringSet = new HashSet<>();
 
 	@ElementCollection
-	@CollectionTable(name = "STRING_LIST", joinColumns = @JoinColumn(name = "myEntityId"))
+	@CollectionTable(name = "STRING_LIST", joinColumns = @JoinColumn(name = "myEntityId") )
 	@Column(name = "stringColumn")
 	private List<String> stringList = new ArrayList<>();
 
 	@ElementCollection
 	@OrderColumn
 	private List<String> orderedStringList = new ArrayList<>();
+
+	@ElementCollection
+	@Enumerated
+	@OrderBy
+	private List<TestEnum> enumList = new ArrayList<>();
 
 	@ElementCollection
 	@Embedded
@@ -57,7 +65,7 @@ public class CollectionsTestEntity extends BaseTestEntity {
 	private List<SimpleTestEntity> entityList = new ArrayList<>();
 
 	@OneToMany
-	@JoinTable(name = "OE_LIST", joinColumns = @JoinColumn(name = "join_id"))
+	@JoinTable(name = "OE_LIST", joinColumns = @JoinColumn(name = "join_id") )
 	@OrderColumn(name = "sorting")
 	private List<SimpleTestEntity> orderedEntityList = new ArrayList<>();
 

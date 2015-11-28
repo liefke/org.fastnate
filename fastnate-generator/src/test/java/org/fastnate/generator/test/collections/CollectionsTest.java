@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.test.SimpleTestEntity;
+import org.fastnate.generator.test.primitive.TestEnum;
 import org.junit.Test;
 
 /**
@@ -40,6 +41,9 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 		final CollectionsTestEntity otherEntity = new CollectionsTestEntity();
 		otherEntity.getStringSet().add("Test2");
 		otherEntity.getStringSet().add("Test3");
+
+		testEntity.getEnumList().add(TestEnum.two);
+		testEntity.getEnumList().add(TestEnum.one);
 
 		testEntity.getStringList().add("list1");
 		testEntity.getStringList().add("list2");
@@ -74,12 +78,14 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getStringList()).containsOnly("list1", "list2");
 		assertThat(result.getOrderedStringList()).containsExactly("A", "Z", "M");
 
+		assertThat(result.getEnumList()).containsExactly(TestEnum.one, TestEnum.two);
+
 		assertThat(result.getEmbeddedList()).hasSize(2);
-		assertThat(result.getEmbeddedList().get(0).getDescription()).isEqualTo(
-				testEntity.getEmbeddedList().get(0).getDescription());
+		assertThat(result.getEmbeddedList().get(0).getDescription())
+				.isEqualTo(testEntity.getEmbeddedList().get(0).getDescription());
 		assertThat(result.getEmbeddedList().get(0).getOtherEntity().getStringSet()).containsOnly("Test2", "Test3");
-		assertThat(result.getEmbeddedList().get(1).getDescription()).isEqualTo(
-				testEntity.getEmbeddedList().get(1).getDescription());
+		assertThat(result.getEmbeddedList().get(1).getDescription())
+				.isEqualTo(testEntity.getEmbeddedList().get(1).getDescription());
 
 		assertThat(result.getEntitySet()).hasSize(2);
 		assertThat(extractNames(result.getEntitySet())).containsOnly(testChild1.getName(), testChild2.getName());
