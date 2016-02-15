@@ -13,6 +13,8 @@ import javax.persistence.TemporalType;
  */
 public final class OracleDialect extends GeneratorDialect {
 
+	private static final int MAX_VARCHAR_LENGTH = 2000;
+
 	@Override
 	public String buildCurrentSequenceValue(final String sequence) {
 		return sequence + ".currval";
@@ -57,5 +59,23 @@ public final class OracleDialect extends GeneratorDialect {
 	@Override
 	public boolean isSequenceInWhereSupported() {
 		return false;
+	}
+
+	@Override
+	public String quoteString(final String value) {
+		if (value.length() > MAX_VARCHAR_LENGTH) {
+			// If our string is to long, we use "TO_CLOB" to ensure that the content fits
+			final StringBuilder result = new StringBuilder();
+			for (int i = 0; i < value.length(); i += MAX_VARCHAR_LENGTH) {
+				if (i > 0) {
+					result.append(" || ");
+				}
+				result.append("TO_CLOB(")
+						.append(super.quoteString(value.substring(i, Math.min(value.length(), i + MAX_VARCHAR_LENGTH))))
+						.append(')');
+			}
+			return result.toString();
+		}
+		return super.quoteString(value);
 	}
 }
