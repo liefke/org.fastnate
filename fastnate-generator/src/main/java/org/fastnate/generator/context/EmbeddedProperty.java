@@ -9,15 +9,16 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import javax.persistence.Access;
+import javax.persistence.AssociationOverride;
 import javax.persistence.AttributeOverride;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 
-import lombok.Getter;
-
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
+
+import lombok.Getter;
 
 /**
  * Handling of properties defined in {@link Embeddable}s.
@@ -58,7 +59,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 		}
 
 		// Determine the access style
-		AccessStyle accessStyle;
+		final AccessStyle accessStyle;
 		final Access accessType = type.getAnnotation(Access.class);
 		if (accessType != null) {
 			accessStyle = AccessStyle.getStyle(accessType.value());
@@ -66,12 +67,15 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 			accessStyle = attribute.getAccessStyle();
 		}
 
-		final Map<String, AttributeOverride> attributeOverrides = EntityClass.getAttributeOverrides(attribute);
+		final Map<String, AttributeOverride> attributeOverrides = EntityClass
+				.getAttributeOverrides(attribute.getElement());
+		final Map<String, AssociationOverride> accociationOverrides = EntityClass
+				.getAccociationOverrides(attribute.getElement());
 		for (final AttributeAccessor field : accessStyle.getDeclaredAttributes(type)) {
 			final AttributeOverride attrOveride = attributeOverrides.get(field.getName());
-			final Property<T, ?> property = entityClass.buildProperty(field, attrOveride != null ? attrOveride.column()
-					: field.getAnnotation(Column.class),
-					EntityClass.getAccociationOverrides(attribute).get(field.getName()));
+			final Property<T, ?> property = entityClass.buildProperty(field,
+					attrOveride != null ? attrOveride.column() : field.getAnnotation(Column.class),
+					accociationOverrides.get(field.getName()));
 			if (property != null) {
 				this.embeddedProperties.put(field.getName(), property);
 			}

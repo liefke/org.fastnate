@@ -17,7 +17,8 @@ import org.junit.Test;
  */
 public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 
-	private void testInheritance(final SubclassEntity subEntity, final SuperclassEntity superEntity) throws IOException {
+	private void testInheritance(final SubclassEntity subEntity, final SuperclassEntity superEntity)
+			throws IOException {
 		write(subEntity);
 		write(superEntity);
 
@@ -30,7 +31,7 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 
 		final List<? extends SuperclassEntity> foundEntities = findResults(superclass);
 		assertThat(foundEntities).hasSize(2);
-		SuperclassEntity foundSuperEntity;
+		final SuperclassEntity foundSuperEntity;
 		if (foundEntities.get(0).equals(foundSubEntity)) {
 			assertThat(foundEntities.get(0)).isInstanceOf(subclass);
 			foundSuperEntity = foundEntities.get(1);

@@ -1,14 +1,14 @@
 package org.fastnate.generator.test.embedded;
 
 import javax.persistence.Embeddable;
-import javax.persistence.OneToOne;
+import javax.persistence.ManyToOne;
+
+import org.fastnate.generator.test.SimpleTestEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import org.fastnate.generator.test.SimpleTestEntity;
 
 /**
  * An embedded property of an entry.
@@ -24,6 +24,6 @@ public class TestEmbeddedProperties {
 
 	private String description;
 
-	@OneToOne
+	@ManyToOne
 	private SimpleTestEntity otherNode;
 }

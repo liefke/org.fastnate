@@ -2,6 +2,7 @@ package org.fastnate.generator.context;
 
 import java.beans.Introspector;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
 
 /**
@@ -14,6 +15,13 @@ import java.lang.reflect.Type;
 public interface AttributeAccessor {
 
 	/**
+	 * Describes how this attribute accesses the values below.
+	 *
+	 * @return the type that has created this attribute accessor
+	 */
+	AccessStyle getAccessStyle();
+
+	/**
 	 * Finds an annotation of the attribute.
 	 *
 	 * @param annotationClass
@@ -21,6 +29,27 @@ public interface AttributeAccessor {
 	 * @return the annotation or {@code null} if none was found
 	 */
 	<A extends Annotation> A getAnnotation(final Class<A> annotationClass);
+
+	/**
+	 * The actual field or method.
+	 *
+	 * @return the wrapped element of the attribute
+	 */
+	AnnotatedElement getElement();
+
+	/**
+	 * The generic type of the accessed attribute.
+	 *
+	 * @return the generic type of the field or the generic return type of the method
+	 */
+	Type getGenericType();
+
+	/**
+	 * The name of the accessed attribute.
+	 *
+	 * @return the name ({@link Introspector#decapitalize(String) decapitalized} if necessary)
+	 */
+	String getName();
 
 	/**
 	 * The type of the accessed attribute.
@@ -63,26 +92,5 @@ public interface AttributeAccessor {
 	 *            the new value
 	 */
 	<E, T> void setValue(final E entity, final T value);
-
-	/**
-	 * The generic type of the accessed attribute.
-	 *
-	 * @return the generic type of the field or the generic return type of the method
-	 */
-	Type getGenericType();
-
-	/**
-	 * The name of the accessed attribute.
-	 *
-	 * @return the name ({@link Introspector#decapitalize(String) decapitalized} if necessary)
-	 */
-	String getName();
-
-	/**
-	 * Describes how this attribute accesses the values below.
-	 *
-	 * @return the type that has created this attribute accessor
-	 */
-	AccessStyle getAccessStyle();
 
 }

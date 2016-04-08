@@ -15,8 +15,6 @@ import javax.persistence.MapsId;
 import javax.persistence.OneToOne;
 import javax.validation.constraints.NotNull;
 
-import lombok.Getter;
-
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
@@ -25,6 +23,8 @@ import org.hibernate.annotations.Any;
 import org.hibernate.annotations.AnyMetaDef;
 import org.hibernate.annotations.ManyToAny;
 import org.hibernate.annotations.MetaValue;
+
+import lombok.Getter;
 
 /**
  * Describes a property of an {@link EntityClass} that references another entity.
@@ -50,7 +50,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 
 		private final String anyMetaColumn;
 
-		public MappingInformation(final AttributeAccessor attribute) {
+		MappingInformation(final AttributeAccessor attribute) {
 			final OneToOne oneToOne = attribute.getAnnotation(OneToOne.class);
 			final NotNull notNull = attribute.getAnnotation(NotNull.class);
 			if (oneToOne != null) {
@@ -71,8 +71,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 					} else {
 						final ManyToAny manyToAny = attribute.getAnnotation(ManyToAny.class);
 						if (manyToAny == null) {
-							throw new IllegalArgumentException(attribute
-									+ " is neither declared as OneToOne nor ManyToOne");
+							throw new IllegalArgumentException(
+									attribute + " is neither declared as OneToOne nor ManyToOne");
 						}
 						this.optional = notNull == null;
 						this.anyMetaColumn = manyToAny.metaColumn().name();
@@ -143,8 +143,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 
 		// Initialize the column name
 		if (this.mappedBy == null) {
-			final JoinColumn joinColumn = override != null && override.joinColumns().length > 0 ? override
-					.joinColumns()[0] : attribute.getAnnotation(JoinColumn.class);
+			final JoinColumn joinColumn = override != null && override.joinColumns().length > 0
+					? override.joinColumns()[0] : attribute.getAnnotation(JoinColumn.class);
 			if (joinColumn != null && joinColumn.name().length() > 0) {
 				this.column = joinColumn.name();
 			} else {
@@ -206,8 +206,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	private String findAnyDesc(final T entity) {
 		final String desc = this.anyClasses.get(entity.getClass());
 		if (desc == null) {
-			throw new IllegalArgumentException("Can'f find meta description for " + entity.getClass() + " on "
-					+ getAttribute());
+			throw new IllegalArgumentException(
+					"Can'f find meta description for " + entity.getClass() + " on " + getAttribute());
 		}
 		return desc;
 	}

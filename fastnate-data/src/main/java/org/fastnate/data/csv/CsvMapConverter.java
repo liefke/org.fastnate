@@ -56,7 +56,7 @@ public final class CsvMapConverter<K, T> implements CsvPropertyConverter<T> {
 		if (value == null || value.length() == 0) {
 			return null;
 		}
-		K key;
+		final K key;
 		if (this.keyConstructor != null) {
 			try {
 				key = this.keyConstructor.newInstance(value);

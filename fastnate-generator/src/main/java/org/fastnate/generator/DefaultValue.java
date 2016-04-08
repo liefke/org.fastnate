@@ -9,10 +9,10 @@ import javax.persistence.Entity;
 
 /**
  * Annotation for attributes of {@link Entity entities}, which indicates default values during SQL generation.
- * 
+ *
  * Attention: This annotation is not evaluated by JPA - neither the JPA provider nor the database will use these values
  * during runtime.
- * 
+ *
  * @author Tobias Liefke
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -21,7 +21,7 @@ public @interface DefaultValue {
 
 	/**
 	 * The value to use during export.
-	 * 
+	 *
 	 * Depending on the type of the field:
 	 * <dl>
 	 * <dt>a plain string which will be escaped during export</dt>
@@ -31,6 +31,8 @@ public @interface DefaultValue {
 	 * <dt>a SQL expression which is used "as is" during export</dt>
 	 * <dd>for all other fields</dd>
 	 * </dl>
+	 *
+	 * @return the default value
 	 */
 	String value();
 

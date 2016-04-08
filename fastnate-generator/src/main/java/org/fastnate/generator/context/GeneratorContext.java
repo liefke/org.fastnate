@@ -9,14 +9,14 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.SequenceGenerator;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.dialect.H2Dialect;
 import org.fastnate.generator.provider.HibernateProvider;
 import org.fastnate.generator.provider.JpaProvider;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Represents the configuration and state for one or more {@link EntitySqlGenerator}s.
@@ -139,7 +139,8 @@ public class GeneratorContext {
 		}
 		try {
 			this.dialect = (GeneratorDialect) Class.forName(dialectName).newInstance();
-		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
+		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException
+				| ClassCastException e) {
 			throw new IllegalArgumentException("Can't instantiate dialect: " + dialectName, e);
 		}
 
@@ -149,20 +150,21 @@ public class GeneratorContext {
 		}
 		try {
 			this.provider = (JpaProvider) Class.forName(providerName).newInstance();
-		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
+		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException
+				| ClassCastException e) {
 			throw new IllegalArgumentException("Can't instantiate provider: " + providerName, e);
 		}
 
 		this.explicitIds = Boolean
 				.parseBoolean(settings.getProperty(EXPLICIT_IDS_KEY, String.valueOf(this.explicitIds)));
-		this.writeNullValues = Boolean.parseBoolean(settings.getProperty(NULL_VALUES_KEY,
-				String.valueOf(this.writeNullValues)));
-		this.uniquePropertyQuality = UniquePropertyQuality.valueOf(settings.getProperty(UNIQUE_PROPERTIES_QUALITY_KEY,
-				this.uniquePropertyQuality.name()));
-		this.maxUniqueProperties = Integer.parseInt(settings.getProperty(UNIQUE_PROPERTIES_MAX_KEY,
-				String.valueOf(this.maxUniqueProperties)));
-		this.preferSequenceCurentValue = Boolean.parseBoolean(settings.getProperty(PREFER_SEQUENCE_CURRENT_VALUE,
-				String.valueOf(this.preferSequenceCurentValue)));
+		this.writeNullValues = Boolean
+				.parseBoolean(settings.getProperty(NULL_VALUES_KEY, String.valueOf(this.writeNullValues)));
+		this.uniquePropertyQuality = UniquePropertyQuality
+				.valueOf(settings.getProperty(UNIQUE_PROPERTIES_QUALITY_KEY, this.uniquePropertyQuality.name()));
+		this.maxUniqueProperties = Integer
+				.parseInt(settings.getProperty(UNIQUE_PROPERTIES_MAX_KEY, String.valueOf(this.maxUniqueProperties)));
+		this.preferSequenceCurentValue = Boolean.parseBoolean(
+				settings.getProperty(PREFER_SEQUENCE_CURRENT_VALUE, String.valueOf(this.preferSequenceCurentValue)));
 	}
 
 	/**
@@ -178,7 +180,7 @@ public class GeneratorContext {
 		}
 		final String columnId = property.getTable() + "." + property.getColumn();
 		final Long currentValue = this.ids.get(columnId);
-		Long newValue;
+		final Long newValue;
 		if (currentValue == null) {
 			newValue = 0L;
 		} else {
@@ -198,7 +200,7 @@ public class GeneratorContext {
 	public Long createNextValue(final SequenceGenerator generator) {
 		final String sequenceName = generator.sequenceName();
 		final Long currentValue = this.sequences.get(sequenceName);
-		Long newValue;
+		final Long newValue;
 		if (currentValue == null) {
 			newValue = (long) generator.initialValue();
 		} else {

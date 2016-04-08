@@ -2,6 +2,7 @@ package org.fastnate.generator.context;
 
 import java.beans.Introspector;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -56,6 +57,11 @@ public enum AccessStyle {
 			@Override
 			public <A extends Annotation> A getAnnotation(final Class<A> annotationClass) {
 				return this.field.getAnnotation(annotationClass);
+			}
+
+			@Override
+			public AnnotatedElement getElement() {
+				return this.field;
 			}
 
 			@Override
@@ -147,7 +153,7 @@ public enum AccessStyle {
 			 * @param getter
 			 *            the method to read the property
 			 */
-			public Accessor(final Method getter) {
+			Accessor(final Method getter) {
 				this.method = getter;
 				this.name = Introspector.decapitalize(getter.getName().replaceAll("^get|is", ""));
 			}
@@ -160,6 +166,11 @@ public enum AccessStyle {
 			@Override
 			public <A extends Annotation> A getAnnotation(final Class<A> annotationClass) {
 				return this.method.getAnnotation(annotationClass);
+			}
+
+			@Override
+			public AnnotatedElement getElement() {
+				return this.method;
 			}
 
 			@Override

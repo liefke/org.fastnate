@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
@@ -27,6 +25,8 @@ import org.apache.commons.lang.StringUtils;
 import org.supercsv.comment.CommentMatches;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for reading a csv file into an object. Useful for constructing arbitrary object types - not only entities.
@@ -73,7 +73,7 @@ public abstract class AbstractCsvReader<R> {
 
 	/**
 	 * Defines the default encoding for CSV files, if it can't be determined from the BOM.
-	 * 
+	 *
 	 * @return the default encoding
 	 */
 	protected Charset getDefaultEncoding() {
@@ -104,7 +104,7 @@ public abstract class AbstractCsvReader<R> {
 		// Guess the encoding
 		final BOMInputStream inputStream = new BOMInputStream(fileStream, false, ByteOrderMark.UTF_8,
 				ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE);
-		String charset;
+		final String charset;
 		if (inputStream.hasBOM()) {
 			charset = inputStream.getBOMCharsetName();
 			log.info("BOM detected. Using {} as encoding", charset);

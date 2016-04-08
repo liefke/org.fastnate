@@ -17,14 +17,14 @@ import javax.persistence.MapKeyColumn;
 import javax.persistence.MapKeyJoinColumn;
 import javax.persistence.OneToMany;
 
-import lombok.Getter;
-
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.converter.ValueConverter;
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
 
 import com.google.common.base.Preconditions;
+
+import lombok.Getter;
 
 /**
  * Describes a property of an {@link EntityClass} that is a {@link Map}.
@@ -62,8 +62,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	 * @return {@code true} if an {@link MapProperty} may be created for the given attribute
 	 */
 	static boolean isMapProperty(final AttributeAccessor attribute) {
-		return (attribute.hasAnnotation(OneToMany.class) || attribute.hasAnnotation(ManyToMany.class) || attribute
-				.hasAnnotation(ElementCollection.class)) && Map.class.isAssignableFrom(attribute.getType());
+		return (attribute.hasAnnotation(OneToMany.class) || attribute.hasAnnotation(ManyToMany.class)
+				|| attribute.hasAnnotation(ElementCollection.class)) && Map.class.isAssignableFrom(attribute.getType());
 	}
 
 	/** Indicates that this property is defined by another property on the target type. */
@@ -116,14 +116,14 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 
 		// Initialize the key description
 		final MapKeyClass keyClassAnnotation = attribute.getAnnotation(MapKeyClass.class);
-		this.keyClass = getPropertyArgument(attribute, keyClassAnnotation != null ? keyClassAnnotation.value()
-				: void.class, 0);
+		this.keyClass = getPropertyArgument(attribute,
+				keyClassAnnotation != null ? keyClassAnnotation.value() : void.class, 0);
 		this.keyEntityClass = sourceClass.getContext().getDescription(this.keyClass);
 		if (this.keyEntityClass != null) {
 			// Entity key
 			this.keyConverter = null;
-			this.keyColumn = buildKeyColumn(attribute.getAnnotation(MapKeyJoinColumn.class), attribute.getName()
-					+ "_KEY");
+			this.keyColumn = buildKeyColumn(attribute.getAnnotation(MapKeyJoinColumn.class),
+					attribute.getName() + "_KEY");
 		} else {
 			// Primitive key
 			this.keyConverter = PrimitiveProperty.createConverter(attribute, this.keyClass, true);
@@ -141,8 +141,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			// Initialize the table and id column name
 			final CollectionTable collectionTable = attribute.getAnnotation(CollectionTable.class);
 			this.table = buildTableName(collectionTable, sourceClass.getEntityName() + '_' + attribute.getName());
-			this.idColumn = buildIdColumn(attribute, override, collectionTable, sourceClass.getEntityName() + '_'
-					+ sourceClass.getIdColumn(attribute));
+			this.idColumn = buildIdColumn(attribute, override, collectionTable,
+					sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute));
 
 			// Initialize the target class description and columns
 			this.valueClass = getPropertyArgument(attribute, values.targetClass(), 1);
@@ -154,8 +154,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			} else {
 				this.valueEntityClass = sourceClass.getContext().getDescription(this.valueClass);
 				// Check for primitive value
-				this.valueConverter = this.valueEntityClass == null ? PrimitiveProperty.createConverter(attribute,
-						this.valueClass, false) : null;
+				this.valueConverter = this.valueEntityClass == null
+						? PrimitiveProperty.createConverter(attribute, this.valueClass, false) : null;
 				this.valueColumn = buildValueColumn(attribute, attribute.getName());
 			}
 		} else {
@@ -164,8 +164,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			final OneToMany oneToMany = attribute.getAnnotation(OneToMany.class);
 			if (oneToMany == null) {
 				final ManyToMany manyToMany = attribute.getAnnotation(ManyToMany.class);
-				Preconditions.checkArgument(manyToMany != null, attribute
-						+ " is neither declared as OneToMany nor ManyToMany nor ElementCollection");
+				Preconditions.checkArgument(manyToMany != null,
+						attribute + " is neither declared as OneToMany nor ManyToMany nor ElementCollection");
 				this.valueClass = getPropertyArgument(attribute, manyToMany.targetEntity(), 1);
 				this.mappedBy = manyToMany.mappedBy().length() == 0 ? null : manyToMany.mappedBy();
 			} else {
@@ -177,8 +177,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			this.valueEntityClass = sourceClass.getContext().getDescription(this.valueClass);
 
 			// An entity mapping needs an entity class
-			Preconditions
-					.checkArgument(this.valueClass != null, "Map field " + attribute + " needs an entity as value");
+			Preconditions.checkArgument(this.valueClass != null,
+					"Map field " + attribute + " needs an entity as value");
 
 			// No primitive value
 			this.valueConverter = null;
@@ -193,10 +193,10 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 				// Unidirectional and we need a mapping table
 				final JoinTable joinTable = attribute.getAnnotation(JoinTable.class);
 				final CollectionTable collectionTable = attribute.getAnnotation(CollectionTable.class);
-				this.table = buildTableName(attribute, override, joinTable, collectionTable, sourceClass.getTable()
-						+ '_' + this.valueEntityClass.getTable());
-				this.idColumn = buildIdColumn(attribute, override, joinTable, collectionTable, sourceClass.getTable()
-						+ '_' + sourceClass.getIdColumn(attribute));
+				this.table = buildTableName(attribute, override, joinTable, collectionTable,
+						sourceClass.getTable() + '_' + this.valueEntityClass.getTable());
+				this.idColumn = buildIdColumn(attribute, override, joinTable, collectionTable,
+						sourceClass.getTable() + '_' + sourceClass.getIdColumn(attribute));
 				this.valueColumn = buildValueColumn(attribute,
 						attribute.getName() + '_' + this.valueEntityClass.getIdColumn(attribute));
 			}
@@ -212,7 +212,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 		final List<EntityStatement> result = new ArrayList<>();
 		final String sourceId = EntityConverter.getEntityReference(entity, getMappedId(), getContext(), false);
 		for (final Map.Entry<K, T> entry : getValue(entity).entrySet()) {
-			String key;
+			final String key;
 			if (entry.getKey() == null) {
 				key = "null";
 			} else if (this.keyEntityClass != null) {
@@ -224,7 +224,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 			if (isEmbedded()) {
 				result.add(createEmbeddedPropertiesStatement(sourceId, key, entry.getValue()));
 			} else {
-				final EntityStatement statement = createDirectPropertyStatement(entity, sourceId, key, entry.getValue());
+				final EntityStatement statement = createDirectPropertyStatement(entity, sourceId, key,
+						entry.getValue());
 				if (statement != null) {
 					result.add(statement);
 				}
@@ -236,7 +237,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 
 	private EntityStatement createDirectPropertyStatement(final E entity, final String sourceId, final String key,
 			final T value) {
-		String target;
+		final String target;
 		if (value == null) {
 			target = "null";
 		} else {

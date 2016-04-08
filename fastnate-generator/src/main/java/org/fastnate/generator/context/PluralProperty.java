@@ -17,9 +17,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.MapsId;
 
-import lombok.Getter;
-
 import org.fastnate.generator.statements.InsertStatement;
+
+import lombok.Getter;
 
 /**
  * Base class for {@link MapProperty} and {@link CollectionProperty}.
@@ -253,7 +253,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	protected void buildEmbeddedProperties(final Class<?> targetType) {
 		if (targetType.isAnnotationPresent(Embeddable.class)) {
 			// Determine the access style
-			AccessStyle accessStyle;
+			final AccessStyle accessStyle;
 			final Access accessType = targetType.getAnnotation(Access.class);
 			if (accessType != null) {
 				accessStyle = AccessStyle.getStyle(accessType.value());
@@ -262,13 +262,15 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			}
 
 			this.embeddedProperties = new ArrayList<>();
-			final Map<String, AttributeOverride> attributeOverrides = EntityClass.getAttributeOverrides(getAttribute());
+			final Map<String, AttributeOverride> attributeOverrides = EntityClass
+					.getAttributeOverrides(getAttribute().getElement());
+			final Map<String, AssociationOverride> accociationOverrides = EntityClass
+					.getAccociationOverrides(getAttribute().getElement());
 			for (final AttributeAccessor attribute : accessStyle.getDeclaredAttributes(targetType)) {
 				final AttributeOverride attributeOveride = attributeOverrides.get(attribute.getName());
-				final Column columnMetadata = attributeOveride != null ? attributeOveride.column() : attribute
-						.getAnnotation(Column.class);
-				final AssociationOverride assocOverride = EntityClass.getAccociationOverrides(getAttribute()).get(
-						attribute.getName());
+				final Column columnMetadata = attributeOveride != null ? attributeOveride.column()
+						: attribute.getAnnotation(Column.class);
+				final AssociationOverride assocOverride = accociationOverrides.get(attribute.getName());
 				final SingularProperty<T, ?> property = buildProperty(attribute, columnMetadata, assocOverride);
 				if (property != null) {
 					this.embeddedProperties.add(property);

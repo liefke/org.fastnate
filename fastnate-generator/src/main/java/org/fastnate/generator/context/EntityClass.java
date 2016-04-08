@@ -1,5 +1,6 @@
 package org.fastnate.generator.context;
 
+import java.lang.reflect.AnnotatedElement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,12 +35,12 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.context.GenerationState.PendingState;
 import org.fastnate.generator.statements.EntityStatement;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Describes the DB relevant metadata of an {@link Entity entity class}.
@@ -76,17 +77,34 @@ public final class EntityClass<E> {
 
 	}
 
-	static Map<String, AssociationOverride> getAccociationOverrides(final AttributeAccessor attribute) {
+	/** Contains the default values for a sequence generator, if none is given. */
+	private static final SequenceGenerator DEFAULT_SEQUENCE_GENERATOR = AnnotationDefaults
+			.create(SequenceGenerator.class);
+
+	/**
+	 * Funds all association overrides that are attached to the given field or class.
+	 *
+	 * @param fieldOrClass
+	 *            the annotated element
+	 * @return a mapping from the name of the override to its definition, empty if neither {@link AssociationOverrides}
+	 *         nor {@link AssociationOverride} are given
+	 */
+	static Map<String, AssociationOverride> getAccociationOverrides(final AnnotatedElement fieldOrClass) {
+		final AssociationOverrides multiOverride = fieldOrClass.getAnnotation(AssociationOverrides.class);
+		final AssociationOverride singleOverride = fieldOrClass.getAnnotation(AssociationOverride.class);
+
+		if (multiOverride == null && singleOverride == null) {
+			return Collections.emptyMap();
+		}
+
 		final Collection<AssociationOverride> config = new ArrayList<>();
 
 		// Multi annotation
-		final AssociationOverrides multiOverride = attribute.getAnnotation(AssociationOverrides.class);
 		if (multiOverride != null) {
 			config.addAll(Arrays.asList(multiOverride.value()));
 		}
 
 		// Single annotion
-		final AssociationOverride singleOverride = attribute.getAnnotation(AssociationOverride.class);
 		if (singleOverride != null) {
 			config.add(singleOverride);
 		}
@@ -98,17 +116,30 @@ public final class EntityClass<E> {
 		return attributeOverrides;
 	}
 
-	static Map<String, AttributeOverride> getAttributeOverrides(final AttributeAccessor attribute) {
+	/**
+	 * Funds all attribute overrides that are attached to the given field or class.
+	 *
+	 * @param fieldOrClass
+	 *            the annotated element
+	 * @return a mapping from the name of the override to its definition, empty if neither {@link AttributeOverrides}
+	 *         nor {@link AttributeOverride} are given
+	 */
+	static Map<String, AttributeOverride> getAttributeOverrides(final AnnotatedElement fieldOrClass) {
+		final AttributeOverrides multiOverride = fieldOrClass.getAnnotation(AttributeOverrides.class);
+		final AttributeOverride singleOverride = fieldOrClass.getAnnotation(AttributeOverride.class);
+
+		if (multiOverride == null && singleOverride == null) {
+			return Collections.emptyMap();
+		}
+
 		final Collection<AttributeOverride> config = new ArrayList<>();
 
 		// Multi annotation
-		final AttributeOverrides multiOverride = attribute.getAnnotation(AttributeOverrides.class);
 		if (multiOverride != null) {
 			config.addAll(Arrays.asList(multiOverride.value()));
 		}
 
 		// Single annotion
-		final AttributeOverride singleOverride = attribute.getAnnotation(AttributeOverride.class);
 		if (singleOverride != null) {
 			config.add(singleOverride);
 		}
@@ -119,10 +150,6 @@ public final class EntityClass<E> {
 		}
 		return attributeOverrides;
 	}
-
-	/** Contains the default values for a sequence generator, if none is given. */
-	private static final SequenceGenerator DEFAULT_SEQUENCE_GENERATOR = AnnotationDefaults
-			.create(SequenceGenerator.class);
 
 	/** The current context. */
 	private final GeneratorContext context;
@@ -216,6 +243,9 @@ public final class EntityClass<E> {
 	/** All attribute overriddes of this class and the parent classes. */
 	private final Map<String, AttributeOverride> attributeOverrides = new HashMap<>();
 
+	/** All association overriddes of this class and the parent classes. */
+	private final Map<String, AssociationOverride> associationOverrides = new HashMap<>();
+
 	/**
 	 * Creates a new description of an entity class.
 	 *
@@ -240,11 +270,11 @@ public final class EntityClass<E> {
 	void build() {
 		// Find the (initial) table name
 		final Table tableMetadata = this.entityClass.getAnnotation(Table.class);
-		this.table = tableMetadata == null || tableMetadata.name().length() == 0 ? this.entityName : tableMetadata
-				.name();
+		this.table = tableMetadata == null || tableMetadata.name().length() == 0 ? this.entityName
+				: tableMetadata.name();
 
-		// Build the attribute overrides of this class
-		buildAttributeOverrides(this.entityClass);
+		// Build the attribute and association overrides of this class
+		buildOverrides(this.entityClass);
 
 		// Now build the sequences (referenced from GeneratedIdProperty)
 		this.sequences.put("", DEFAULT_SEQUENCE_GENERATOR);
@@ -280,26 +310,6 @@ public final class EntityClass<E> {
 
 	}
 
-	private void buildAttributeOverrides(final Class<? super E> inspectedClass) {
-		if (inspectedClass.getSuperclass() != null) {
-			buildAttributeOverrides(inspectedClass.getSuperclass());
-		}
-
-		// Multi annotation
-		final AttributeOverrides multiOverride = this.entityClass.getAnnotation(AttributeOverrides.class);
-		if (multiOverride != null) {
-			for (final AttributeOverride override : multiOverride.value()) {
-				this.attributeOverrides.put(override.name(), override);
-			}
-		}
-
-		// Single annotion
-		final AttributeOverride singleOverride = this.entityClass.getAnnotation(AttributeOverride.class);
-		if (singleOverride != null) {
-			this.attributeOverrides.put(singleOverride.name(), singleOverride);
-		}
-	}
-
 	private void buildDiscriminator() {
 		if (this.inheritanceType == InheritanceType.SINGLE_TABLE || this.inheritanceType == InheritanceType.JOINED) {
 			final DiscriminatorColumn column = this.hierarchyRoot.entityClass.getAnnotation(DiscriminatorColumn.class);
@@ -312,8 +322,8 @@ public final class EntityClass<E> {
 	}
 
 	private String buildDiscriminator(final EntityClass<?> c, final DiscriminatorColumn column) {
-		DiscriminatorType type;
-		int maxLength;
+		final DiscriminatorType type;
+		final int maxLength;
 		if (column == null) {
 			type = DiscriminatorType.STRING;
 			final int defaultMaxLength = 31;
@@ -402,6 +412,17 @@ public final class EntityClass<E> {
 		buildDiscriminator();
 	}
 
+	private void buildOverrides(final Class<? super E> inspectedClass) {
+		if (inspectedClass.getSuperclass() != null) {
+			buildOverrides(inspectedClass.getSuperclass());
+		}
+
+		// Add the attribute and association overrides of this class
+		this.attributeOverrides.putAll(getAttributeOverrides(inspectedClass));
+		this.associationOverrides.putAll(getAccociationOverrides(inspectedClass));
+
+	}
+
 	private void buildPrimaryKeyJoinColumn() {
 		if (this.joinedParentClass.getIdProperty() instanceof SingularProperty) {
 			final PrimaryKeyJoinColumn pkColumn = this.entityClass.getAnnotation(PrimaryKeyJoinColumn.class);
@@ -435,7 +456,8 @@ public final class EntityClass<E> {
 		if (c.isAnnotationPresent(MappedSuperclass.class) || c.isAnnotationPresent(Entity.class)) {
 			for (final AttributeAccessor field : this.accessStyle.getDeclaredAttributes(c)) {
 				if (!field.hasAnnotation(EmbeddedId.class) && !field.hasAnnotation(Id.class)) {
-					final Property<E, ?> property = buildProperty(field, getColumnAnnotation(field), null);
+					final Property<E, ?> property = buildProperty(field, getColumnAnnotation(field),
+							this.associationOverrides.get(field.getName()));
 					if (property != null) {
 						this.properties.put(field.getName(), property);
 						this.allProperties.add(property);
@@ -449,6 +471,17 @@ public final class EntityClass<E> {
 
 	}
 
+	/**
+	 * Builds the property for the given attribute.
+	 *
+	 * @param attribute
+	 *            the attribute to inspect
+	 * @param columnMetadata
+	 *            the attached (or overriden) column metadata
+	 * @param override
+	 *            the AssociationOverride found for this attribute
+	 * @return the property that represents the attribute or {@code null} if not persistent
+	 */
 	<X> Property<X, ?> buildProperty(final AttributeAccessor attribute, final Column columnMetadata,
 			final AssociationOverride override) {
 		if (attribute.isPersistent()) {
@@ -572,7 +605,8 @@ public final class EntityClass<E> {
 					registerSequence(attribute.getAnnotation(SequenceGenerator.class));
 					this.idProperty = new GeneratedIdProperty<>(this, attribute, getColumnAnnotation(attribute));
 				} else {
-					this.idProperty = buildProperty(attribute, getColumnAnnotation(attribute), null);
+					this.idProperty = buildProperty(attribute, getColumnAnnotation(attribute),
+							this.associationOverrides.get(attribute.getName()));
 				}
 				return true;
 			}
@@ -609,13 +643,13 @@ public final class EntityClass<E> {
 			final Map<String, ?> embeddedProperties = ((EmbeddedProperty<E, ?>) this.idProperty)
 					.getEmbeddedProperties();
 			if (idField == null) {
-				ModelException.test(embeddedProperties.size() != 1, "Missing MapsId annotation for access to "
-						+ this.idProperty);
+				ModelException.test(embeddedProperties.size() != 1,
+						"Missing MapsId annotation for access to " + this.idProperty);
 				property = (Property<E, ?>) embeddedProperties.values().iterator().next();
 			} else {
 				property = (Property<E, ?>) embeddedProperties.get(idField);
-				ModelException.test(property != null, "MapsId reference " + idField + " not found in "
-						+ this.idProperty);
+				ModelException.test(property != null,
+						"MapsId reference " + idField + " not found in " + this.idProperty);
 			}
 		}
 		@SuppressWarnings("null")
@@ -628,10 +662,8 @@ public final class EntityClass<E> {
 		final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
 		if (!generatedIdProperty.isReference(entity) && this.uniqueProperties != null) {
 			// Check to write "currval" of sequence if we just have written the same value
-			if (this.context.isPreferSequenceCurentValue()
-					&& generatedIdProperty.getGenerator() != null
-					&& this.context.getCurrentValue(generatedIdProperty.getGenerator()).equals(
-							generatedIdProperty.getValue(entity))) {
+			if (this.context.isPreferSequenceCurentValue() && generatedIdProperty.getGenerator() != null && this.context
+					.getCurrentValue(generatedIdProperty.getGenerator()).equals(generatedIdProperty.getValue(entity))) {
 				return generatedIdProperty.getExpression(entity, whereExpression);
 			}
 
@@ -673,8 +705,8 @@ public final class EntityClass<E> {
 		if (this.idProperty instanceof EmbeddedProperty) {
 			final MapsId mapsId = attribute.getAnnotation(MapsId.class);
 			if (mapsId != null && mapsId.value().length() > 0) {
-				final Property<?, ?> property = ((EmbeddedProperty<E, ?>) this.idProperty).getEmbeddedProperties().get(
-						mapsId.value());
+				final Property<?, ?> property = ((EmbeddedProperty<E, ?>) this.idProperty).getEmbeddedProperties()
+						.get(mapsId.value());
 				if (property instanceof SingularProperty) {
 					return ((SingularProperty<?, ?>) this.idProperty).getColumn();
 				}
@@ -778,7 +810,7 @@ public final class EntityClass<E> {
 			final Property<V, ?> propertyToUpdate, final Object... arguments) {
 		final Object id = getStateId(pendingEntity);
 		final GenerationState state = this.entityStates.get(id);
-		PendingState pendingState;
+		final PendingState pendingState;
 		if (state instanceof PendingState) {
 			pendingState = (PendingState) state;
 		} else {

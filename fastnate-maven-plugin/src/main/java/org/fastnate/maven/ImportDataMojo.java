@@ -41,8 +41,10 @@ import org.sonatype.plexus.build.incremental.BuildContext;
  * @author Tobias Liefke
  */
 @Mojo(name = "import-data", threadSafe = true, defaultPhase = LifecyclePhase.PROCESS_CLASSES, //
-requiresDependencyResolution = ResolutionScope.COMPILE)
+		requiresDependencyResolution = ResolutionScope.COMPILE)
 public class ImportDataMojo extends AbstractMojo {
+
+	private static final String SETTINGS_KEY = ImportDataMojo.class.getName() + ".settings";
 
 	private static void addProperty(final Properties settings, final String key, final String value) {
 		if (value != null) {
@@ -69,8 +71,6 @@ public class ImportDataMojo extends AbstractMojo {
 		}
 
 	}
-
-	private static final String SETTINGS_KEY = ImportDataMojo.class.getName() + ".settings";
 
 	/** The current build context for incremental builds. */
 	@Component
@@ -215,10 +215,10 @@ public class ImportDataMojo extends AbstractMojo {
 		if (scanner.getIncludedFiles().length > 0) {
 			// Load classes
 			final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-			Class<?> dataProviderClass;
-			Class<? extends Annotation> entityClass;
-			Class<? extends Annotation> embeddableClass;
-			Class<? extends Annotation> mappedSuperClass;
+			final Class<?> dataProviderClass;
+			final Class<? extends Annotation> entityClass;
+			final Class<? extends Annotation> embeddableClass;
+			final Class<? extends Annotation> mappedSuperClass;
 			try {
 				dataProviderClass = classLoader.loadClass("org.fastnate.data.DataProvider");
 				entityClass = (Class<? extends Annotation>) classLoader.loadClass("javax.persistence.Entity");
@@ -233,8 +233,8 @@ public class ImportDataMojo extends AbstractMojo {
 			for (final String file : scanner.getIncludedFiles()) {
 				try {
 					// Load class
-					final Class<?> c = classLoader.loadClass(file.replace('\\', '.').replace('/', '.')
-							.substring(0, file.length() - ".class".length()));
+					final Class<?> c = classLoader.loadClass(
+							file.replace('\\', '.').replace('/', '.').substring(0, file.length() - ".class".length()));
 
 					// Check if the class is a data provider
 					if (dataProviderClass.isAssignableFrom(c)) {
@@ -331,8 +331,8 @@ public class ImportDataMojo extends AbstractMojo {
 				} catch (final InvocationTargetException e) {
 					final Throwable target = e.getTargetException();
 					getLog().error("Could not generate SQL file: " + this.sqlFile, target);
-					throw new MojoExecutionException("Could not generate SQL file '" + this.sqlFile + "' due to "
-							+ target, target);
+					throw new MojoExecutionException(
+							"Could not generate SQL file '" + this.sqlFile + "' due to " + target, target);
 					// CHECKSTYLE OFF: IllegalCatch
 				} catch (final IOException | ReflectiveOperationException | RuntimeException e) {
 					// CHECKSTYLE ON: IllegalCatch
