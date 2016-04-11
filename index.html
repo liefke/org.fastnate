@@ -288,7 +288,7 @@
 		&lt;snapshots>
 			&lt;enabled>true&lt;/enabled>
 		&lt;/snapshots>
-	&lt;/pluginRepositories>
+	&lt;/pluginRepository>
 &lt;/pluginRepositories></pre>
 				</div>
 				Now you can add the dependencies:
@@ -311,6 +311,10 @@
 				And use the importData task:
 				<div class="highlight">
 					<pre>&lt;build>
+	&lt;properties>
+		&lt;-- Your database dialect: -->
+		&lt;target.db>Oracle&lt;/target.db>
+	&lt;/properties>
 	&lt;plugins>
 		&lt;plugin>
 			&lt;groupId>org.fastnate&lt;/groupId>
