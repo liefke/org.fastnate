@@ -70,7 +70,7 @@
 		<build.svnRevNumber>Unknown</build.svnRevNumber>
 		<maven.build.timestamp.format>yyyyMMdd'T'HHmmss</maven.build.timestamp.format>
 		<build.timestamp>${maven.build.timestamp}</build.timestamp>
-		<project.scm.id>git-server<project.scm.id>
+		<project.scm.id>git-server</project.scm.id>
 
 		<!-- Default encoding -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
