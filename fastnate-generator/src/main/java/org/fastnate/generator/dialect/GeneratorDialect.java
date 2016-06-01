@@ -9,9 +9,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
-import lombok.Getter;
-
 import org.fastnate.generator.statements.EntityStatement;
+
+import lombok.Getter;
 
 /**
  * Handles database specific conversions.
@@ -24,6 +24,11 @@ import org.fastnate.generator.statements.EntityStatement;
  */
 @Getter
 public abstract class GeneratorDialect {
+
+	/**
+	 * Represents the constant for writing the "now" function to SQL.
+	 */
+	public static final Date NOW = new Date();
 
 	private static void finishPart(final StringBuilder result, final String value, final int start, final int end,
 			final boolean isOpen, final boolean close) {
@@ -47,11 +52,6 @@ public abstract class GeneratorDialect {
 			result.append('\'');
 		}
 	}
-
-	/**
-	 * Represents the constant for writing the "now" function to SQL.
-	 */
-	public static final Date NOW = new Date();
 
 	private final char[] letter = "0123456789ABCDEF".toCharArray();
 
@@ -176,7 +176,8 @@ public abstract class GeneratorDialect {
 	 * @return the replacement for {@link GenerationType#AUTO} for the current dialect in Hibernate.
 	 */
 	public GenerationType getAutoGenerationType() {
-		return GenerationType.IDENTITY;
+		return isSequenceSupported() ? GenerationType.SEQUENCE
+				: isIdentitySupported() ? GenerationType.IDENTITY : GenerationType.TABLE;
 	}
 
 	/**
@@ -191,11 +192,29 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * Indicates that identity columns are supported by the database.
+	 * 
+	 * @return {@code true} if the database supports identities
+	 */
+	public boolean isIdentitySupported() {
+		return true;
+	}
+
+	/**
 	 * Indicates that references to sequences in {@code WHERE} expressions are supported.
 	 *
 	 * @return {@code true} if this database supports sequences in {@code WHERE} expressions
 	 */
 	public boolean isSequenceInWhereSupported() {
+		return true;
+	}
+
+	/**
+	 * Indicates that sequences are supported by the database.
+	 * 
+	 * @return {@code true} if the database supports sequences
+	 */
+	public boolean isSequenceSupported() {
 		return true;
 	}
 

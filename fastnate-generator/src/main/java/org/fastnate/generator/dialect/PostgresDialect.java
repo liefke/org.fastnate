@@ -1,7 +1,5 @@
 package org.fastnate.generator.dialect;
 
-import javax.persistence.GenerationType;
-
 /**
  * Handles PostgreSQL specific conversions.
  *
@@ -20,7 +18,8 @@ public final class PostgresDialect extends GeneratorDialect {
 	}
 
 	@Override
-	public GenerationType getAutoGenerationType() {
-		return GenerationType.SEQUENCE;
+	public boolean isIdentitySupported() {
+		return false;
 	}
+
 }

@@ -87,6 +87,7 @@
 		<org.reflections.version>0.9.10</org.reflections.version>
 		<hibernate.version>5.0.7.Final</hibernate.version>
 		<hibernate.validator.version>5.2.3.Final</hibernate.validator.version>
+		<javax.el.version>2.2.5</javax.el.version>
 		<h2.version>1.4.192</h2.version>
 		<assertj.version>3.4.1</assertj.version>
 	</properties>
@@ -189,6 +190,13 @@
 				<groupId>org.hibernate</groupId>
 				<artifactId>hibernate-validator</artifactId>
 				<version>${hibernate.validator.version}</version>
+				<scope>test</scope>
+			</dependency>
+
+			<dependency>
+			   <groupId>javax.el</groupId>
+			   <artifactId>javax.el-api</artifactId>
+			   <version>${javax.el.version}</version>
 				<scope>test</scope>
 			</dependency>
 

@@ -2,7 +2,6 @@ package org.fastnate.generator.dialect;
 
 import java.util.Date;
 
-import javax.persistence.GenerationType;
 import javax.persistence.TemporalType;
 
 /**
@@ -47,13 +46,13 @@ public final class OracleDialect extends GeneratorDialect {
 	}
 
 	@Override
-	public GenerationType getAutoGenerationType() {
-		return GenerationType.SEQUENCE;
+	public boolean isEmptyStringEqualToNull() {
+		return true;
 	}
 
 	@Override
-	public boolean isEmptyStringEqualToNull() {
-		return true;
+	public boolean isIdentitySupported() {
+		return false;
 	}
 
 	@Override

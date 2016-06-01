@@ -48,9 +48,6 @@ public class GeneratorContext {
 	/** The settings key for {@link #preferSequenceCurentValue}. */
 	public static final String PREFER_SEQUENCE_CURRENT_VALUE = "fastnate.generator.prefer.sequence.current.value";
 
-	/** The default increment size for the sequences. */
-	private static final int SEQUENCE_INCREMENT_SIZE = 1;
-
 	/** Contains the extracted metadata per entity class. */
 	private final Map<Class<?>, EntityClass<?>> descriptions = new HashMap<>();
 
@@ -204,9 +201,9 @@ public class GeneratorContext {
 		if (currentValue == null) {
 			newValue = (long) generator.initialValue();
 		} else {
-			// Allocation size is _not_ the increment size
+			// Allocation size is _not_ necessarily the increment size
 			// As soon as we read hibernate specific properties, we can read the increment size as well
-			newValue = currentValue + SEQUENCE_INCREMENT_SIZE;
+			newValue = currentValue + generator.allocationSize();
 		}
 		this.sequences.put(sequenceName, newValue);
 		return newValue;

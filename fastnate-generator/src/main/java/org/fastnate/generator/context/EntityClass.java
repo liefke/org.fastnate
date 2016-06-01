@@ -39,6 +39,8 @@ import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.context.GenerationState.PendingState;
 import org.fastnate.generator.statements.EntityStatement;
 
+import com.google.common.collect.ImmutableMap;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -79,7 +81,7 @@ public final class EntityClass<E> {
 
 	/** Contains the default values for a sequence generator, if none is given. */
 	private static final SequenceGenerator DEFAULT_SEQUENCE_GENERATOR = AnnotationDefaults
-			.create(SequenceGenerator.class);
+			.create(SequenceGenerator.class, ImmutableMap.of("allocationSize", 1));
 
 	/**
 	 * Funds all association overrides that are attached to the given field or class.
