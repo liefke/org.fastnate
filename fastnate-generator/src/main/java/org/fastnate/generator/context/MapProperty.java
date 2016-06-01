@@ -117,7 +117,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 		// Initialize the key description
 		final MapKeyClass keyClassAnnotation = attribute.getAnnotation(MapKeyClass.class);
 		this.keyClass = getPropertyArgument(attribute,
-				keyClassAnnotation != null ? keyClassAnnotation.value() : void.class, 0);
+				keyClassAnnotation != null ? keyClassAnnotation.value() : (Class<K>) void.class, 0);
 		this.keyEntityClass = sourceClass.getContext().getDescription(this.keyClass);
 		if (this.keyEntityClass != null) {
 			// Entity key
