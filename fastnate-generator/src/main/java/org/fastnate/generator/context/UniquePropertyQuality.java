@@ -1,9 +1,7 @@
 package org.fastnate.generator.context;
 
-
-
 /**
- * Possible values for {@link GeneratorContext#setUniquePropertyQuality}.
+ * Possible values for {@link GeneratorContext}{@code .getUniquePropertyQuality()}.
  */
 public enum UniquePropertyQuality {
 	/** Only required primitives are allowed. */
@@ -21,7 +19,7 @@ public enum UniquePropertyQuality {
 		@Override
 		public boolean isAllowed(final Property<?, ?> property) {
 			return (property instanceof PrimitiveProperty || property instanceof EntityProperty)
-				&& property.isRequired();
+					&& property.isRequired();
 		}
 	},
 	/** Only primitives are allowed (even optional). */
@@ -46,7 +44,7 @@ public enum UniquePropertyQuality {
 
 	/**
 	 * Finds the best quality that matches the given property.
-	 * 
+	 *
 	 * @param property
 	 *            the property to check
 	 * @return the quality with the lowest ordinal, that matches the given property, or {@code null} if the property is
@@ -69,7 +67,7 @@ public enum UniquePropertyQuality {
 
 	/**
 	 * Indicates which type of property is allowed for this quality.
-	 * 
+	 *
 	 * @param property
 	 *            the property to check
 	 * @return {@code true} if that property is allowed as unique property

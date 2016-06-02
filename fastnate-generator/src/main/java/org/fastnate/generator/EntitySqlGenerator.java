@@ -7,9 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import org.fastnate.generator.context.EmbeddedProperty;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratedIdProperty;
@@ -21,16 +18,17 @@ import org.fastnate.generator.statements.InsertStatement;
 
 import com.google.common.io.Closeables;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 /**
  * Creates SQL statements for a set of entities using their JPA annotations.
  *
- * <p>
  * Known limitations:
  * <ul>
  * <li>Not all databases covered, see {@link GeneratorDialect}.</li>
  * <li>Only tested with Hibernate.</li>
  * </ul>
- * </p>
  *
  * @author Tobias Liefke
  */
