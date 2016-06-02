@@ -41,7 +41,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	private static String buildOrderColumn(final AttributeAccessor attribute) {
 		final OrderColumn orderColumnDef = attribute.getAnnotation(OrderColumn.class);
 		return orderColumnDef == null ? null
-				: orderColumnDef.name().length() == 0 ? attribute.getName() + "_order" : orderColumnDef.name();
+				: orderColumnDef.name().length() == 0 ? attribute.getName() + "_ORDER" : orderColumnDef.name();
 	}
 
 	/**
@@ -82,7 +82,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	private final String table;
 
 	/** The name of the column that contains the id of the entity. */
-	private final String idColumn;
+	private String idColumn;
 
 	/** The name of the column that contains the value (or the id of the value). */
 	private final String valueColumn;
@@ -148,11 +148,11 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 						attribute + " is neither declared as OneToMany nor ManyToMany nor ElementCollection");
 				this.targetClass = getPropertyArgument(attribute, manyToMany.targetEntity(), 0);
 				this.mappedBy = manyToMany.mappedBy().length() == 0 ? null : manyToMany.mappedBy();
-				this.useTargetTable = false;
+				this.useTargetTable = this.mappedBy != null;
 			} else {
 				this.targetClass = getPropertyArgument(attribute, oneToMany.targetEntity(), 0);
 				this.mappedBy = oneToMany.mappedBy().length() == 0 ? null : oneToMany.mappedBy();
-				this.useTargetTable = useTargetTable(attribute, override);
+				this.useTargetTable = this.mappedBy != null || useTargetTable(attribute, override);
 			}
 
 			// Resolve the target entity class
@@ -167,10 +167,13 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 
 			// Initialize the table and column names
 			if (this.mappedBy != null) {
-				// Bidirectional - use the column of the target class
-				this.table = null;
-				this.idColumn = null;
-				this.valueColumn = null;
+				// Bidirectional - use the columns of the target class
+				this.table = this.targetEntityClass.getTable();
+				// Find the mappedBy property later - may be that is not created in the target class up to now
+				final Property<? super T, ?> idProperty = this.targetEntityClass.getIdProperty();
+				Preconditions.checkArgument(idProperty instanceof SingularProperty,
+						"Can only handle singular properties for ID in mapped by " + attribute);
+				this.valueColumn = buildValueColumn(attribute, this.targetEntityClass.getIdColumn(attribute));
 			} else if (this.useTargetTable) {
 				// Unidirectional and join column is in the table of the target class
 				this.table = this.targetEntityClass.getTable();
@@ -192,7 +195,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 
 	@Override
 	public List<EntityStatement> buildAdditionalStatements(final E entity) {
-		if (this.mappedBy != null) {
+		if (this.mappedBy != null && this.orderColumn == null) {
 			return Collections.emptyList();
 		}
 
@@ -238,18 +241,30 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 			}
 		}
 
+		if (this.idColumn == null && this.mappedBy != null) {
+			final Property<T, ?> mappedByProperty = this.targetEntityClass.getProperties().get(this.mappedBy);
+			Preconditions.checkArgument(mappedByProperty != null,
+					"Could not find property: " + this.mappedBy + " in " + this.targetClass);
+			Preconditions.checkArgument(mappedByProperty instanceof SingularProperty,
+					"Can only handle singular properties for mapped by in " + getAttribute().getElement());
+			this.idColumn = ((SingularProperty<?, ?>) mappedByProperty).getColumn();
+		}
+
+		final EntityStatement stmt;
 		if (this.useTargetTable) {
 			// Unidirectional, but from target table
 			if (value == null) {
 				return null;
 			}
-			final UpdateStatement stmt = new UpdateStatement(this.table, this.valueColumn, target);
+			stmt = new UpdateStatement(this.table, this.valueColumn, target);
+			if (this.mappedBy == null) {
+				stmt.addValue(this.idColumn, sourceId);
+			}
+		} else {
+			stmt = new InsertStatement(this.table);
 			stmt.addValue(this.idColumn, sourceId);
-			return stmt;
+			stmt.addValue(this.valueColumn, target);
 		}
-		final InsertStatement stmt = new InsertStatement(this.table);
-		stmt.addValue(this.idColumn, sourceId);
-		stmt.addValue(this.valueColumn, target);
 		if (this.orderColumn != null) {
 			stmt.addValue(this.orderColumn, String.valueOf(index));
 		}

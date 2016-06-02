@@ -39,7 +39,7 @@ public class CollectionsTestEntity extends BaseTestEntity {
 	private Set<String> stringSet = new HashSet<>();
 
 	@ElementCollection
-	@CollectionTable(name = "STRING_LIST", joinColumns = @JoinColumn(name = "myEntityId") )
+	@CollectionTable(name = "STRING_LIST", joinColumns = @JoinColumn(name = "myEntityId"))
 	@Column(name = "stringColumn")
 	private List<String> stringList = new ArrayList<>();
 
@@ -65,8 +65,12 @@ public class CollectionsTestEntity extends BaseTestEntity {
 	private List<SimpleTestEntity> entityList = new ArrayList<>();
 
 	@OneToMany
-	@JoinTable(name = "OE_LIST", joinColumns = @JoinColumn(name = "join_id") )
+	@JoinTable(name = "OE_LIST", joinColumns = @JoinColumn(name = "join_id"))
 	@OrderColumn(name = "sorting")
 	private List<SimpleTestEntity> orderedEntityList = new ArrayList<>();
+
+	@OneToMany(mappedBy = "parent")
+	@OrderColumn
+	private List<ChildTestEntity> children = new ArrayList<>();
 
 }

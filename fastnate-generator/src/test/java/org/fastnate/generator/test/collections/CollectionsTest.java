@@ -68,6 +68,8 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 		testEntity.getOrderedEntityList().add(new SimpleTestEntity("Plural sort test 3"));
 		testEntity.getOrderedEntityList().add(new SimpleTestEntity("Plural sort test 2"));
 
+		testEntity.getChildren().add(new ChildTestEntity(testEntity, "First child"));
+		testEntity.getChildren().add(new ChildTestEntity(testEntity, "Second child"));
 		write(testEntity);
 
 		final CollectionsTestEntity result = findSingleResult(
@@ -96,6 +98,10 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getOrderedEntityList()).hasSize(testEntity.getOrderedEntityList().size());
 		assertThat(extractNames(result.getOrderedEntityList())).containsExactly("Plural sort test 1",
 				"Plural sort test 3", "Plural sort test 2");
+
+		assertThat(result.getChildren()).hasSize(2);
+		assertThat(result.getChildren().get(0).getName()).isEqualTo("First child");
+		assertThat(result.getChildren().get(1).getName()).isEqualTo("Second child");
 	}
 
 }
