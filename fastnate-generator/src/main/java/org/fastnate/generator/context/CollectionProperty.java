@@ -232,7 +232,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 			if (this.targetConverter != null) {
 				target = this.targetConverter.getExpression(value, getContext());
 			} else {
-				target = this.targetEntityClass.getEntityReference(value, getMappedId(), false);
+				target = this.targetEntityClass.getEntityReference(value, getMappedId(), this.useTargetTable);
 				if (target == null) {
 					// Not created up to now
 					this.targetEntityClass.markPendingUpdates(value, entity, this, index);
