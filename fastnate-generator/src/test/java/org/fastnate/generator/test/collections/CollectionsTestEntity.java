@@ -31,7 +31,7 @@ import lombok.Setter;
  *
  * @author Tobias Liefke
  */
-@Entity
+@Entity(name = "CTE")
 @Table(name = "CollectionsTest")
 @Getter
 @Setter

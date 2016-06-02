@@ -2,20 +2,20 @@ package org.fastnate.generator.test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.persistence.criteria.CriteriaQuery;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
-import org.fastnate.generator.dialect.H2Dialect;
 import org.junit.After;
 import org.junit.Before;
+
+import lombok.AccessLevel;
+import lombok.Getter;
 
 /**
  * Test the {@link EntitySqlGenerator} framework.
@@ -89,11 +89,13 @@ public class AbstractEntitySqlGeneratorTest {
 	 */
 	@Before
 	public void setUp() {
-		this.emf = Persistence.createEntityManagerFactory("test");
+		final Properties properties = new Properties(System.getProperties());
+		this.emf = Persistence
+				.createEntityManagerFactory(properties.getProperty(GeneratorContext.PERSISTENCE_UNIT_KEY, "test-h2"));
 		this.em = this.emf.createEntityManager();
 		@SuppressWarnings("resource")
 		final SqlEmWriter sqlWriter = new SqlEmWriter(this.em);
-		final GeneratorContext context = new GeneratorContext(new H2Dialect());
+		final GeneratorContext context = new GeneratorContext(properties);
 		context.setMaxUniqueProperties(0);
 		this.generator = new EntitySqlGenerator(sqlWriter, context);
 	}

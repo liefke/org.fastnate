@@ -73,8 +73,7 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 		write(testEntity);
 
 		final CollectionsTestEntity result = findSingleResult(
-				"SELECT e FROM CollectionsTestEntity e JOIN e.stringSet s WHERE s = 'Test1'",
-				CollectionsTestEntity.class);
+				"SELECT e FROM CTE e JOIN e.stringSet s WHERE s = 'Test1'", CollectionsTestEntity.class);
 
 		assertThat(result.getStringSet()).containsOnly("Test1", "Test2");
 		assertThat(result.getStringList()).containsOnly("list1", "list2");

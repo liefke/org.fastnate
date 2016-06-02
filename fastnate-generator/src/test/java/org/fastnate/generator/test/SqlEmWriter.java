@@ -5,12 +5,14 @@ import java.io.Writer;
 
 import javax.persistence.EntityManager;
 
+import org.apache.commons.lang.StringUtils;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Writes SQL to an {@link EntityManager}.
- * 
+ *
  * @author Tobias Liefke
  */
 @RequiredArgsConstructor
@@ -42,7 +44,7 @@ public class SqlEmWriter extends Writer {
 				if (this.index > 0) {
 					this.em.getTransaction().begin();
 					try {
-						final String sql = this.currentLine.substring(0, this.index);
+						final String sql = StringUtils.removeEnd(this.currentLine.substring(0, this.index), ";");
 						log.info("Writing SQL: {}", sql);
 						this.em.createNativeQuery(sql).executeUpdate();
 					} finally {

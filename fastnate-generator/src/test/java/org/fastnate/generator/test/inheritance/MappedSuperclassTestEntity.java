@@ -1,7 +1,6 @@
 package org.fastnate.generator.test.inheritance;
 
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 
@@ -20,7 +19,7 @@ import lombok.Setter;
 public class MappedSuperclassTestEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue
 	private Long id;
 
 	@Setter
@@ -28,7 +27,7 @@ public class MappedSuperclassTestEntity {
 
 	/**
 	 * Creates a new instance of {@link MappedSuperclassTestEntity}.
-	 * 
+	 *
 	 * @param superProperty
 	 *            a test property that is written
 	 */
