@@ -1,5 +1,8 @@
 package org.fastnate.generator.context;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -8,15 +11,23 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.SequenceGenerator;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.dialect.H2Dialect;
 import org.fastnate.generator.provider.HibernateProvider;
 import org.fastnate.generator.provider.JpaProvider;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Represents the configuration and state for one or more {@link EntitySqlGenerator}s.
@@ -25,13 +36,23 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Slf4j
 public class GeneratorContext {
-
-	/** The settings key for the {@link #dialect}. */
-	public static final String DIALECT_KEY = "fastnate.generator.dialect";
 
 	/** The settings key for the {@link #provider}. */
 	public static final String PROVIDER_KEY = "fastnate.generator.jpa.provider";
+
+	/** The settings key for the path to the persistence.xml, either relative to the current directory or absolute. */
+	public static final String PERSISTENCE_FILE_KEY = "fastnate.generator.persistence.file";
+
+	/**
+	 * The settings key for the name of the persistence unit in the persistence.xml. The first is used, if none is
+	 * given.
+	 */
+	public static final String PERSISTENCE_UNIT_KEY = "fastnate.generator.persistence.unit";
+
+	/** The settings key for the {@link #dialect}. */
+	public static final String DIALECT_KEY = "fastnate.generator.dialect";
 
 	/** The settings key for {@link #writeNullValues}. */
 	public static final String NULL_VALUES_KEY = "fastnate.generator.null.values";
@@ -47,6 +68,52 @@ public class GeneratorContext {
 
 	/** The settings key for {@link #preferSequenceCurentValue}. */
 	public static final String PREFER_SEQUENCE_CURRENT_VALUE = "fastnate.generator.prefer.sequence.current.value";
+
+	/**
+	 * Tries to read any persistence file defined in the settings.
+	 *
+	 * @param settings
+	 *            the current settings
+	 */
+	private static void readPersistenceFile(final Properties settings) {
+		String persistenceFilePath = settings.getProperty(PERSISTENCE_FILE_KEY);
+		if (StringUtils.isEmpty(persistenceFilePath)) {
+			final URL url = GeneratorContext.class.getResource("/META-INF/persistence.xml");
+			if (url == null) {
+				return;
+			}
+			persistenceFilePath = url.toString();
+		} else {
+			final File persistenceFile = new File(persistenceFilePath);
+			if (persistenceFile.isFile()) {
+				persistenceFilePath = persistenceFile.toURI().toString();
+			}
+		}
+
+		final String persistenceUnit = settings.getProperty(PERSISTENCE_UNIT_KEY);
+		try {
+			final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+					.parse(persistenceFilePath);
+			final NodeList persistenceUnits = document.getElementsByTagName("persistence-unit");
+			for (int i = 0; i < persistenceUnits.getLength(); i++) {
+				final Element persistenceUnitElement = (Element) persistenceUnits.item(i);
+				if (StringUtils.isEmpty(persistenceUnit)
+						|| persistenceUnit.equals(persistenceUnitElement.getAttribute("name"))) {
+					final NodeList properties = persistenceUnitElement.getElementsByTagName("property");
+					for (int i2 = 0; i2 < properties.getLength(); i2++) {
+						final Element property = (Element) properties.item(i2);
+						final String name = property.getAttribute("name");
+						if (!settings.containsKey(name)) {
+							settings.put(name, property.getAttribute("value"));
+						}
+					}
+					break;
+				}
+			}
+		} catch (final IOException | SAXException | ParserConfigurationException e) {
+			log.error("Could not read " + persistenceFilePath + ": " + e, e);
+		}
+	}
 
 	/** Contains the extracted metadata per entity class. */
 	private final Map<Class<?>, EntityClass<?>> descriptions = new HashMap<>();
@@ -127,6 +194,21 @@ public class GeneratorContext {
 	 */
 	public GeneratorContext(final Properties settings) {
 		this.settings = settings;
+
+		readPersistenceFile(settings);
+
+		String providerName = settings.getProperty(PROVIDER_KEY, "HibernateProvider");
+		if (providerName.indexOf('.') < 0) {
+			providerName = JpaProvider.class.getPackage().getName() + '.' + providerName;
+		}
+		try {
+			this.provider = (JpaProvider) Class.forName(providerName).newInstance();
+			this.provider.initialize(settings);
+		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException
+				| ClassCastException e) {
+			throw new IllegalArgumentException("Can't instantiate provider: " + providerName, e);
+		}
+
 		String dialectName = settings.getProperty(DIALECT_KEY, "H2Dialect");
 		if (dialectName.indexOf('.') < 0) {
 			dialectName = GeneratorDialect.class.getPackage().getName() + '.' + dialectName;
@@ -139,17 +221,6 @@ public class GeneratorContext {
 		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException
 				| ClassCastException e) {
 			throw new IllegalArgumentException("Can't instantiate dialect: " + dialectName, e);
-		}
-
-		String providerName = settings.getProperty(PROVIDER_KEY, "HibernateProvider");
-		if (providerName.indexOf('.') < 0) {
-			providerName = JpaProvider.class.getPackage().getName() + '.' + providerName;
-		}
-		try {
-			this.provider = (JpaProvider) Class.forName(providerName).newInstance();
-		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException
-				| ClassCastException e) {
-			throw new IllegalArgumentException("Can't instantiate provider: " + providerName, e);
 		}
 
 		this.explicitIds = Boolean
