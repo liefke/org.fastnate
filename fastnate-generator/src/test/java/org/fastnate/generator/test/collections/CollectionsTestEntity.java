@@ -17,6 +17,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.OrderColumn;
+import javax.persistence.Table;
 
 import org.fastnate.generator.test.BaseTestEntity;
 import org.fastnate.generator.test.SimpleTestEntity;
@@ -31,6 +32,7 @@ import lombok.Setter;
  * @author Tobias Liefke
  */
 @Entity
+@Table(name = "CollectionsTest")
 @Getter
 @Setter
 public class CollectionsTestEntity extends BaseTestEntity {

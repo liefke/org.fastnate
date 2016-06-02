@@ -1,6 +1,7 @@
 package org.fastnate.generator.test;
 
 import javax.persistence.Entity;
+import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -17,6 +18,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
+@Table(name = "SimpleTest")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SimpleTestEntity extends BaseTestEntity {
 

@@ -186,7 +186,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 				this.table = buildTableName(attribute, override, joinTable, collectionTable,
 						sourceClass.getTable() + '_' + this.targetEntityClass.getTable());
 				this.idColumn = buildIdColumn(attribute, override, joinTable, collectionTable,
-						sourceClass.getTable() + '_' + sourceClass.getIdColumn(attribute));
+						sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute));
 				this.valueColumn = buildValueColumn(attribute,
 						attribute.getName() + '_' + this.targetEntityClass.getIdColumn(attribute));
 			}

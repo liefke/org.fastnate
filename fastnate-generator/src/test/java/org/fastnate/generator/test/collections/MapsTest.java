@@ -21,6 +21,29 @@ import org.junit.Test;
  */
 public class MapsTest extends AbstractEntitySqlGeneratorTest {
 
+	private static String getName(final Object value) {
+		return value instanceof SimpleTestEntity ? ((SimpleTestEntity) value).getName() : value.toString();
+	}
+
+	private static <K, V> void testMap(final String firstKey, final String firstValue, final String secondKey,
+			final String secondValue, final Map<K, V> resultMap, final Map<K, V> testMap) {
+		assertThat(resultMap).hasSameSizeAs(testMap);
+		final Iterator<Map.Entry<K, V>> entryIterator = resultMap.entrySet().iterator();
+		final Map.Entry<K, V> first = entryIterator.next();
+		final Map.Entry<K, V> second = entryIterator.next();
+		assertThat(getName(first.getKey())).isIn(firstKey, secondKey);
+		final boolean firstIsFirst = getName(first.getKey()).equals(firstKey);
+		if (firstIsFirst) {
+			assertThat(getName(first.getValue())).isEqualTo(firstValue);
+			assertThat(getName(second.getKey())).isEqualTo(secondKey);
+			assertThat(getName(second.getValue())).isEqualTo(secondValue);
+		} else {
+			assertThat(getName(first.getValue())).isEqualTo(secondValue);
+			assertThat(getName(second.getKey())).isEqualTo(firstKey);
+			assertThat(getName(second.getValue())).isEqualTo(firstValue);
+		}
+	}
+
 	/**
 	 * Tests to write maps with content of basic type.
 	 *
@@ -66,30 +89,21 @@ public class MapsTest extends AbstractEntitySqlGeneratorTest {
 
 		final String firstKey = "First Key";
 		final String firstValue = "First Value";
-		testEntity.getEntityMap().put(new SimpleTestEntity(firstKey), new SimpleTestEntity(firstValue));
+		testEntity.getStringToEntityMap().put(firstKey, new SimpleTestEntity(firstValue));
 		final String secondKey = "Second Key";
 		final String secondValue = "Second Value";
-		testEntity.getEntityMap().put(new SimpleTestEntity(secondKey), new SimpleTestEntity(secondValue));
+		testEntity.getStringToEntityMap().put(secondKey, new SimpleTestEntity(secondValue));
+
+		testEntity.getEntityToEntityMap().put(new SimpleTestEntity(firstKey), new SimpleTestEntity(firstValue));
+		testEntity.getEntityToEntityMap().put(new SimpleTestEntity(secondKey), new SimpleTestEntity(secondValue));
 
 		write(testEntity);
 
 		final MapsTestEntity result = findSingleResult(MapsTestEntity.class);
-		assertThat(result.getEntityMap()).hasSameSizeAs(testEntity.getEntityMap());
-		final Iterator<Map.Entry<SimpleTestEntity, SimpleTestEntity>> entryIterator = result.getEntityMap().entrySet()
-				.iterator();
-		final Map.Entry<SimpleTestEntity, SimpleTestEntity> first = entryIterator.next();
-		final Map.Entry<SimpleTestEntity, SimpleTestEntity> second = entryIterator.next();
-		assertThat(first.getKey().getName()).isIn(firstKey, secondKey);
-		final boolean firstIsFirst = first.getKey().getName().equals(firstKey);
-		if (firstIsFirst) {
-			assertThat(first.getValue().getName()).isEqualTo(firstValue);
-			assertThat(second.getKey().getName()).isEqualTo(secondKey);
-			assertThat(second.getValue().getName()).isEqualTo(secondValue);
-		} else {
-			assertThat(first.getValue().getName()).isEqualTo(secondValue);
-			assertThat(second.getKey().getName()).isEqualTo(firstKey);
-			assertThat(second.getValue().getName()).isEqualTo(firstValue);
-		}
+		testMap(firstKey, firstValue, secondKey, secondValue, result.getEntityToEntityMap(),
+				testEntity.getEntityToEntityMap());
+		testMap(firstKey, firstValue, secondKey, secondValue, result.getStringToEntityMap(),
+				testEntity.getStringToEntityMap());
 	}
 
 }

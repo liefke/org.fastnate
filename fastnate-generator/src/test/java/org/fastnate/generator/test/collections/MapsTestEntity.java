@@ -13,13 +13,14 @@ import javax.persistence.MapKeyColumn;
 import javax.persistence.MapKeyJoinColumn;
 import javax.persistence.MapKeyTemporal;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import javax.persistence.TemporalType;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import org.fastnate.generator.test.BaseTestEntity;
 import org.fastnate.generator.test.SimpleTestEntity;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * An entity for testing maps in SQL generation.
@@ -29,6 +30,7 @@ import org.fastnate.generator.test.SimpleTestEntity;
 @Entity
 @Getter
 @Setter
+@Table(name = "MapsTest")
 public class MapsTestEntity extends BaseTestEntity {
 
 	@ElementCollection
@@ -42,8 +44,11 @@ public class MapsTestEntity extends BaseTestEntity {
 	private Map<Date, Integer> dateMap = new HashMap<>();
 
 	@OneToMany
+	private Map<String, SimpleTestEntity> stringToEntityMap = new HashMap<>();
+
+	@OneToMany
 	@CollectionTable(name = "ENTITY_MAP", joinColumns = @JoinColumn(name = "myEntityId"))
 	@MapKeyJoinColumn(name = "entityColumn")
-	private Map<SimpleTestEntity, SimpleTestEntity> entityMap = new HashMap<>();
+	private Map<SimpleTestEntity, SimpleTestEntity> entityToEntityMap = new HashMap<>();
 
 }
