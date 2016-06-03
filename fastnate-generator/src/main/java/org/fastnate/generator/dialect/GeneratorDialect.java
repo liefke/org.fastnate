@@ -56,6 +56,18 @@ public abstract class GeneratorDialect {
 	private final char[] letter = "0123456789ABCDEF".toCharArray();
 
 	/**
+	 * Adds a quoted character to the result string buffer.
+	 * 
+	 * @param result
+	 *            the current result buffer
+	 * @param c
+	 *            the character to quote
+	 */
+	protected void addQuotedCharacter(final StringBuilder result, final char c) {
+		result.append("CHR(").append((byte) c).append(')');
+	}
+
+	/**
 	 * Builds the SQL expression that is used for referencing the current value of the given sequence.
 	 *
 	 * @param sequence
@@ -193,7 +205,7 @@ public abstract class GeneratorDialect {
 
 	/**
 	 * Indicates that identity columns are supported by the database.
-	 * 
+	 *
 	 * @return {@code true} if the database supports identities
 	 */
 	public boolean isIdentitySupported() {
@@ -211,7 +223,7 @@ public abstract class GeneratorDialect {
 
 	/**
 	 * Indicates that sequences are supported by the database.
-	 * 
+	 *
 	 * @return {@code true} if the database supports sequences
 	 */
 	public boolean isSequenceSupported() {
@@ -241,7 +253,7 @@ public abstract class GeneratorDialect {
 					isOpen = false;
 					result.append(" || ");
 				}
-				result.append("CHR(").append((byte) c).append(')');
+				addQuotedCharacter(result, c);
 			} else if (c == '\'') {
 				// Escape quotes
 				finishPart(result, value, start, i, isOpen, false);

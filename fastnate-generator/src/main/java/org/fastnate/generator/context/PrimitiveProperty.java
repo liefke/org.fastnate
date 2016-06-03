@@ -11,8 +11,6 @@ import javax.persistence.Column;
 import javax.persistence.Lob;
 import javax.validation.constraints.NotNull;
 
-import lombok.Getter;
-
 import org.apache.commons.lang.ClassUtils;
 import org.fastnate.generator.DefaultValue;
 import org.fastnate.generator.converter.BooleanConverter;
@@ -28,6 +26,8 @@ import org.fastnate.generator.converter.UnsupportedTypeConverter;
 import org.fastnate.generator.converter.ValueConverter;
 import org.fastnate.generator.statements.InsertStatement;
 
+import lombok.Getter;
+
 /**
  * Describes a singular primitive property of an {@link EntityClass}.
  *
@@ -41,7 +41,8 @@ import org.fastnate.generator.statements.InsertStatement;
  * {@link Long}, {@link Float}, {@link Double})</li>
  * <li>{@link String}</li>
  * <li>{@link BigInteger} and {@link BigDecimal}</li>
- * <li>{@link Date} and its subclasses ({@link java.sql.Date}, {@link java.sql.Time} and {@link java.sql.Timestamp})</li>
+ * <li>{@link Date} and its subclasses ({@link java.sql.Date}, {@link java.sql.Time} and {@link java.sql.Timestamp})
+ * </li>
  * <li>{@link Calendar}</li>
  * <li>byte arrays ({@code byte[]} and {@code Byte[]})</li>
  * <li>character array ({@code char[]} and {@code Character[]})</li>
@@ -72,7 +73,7 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 	 *            the primitive type
 	 * @param mapKey
 	 *            indicates that the converter is for the key of a map
-	 * @return the converter or {@code null} if no converter is available
+	 * @return the converter or {@link UnsupportedTypeConverter} if no converter is available
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T, E extends Enum<E>> ValueConverter<T> createConverter(final AttributeAccessor attribute,
@@ -80,26 +81,32 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 		if (attribute.hasAnnotation(Lob.class)) {
 			return (ValueConverter<T>) new LobConverter();
 		}
-		final Class<T> type = ClassUtils.primitiveToWrapper(targetType);
-		if (String.class == type) {
+		if (String.class == targetType) {
 			return (ValueConverter<T>) new StringConverter(attribute, mapKey);
-		} else if (Character.class == type) {
-			return (ValueConverter<T>) new CharConverter();
-		} else if (Boolean.class == type) {
-			return (ValueConverter<T>) new BooleanConverter();
-		} else if (Number.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new NumberConverter();
-		} else if (Date.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new DateConverter(attribute, mapKey);
-		} else if (Calendar.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new CalendarConverter(attribute, mapKey);
-		} else if (Enum.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new EnumConverter<>(attribute, (Class<E>) type, mapKey);
-		} else if (Serializable.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new SerializableConverter();
-		} else {
-			return (ValueConverter<T>) new UnsupportedTypeConverter(attribute);
 		}
+		if (Date.class.isAssignableFrom(targetType)) {
+			return (ValueConverter<T>) new DateConverter(attribute, mapKey);
+		}
+		if (Calendar.class.isAssignableFrom(targetType)) {
+			return (ValueConverter<T>) new CalendarConverter(attribute, mapKey);
+		}
+		if (Enum.class.isAssignableFrom(targetType)) {
+			return (ValueConverter<T>) new EnumConverter<>(attribute, (Class<E>) targetType, mapKey);
+		}
+		final Class<T> type = ClassUtils.primitiveToWrapper(targetType);
+		if (Character.class == type) {
+			return (ValueConverter<T>) new CharConverter();
+		}
+		if (Boolean.class == type) {
+			return (ValueConverter<T>) new BooleanConverter();
+		}
+		if (Number.class.isAssignableFrom(type)) {
+			return (ValueConverter<T>) new NumberConverter();
+		}
+		if (Serializable.class.isAssignableFrom(type)) {
+			return (ValueConverter<T>) new SerializableConverter();
+		}
+		return (ValueConverter<T>) new UnsupportedTypeConverter(attribute);
 	}
 
 	private static boolean isRequired(final AttributeAccessor attribute) {
