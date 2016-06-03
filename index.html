@@ -39,6 +39,7 @@
 					<li class="active"><a href="#introduction">Introduction</a></li>
 					<li><a href="#documentation">Documentation</a></li>
 					<li><a href="#download">Download</a></li>
+					<li><a href="#versions">Versions</a></li>
 					<li><a href="#license">License</a></li>
 					<li><a href="#about">About</a></li>
 				</ul>
@@ -185,9 +186,9 @@
 									<td><span class="glyphicon text-success glyphicon-ok"></span><span class="sr-only">yes</span></td>
 								</tr>
 								<tr>
-									<td>Fast</td>
+									<td>Fast import</td>
 									<td><span class="glyphicon text-danger glyphicon-remove"></span><span class="sr-only">no</span></td>
-									<td><span class="glyphicon text-success glyphicon-ok"></span><span class="sr-only">yes</span></td>
+									<td><span class="glyphicon text-warning glyphicon-ok"></span><span class="sr-only">yes</span></td>
 									<td><span class="glyphicon text-success glyphicon-ok"></span><span class="sr-only">yes</span></td>
 								</tr>
 							</tbody>
@@ -209,8 +210,6 @@
 					documentation</a></li>
 			<li class="list-group-item"><a href="https://github.com/liefke/org.fastnate/wiki/FirstSteps">First
 					steps</a></li>
-			<li class="list-group-item disabled">How tos (<i>Still to come</i>)
-			</li>
 			<li class="list-group-item"><a href="https://github.com/liefke/org.fastnate/wiki/FAQ">FAQ</a></li>
 		</ul>
 
@@ -255,80 +254,44 @@
 
 		<!-- Download -->
 		<h2 id="download" class="page-header">Download Fastnate</h2>
-		<p></p>
-		<h3>Latest stable version</h3>
 		<p>
-			<i>Until now there is no final stable version. But we are working on release 1.0 so stay tuned.</i>
+			You can obtain Fastnate in different flavours. For an overview of available versions see <a href="#versions">below</a>.
 		</p>
-		<h3>Snapshot releases</h3>
-		<p>You can obtain Fastnate in different styles:</p>
 		<dl class="download">
-			<dt>Include Fastnate as Maven dependency:</dt>
+			<dt>
+				Include Fastnate as <em>Maven</em> dependency
+			</dt>
 			<dd>
-				To add the latest Snapshot you need to add our repository to your
-				<code>settings.xml</code>
-				or
-				<code>pom.xml</code>
-				:
-				<div class="highlight">
-					<pre>&lt;repositories>
-	&lt;repository>
-		&lt;id>fastnate.org&lt;/id>
-		&lt;url>http://download.fastnate.org/repository&lt;/url>
-		&lt;snapshots>
-			&lt;enabled>true&lt;/enabled>
-		&lt;/snapshots>
-	&lt;/repository>
-&lt;/repositories>
-&lt;-- To use the importData task: -->
-&lt;pluginRepositories>
-	&lt;pluginRepository>
-		&lt;id>fastnate.org&lt;/id>
-		&lt;url>http://download.fastnate.org/repository&lt;/url>
-		&lt;snapshots>
-			&lt;enabled>true&lt;/enabled>
-		&lt;/snapshots>
-	&lt;/pluginRepository>
-&lt;/pluginRepositories></pre>
-				</div>
-				Now you can add the dependencies:
+				Fastnate is included in the <a href="http://mvnrepository.com/">central Maven repository</a>. Just add it to your pom.xml:
 				<div class="highlight">
 					<pre>&lt;dependencies>
 	&lt;!-- Use the DataProvider -->
 	&lt;dependency>
 		&lt;groupId>org.fastnate&lt;/groupId>
 		&lt;artifactId>fastnate-data&lt;/artifactId>
-		&lt;version>1.0.0-SNAPSHOT&lt;/version>
+		&lt;version>1.1.0-CR1&lt;/version>
 	&lt;/dependency>
 	&lt;!-- Or use the generator itself -->
 	&lt;dependency>
 		&lt;groupId>org.fastnate&lt;/groupId>
 		&lt;artifactId>fastnate-generator&lt;/artifactId>
-		&lt;version>1.0.0-SNAPSHOT&lt;/version>
+		&lt;version>1.1.0-CR1&lt;/version>
 	&lt;/dependency>
 &lt;/dependencies></pre>
 				</div>
 				And use the importData task:
 				<div class="highlight">
 					<pre>&lt;build>
-	&lt;properties>
-		&lt;-- Your database dialect: -->
-		&lt;target.db>Oracle&lt;/target.db>
-	&lt;/properties>
 	&lt;plugins>
 		&lt;plugin>
 			&lt;groupId>org.fastnate&lt;/groupId>
 			&lt;artifactId>fastnate-maven-plugin&lt;/artifactId>
-			&lt;version>1.0.0-SNAPSHOT&lt;/version>
+			&lt;version>1.1.0-CR1&lt;/version>
 			&lt;executions>
 				&lt;execution>
 					&lt;goals>
 						&lt;goal>import-data&lt;/goal>
 					&lt;/goals>
-					&lt;configuration>
-						&lt;dialect>${target.db}&lt;/dialect>
-						...
-					&lt;/configuration>
 				&lt;/execution>
 			&lt;/executions>
 		&lt;/plugin>
@@ -336,20 +299,57 @@
 &lt;/build></pre>
 				</div>
 			</dd>
-			<dt>Download the packages from:</dt>
+			<dt>Standalone</dt>
 			<dd>
-				<a href="http://download.fastnate.org/repository/">Fastnate Repository</a>
+				If you want to use Fastnate as standalone library, you need to download it from our <a
+					href="http://download.fastnate.org/repository/">binary repository</a>:
+				<ul>
+					<li><a
+						href="https://download.fastnate.org/repository/org/fastnate/fastnate-generator/1.1.0-RC1/fastnate-generator-1.1.0-RC1.jar">fastnate-generator-1.1.0-RC1.jar</a>
+						<a
+						href="https://download.fastnate.org/repository/org/fastnate/fastnate-generator/1.1.0-RC1/fastnate-generator-1.1.0-RC1.jar.sha1">(SHA-1)</a>
+						<a
+						href="https://download.fastnate.org/repository/org/fastnate/fastnate-generator/1.1.0-RC1/fastnate-generator-1.1.0-RC1.jar.md5">(MD5)</a>
+					</li>
+					<li><a
+						href="http://download.fastnate.org/repository/org/fastnate/fastnate-data/1.1.0-RC1/fastnate-data-1.1.0-RC1.jar">fastnate-data-1.1.0-RC1.jar</a>
+						<a
+						href="http://download.fastnate.org/repository/org/fastnate/fastnate-data/1.1.0-RC1/fastnate-data-1.1.0-RC1.jar.sha1">(SHA-1)</a>
+						<a
+						href="http://download.fastnate.org/repository/org/fastnate/fastnate-data/1.1.0-RC1/fastnate-data-1.1.0-RC1.jar.md5">(MD5)</a>
+					</li>
+				</ul>
 			</dd>
-			<dt>Download the latest sources:</dt>
+			<dt>Latest sources</dt>
 			<dd>
-				<a href="https://github.com/liefke/org.fastnate/archive/master.zip">org.fastnate-master-src.zip</a><br /> <a
-					href="https://github.com/liefke/org.fastnate/tarball/master">org.fastnate-master-src.tar.gz</a><br />
-			</dd>
-			<dt>Browse or clone the source on GitHub:</dt>
-			<dd>
-				<a href="https://github.com/liefke/org.fastnate">https://github.com/liefke/org.fastnate</a>
+				The sources are available in GitHub:
+				<ul>
+					<li><a href="https://github.com/liefke/org.fastnate/archive/master.zip">org.fastnate-master-src.zip</a></li>
+					<li><a href="https://github.com/liefke/org.fastnate/tarball/master">org.fastnate-master-src.tar.gz</a></li>
+				</ul>
+				You can browse or clone the source here:
+				<ul>
+					<li><a href="https://github.com/liefke/org.fastnate">https://github.com/liefke/org.fastnate</a></li>
+				</ul>
 			</dd>
 		</dl>
+
+		<!-- About -->
+		<h2 id="versions" class="page-header">Versions of Fastnate</h2>
+
+		<h3>Latest stable versions</h3>
+		<dl class="download">
+			<dt>1.0.0-RC1</dt>
+			<dd>Support for JBoss AS 7.x / Hibernate 4</dd>
+			<dt>1.1.0-RC1</dt>
+			<dd>Support for WildFly 10 / Hibernate 5</dd>
+		</dl>
+
+		<h3>Changelog</h3>
+		<p>
+			The changelog is maintained in the repository in the file <a
+				href="https://github.com/liefke/org.fastnate/blob/develop/changelog.md">changelog.md</a>.
+		</p>
 
 		<!-- License -->
 		<h2 id="license" class="page-header">Fastnate License</h2>
@@ -392,7 +392,7 @@
 			<hr />
 			<p class="row">
 				<span class="col-sm-6">fastnate.org</span> <span class="col-sm-6 text-right">Designed with <a
-					href="getbootstrap.com">Bootstrap</a></span>
+					href="https://getbootstrap.com">Bootstrap</a></span>
 			</p>
 		</footer>
 	</div>
