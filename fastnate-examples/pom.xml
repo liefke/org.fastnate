@@ -14,6 +14,11 @@
 	<artifactId>fastnate-examples</artifactId>
 	<packaging>jar</packaging>
 
+	<properties>
+		<!-- Projectroot -->
+		<fastnate.root>${basedir}/..</fastnate.root>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.fastnate</groupId>

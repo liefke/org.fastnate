@@ -3,13 +3,20 @@
 	<name>FastNate Maven Plugin</name>
 	<description>The fastnate.org maven plugin</description>
 
-	<artifactId>fastnate-maven-plugin</artifactId>
 	<parent>
 		<groupId>org.fastnate</groupId>
 		<artifactId>fastnate-base</artifactId>
 		<version>1.1.0-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
+	
+	<artifactId>fastnate-maven-plugin</artifactId>
+	<packaging>maven-plugin</packaging>
+
+	<properties>
+		<!-- Projectroot -->
+		<fastnate.root>${basedir}/..</fastnate.root>
+	</properties>
 
 	<dependencies>
 		<!-- Default plugin dependencies -->
@@ -58,8 +65,6 @@
 			<scope>provided</scope>
 		</dependency>	
 	</dependencies>
-
-	<packaging>maven-plugin</packaging>
 
 	<build>
 		<plugins>
