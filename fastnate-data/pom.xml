@@ -14,6 +14,11 @@
 	<artifactId>fastnate-data</artifactId>
 	<packaging>jar</packaging>
 
+	<properties>
+		<!-- Projectroot -->
+		<fastnate.root>${basedir}/..</fastnate.root>
+	</properties>
+
 	<dependencies>
 		<!-- Use the generator -->
 		<dependency>
