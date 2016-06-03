@@ -20,15 +20,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.ModelException;
 import org.reflections.Reflections;
+
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Main class for importing entities.
@@ -42,6 +42,31 @@ import org.reflections.Reflections;
 @Slf4j
 @Getter
 public final class EntityImporter {
+
+	/**
+	 * The String in the SQL, if the generation was aborted.
+	 *
+	 * Can be used by other utilities that perform further modifications on the generated files.
+	 */
+	public static final String GENERATION_ABORTED_MESSAGE = "!!! GENERATION ABORTED !!!";
+
+	/** Settings key for the folder that contains any data to import. */
+	public static final String DATA_FOLDER_KEY = "fastnate.data.folder";
+
+	/** Settings key for the generated SQL file. */
+	public static final String OUTPUT_FILE_KEY = "fastnate.data.sql.output.file";
+
+	/** Settings key for the encoding of the generated SQL file. */
+	public static final String OUTPUT_ENCODING_KEY = "fastnate.data.sql.output.encoding";
+
+	/** Settings key for a part to write into the output file before the generated content. */
+	public static final String PREFIX_KEY = "fastnate.data.sql.prefix";
+
+	/** Settings key for a part to write into the output file after the generated content. */
+	public static final String POSTFIX_KEY = "fastnate.data.sql.postfix";
+
+	/** Settings key for the packages to scan. */
+	public static final String PACKAGES_KEY = "fastnate.data.provider.packages";
 
 	/**
 	 * Starts the entity importer from the command line.
@@ -78,31 +103,6 @@ public final class EntityImporter {
 		}
 		new EntityImporter(settings).importData();
 	}
-
-	/**
-	 * The String in the SQL, if the generation was aborted.
-	 *
-	 * Can be used by other utilities that perform further modifications on the generated files.
-	 */
-	public static final String GENERATION_ABORTED_MESSAGE = "!!! GENERATION ABORTED !!!";
-
-	/** Settings key for the folder that contains any data to import. */
-	public static final String DATA_FOLDER_KEY = "fastnate.data.folder";
-
-	/** Settings key for the generated SQL file. */
-	public static final String OUTPUT_FILE_KEY = "fastnate.data.sql.output.file";
-
-	/** Settings key for the encoding of the generated SQL file. */
-	public static final String OUTPUT_ENCODING_KEY = "fastnate.data.sql.output.encoding";
-
-	/** Settings key for a part to write into the output file before the generated content. */
-	public static final String PREFIX_KEY = "fastnate.data.sql.prefix";
-
-	/** Settings key for a part to write into the output file after the generated content. */
-	public static final String POSTFIX_KEY = "fastnate.data.sql.postfix";
-
-	/** Settings key for the packages to scan. */
-	public static final String PACKAGES_KEY = "fastnate.data.provider.packages";
 
 	private final Properties settings;
 
@@ -230,6 +230,10 @@ public final class EntityImporter {
 	 *             if one of the data importers or the file writer throws one
 	 */
 	public void importData(final File targetFile) throws IOException {
+		final File directory = targetFile.getParentFile();
+		if (directory != null && !directory.exists()) {
+			directory.mkdirs();
+		}
 		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(targetFile),
 				Charset.forName(this.settings.getProperty(OUTPUT_ENCODING_KEY, "UTF-8"))))) {
 			importData(writer);
@@ -320,8 +324,8 @@ public final class EntityImporter {
 			}
 
 			// Prevent endless loops
-			ModelException.test(previousSize > providers.size(), "No matching data provider in dependencies of "
-					+ Arrays.toString(providers.toArray()));
+			ModelException.test(previousSize > providers.size(),
+					"No matching data provider in dependencies of " + Arrays.toString(providers.toArray()));
 		}
 	}
 
