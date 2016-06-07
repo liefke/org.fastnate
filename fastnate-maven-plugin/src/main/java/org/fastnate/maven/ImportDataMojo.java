@@ -1,20 +1,10 @@
 package org.fastnate.maven;
 
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.descriptor.PluginDescriptor;
-import org.apache.maven.plugins.annotations.*;
-import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.Scanner;
-import org.fastnate.data.DataChangeDetector;
-import org.fastnate.data.DataProvider;
-import org.fastnate.data.EntityImporter;
-import org.fastnate.generator.context.GeneratorContext;
-import org.sonatype.plexus.build.incremental.BuildContext;
-
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,6 +16,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.Scanner;
+import org.fastnate.data.DataChangeDetector;
+import org.fastnate.data.DataProvider;
+import org.fastnate.data.EntityImporter;
+import org.fastnate.generator.context.GeneratorContext;
+import org.sonatype.plexus.build.incremental.BuildContext;
 
 /**
  * Creates an SQL file from all {@link DataProvider}.
