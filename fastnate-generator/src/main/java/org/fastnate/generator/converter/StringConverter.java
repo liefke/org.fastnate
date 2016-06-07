@@ -55,14 +55,15 @@ public class StringConverter extends AbstractValueConverter<String> {
 			this.minSize = 0;
 		} else {
 			final Column column = attribute.getAnnotation(Column.class);
+			final int columnLength = column != null ? column.length() : DEFAULT_COLUMN_LENGTH;
 			this.nullable = column != null && !column.nullable() || attribute.hasAnnotation(NotNull.class);
 
 			final Size size = attribute.getAnnotation(Size.class);
 			if (size != null) {
-				this.maxSize = Math.min(column != null ? column.length() : Integer.MAX_VALUE, size.max());
+				this.maxSize = size.max() < Integer.MAX_VALUE ? size.max() : columnLength;
 				this.minSize = size.min();
 			} else {
-				this.maxSize = column != null ? column.length() : DEFAULT_COLUMN_LENGTH;
+				this.maxSize = columnLength;
 				this.minSize = 0;
 			}
 		}
@@ -73,7 +74,8 @@ public class StringConverter extends AbstractValueConverter<String> {
 		// Check constraints
 		if (value.length() > this.maxSize) {
 			throw new IllegalArgumentException("The length of the given string value (" + value.length()
-					+ ") exceeds the maximum allowed length of " + this.attribute + " (" + this.maxSize + "): " + value);
+					+ ") exceeds the maximum allowed length of " + this.attribute + " (" + this.maxSize + "): "
+					+ value);
 		}
 		if (value.length() < this.minSize) {
 			throw new IllegalArgumentException("The length of the given string value (" + value.length()
