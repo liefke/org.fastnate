@@ -322,6 +322,10 @@ public class ImportDataMojo extends AbstractMojo {
 
 				final String outputEncoding = settings.getProperty(EntityImporter.OUTPUT_ENCODING_KEY, "UTF-8");
 				getLog().info("Writing entities to " + outputFile + " with encoding " + outputEncoding);
+				final File directory = outputFile.getParentFile();
+				if (directory != null && !directory.exists()) {
+					directory.mkdirs();
+				}
 				try (final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
 						this.context.newFileOutputStream(outputFile), Charset.forName(outputEncoding)))) {
 					final Class<?> importerClass = Thread.currentThread().getContextClassLoader()
