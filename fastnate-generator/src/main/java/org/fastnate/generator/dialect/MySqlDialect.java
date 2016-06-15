@@ -102,4 +102,9 @@ public final class MySqlDialect extends GeneratorDialect {
 		return result.append('\'').toString();
 	}
 
+
+	@Override
+	public boolean isSequenceSupported() {
+		return false;
+	}
 }
