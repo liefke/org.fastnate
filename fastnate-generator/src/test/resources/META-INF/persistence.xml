@@ -40,4 +40,16 @@
             <property name="hibernate.connection.password" value="fastnate"/>
 		</properties>
 	</persistence-unit>
+	<persistence-unit name="test-mysql" transaction-type="RESOURCE_LOCAL">
+		<properties>
+            <property name="hibernate.hbm2ddl.auto" value="create"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="false"/>
+			<property name="hibernate.use_sql_comments" value="true" />
+            <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
+            <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/fastnate"/>
+            <property name="hibernate.connection.username" value="fastnate"/>
+            <property name="hibernate.connection.password" value="fastnate"/>
+		</properties>
+	</persistence-unit>
 </persistence> 

@@ -71,15 +71,15 @@ public class PrimitiveTestEntity {
 	private double testDouble;
 
 	@Temporal(TemporalType.DATE)
-	@Column(name = "\"date\"")
+	@Column(name = "dateColumn")
 	private Date date;
 
 	@Temporal(TemporalType.TIME)
-	@Column(name = "\"time\"")
+	@Column(name = "timeColumn")
 	private Date time;
 
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "\"timestamp\"")
+	@Column(name = "timestampColumn")
 	private Date timestamp;
 
 	@Lob

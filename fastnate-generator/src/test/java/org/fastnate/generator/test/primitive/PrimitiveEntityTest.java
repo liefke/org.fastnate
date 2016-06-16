@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import org.apache.commons.lang.time.DateUtils;
+import org.assertj.core.api.Assertions;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.junit.Test;
 
@@ -16,6 +17,8 @@ import org.junit.Test;
  * @author Tobias Liefke
  */
 public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
+
+	private static final float MINIMUM_FLOAT_PRECISION = 0.000001f;
 
 	/**
 	 * Tests to write enum properties in an entity.
@@ -99,7 +102,8 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getTestShort()).isEqualTo(testEntity.getTestShort());
 		assertThat(result.getTestInt()).isEqualTo(testEntity.getTestInt());
 		assertThat(result.getTestLong()).isEqualTo(testEntity.getTestLong());
-		assertThat(result.getTestFloat()).isEqualTo(testEntity.getTestFloat());
+		assertThat(result.getTestFloat()).isEqualTo(testEntity.getTestFloat(),
+				Assertions.withPrecision(MINIMUM_FLOAT_PRECISION));
 		assertThat(result.getTestDouble()).isEqualTo(testEntity.getTestDouble());
 	}
 
