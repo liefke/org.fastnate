@@ -44,6 +44,14 @@ public final class MySqlDialect extends GeneratorDialect {
 	}
 
 	/**
+	 * Create MySQL specific binary expression.
+	 */
+	@Override
+	public String createBlobExpression(final byte[] blob) {
+		return createHexBlobExpression("x'", blob, "'");
+	}
+
+	/**
 	 * Replace any subselect in an insert statement, if the same table is selected.
 	 */
 	@Override
@@ -78,6 +86,11 @@ public final class MySqlDialect extends GeneratorDialect {
 		return result.toString();
 	}
 
+	@Override
+	public boolean isSequenceSupported() {
+		return false;
+	}
+
 	/**
 	 * Create MySQL specific quoting of the string.
 	 */
@@ -102,9 +115,4 @@ public final class MySqlDialect extends GeneratorDialect {
 		return result.append('\'').toString();
 	}
 
-
-	@Override
-	public boolean isSequenceSupported() {
-		return false;
-	}
 }
