@@ -218,7 +218,7 @@ public abstract class GeneratorDialect {
 	 * @return {@code true} if this database supports sequences in {@code WHERE} expressions
 	 */
 	public boolean isSequenceInWhereSupported() {
-		return true;
+		return isSequenceSupported();
 	}
 
 	/**
