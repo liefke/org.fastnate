@@ -22,7 +22,7 @@ import lombok.Setter;
 @Setter
 public class TestEmbeddedId implements Serializable {
 
-	private static final long serialVersionUID = -9125190916974711578L;
+	private static final long serialVersionUID = 1L;
 
 	private long id;
 
