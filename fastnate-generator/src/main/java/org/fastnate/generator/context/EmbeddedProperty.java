@@ -51,7 +51,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	public EmbeddedProperty(final EntityClass<?> entityClass, final AttributeAccessor attribute) {
 		super(attribute);
 
-		this.id = attribute.hasAnnotation(EmbeddedId.class);
+		this.id = attribute.isAnnotationPresent(EmbeddedId.class);
 
 		final Class<?> type = attribute.getType();
 		if (!type.isAnnotationPresent(Embeddable.class)) {
@@ -95,11 +95,22 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	}
 
 	@Override
-	public List<EntityStatement> buildAdditionalStatements(final E entity) {
+	public List<EntityStatement> createPostInsertStatements(final E entity) {
 		final T value = getValue(entity);
 		final List<EntityStatement> result = new ArrayList<>();
 		for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
-			result.addAll(property.buildAdditionalStatements(value));
+			result.addAll(property.createPostInsertStatements(value));
+		}
+
+		return result;
+	}
+
+	@Override
+	public List<EntityStatement> createPreInsertStatements(final E entity) {
+		final T value = getValue(entity);
+		final List<EntityStatement> result = new ArrayList<>();
+		for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
+			result.addAll(property.createPreInsertStatements(value));
 		}
 
 		return result;

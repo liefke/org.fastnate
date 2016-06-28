@@ -52,8 +52,8 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	 * @return {@code true} if an {@link CollectionProperty} may be created for the given attribute
 	 */
 	static boolean isCollectionProperty(final AttributeAccessor attribute) {
-		return (attribute.hasAnnotation(OneToMany.class) || attribute.hasAnnotation(ManyToMany.class)
-				|| attribute.hasAnnotation(ElementCollection.class))
+		return (attribute.isAnnotationPresent(OneToMany.class) || attribute.isAnnotationPresent(ManyToMany.class)
+				|| attribute.isAnnotationPresent(ElementCollection.class))
 				&& Collection.class.isAssignableFrom(attribute.getType());
 	}
 
@@ -194,7 +194,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	}
 
 	@Override
-	public List<EntityStatement> buildAdditionalStatements(final E entity) {
+	public List<EntityStatement> createPostInsertStatements(final E entity) {
 		if (this.mappedBy != null && this.orderColumn == null) {
 			return Collections.emptyList();
 		}

@@ -1,7 +1,6 @@
 package org.fastnate.generator.context;
 
 import java.beans.Introspector;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
 
@@ -12,7 +11,7 @@ import java.lang.reflect.Type;
  *
  * @author Tobias Liefke
  */
-public interface AttributeAccessor {
+public interface AttributeAccessor extends AnnotatedElement {
 
 	/**
 	 * Describes how this attribute accesses the values below.
@@ -20,15 +19,6 @@ public interface AttributeAccessor {
 	 * @return the type that has created this attribute accessor
 	 */
 	AccessStyle getAccessStyle();
-
-	/**
-	 * Finds an annotation of the attribute.
-	 *
-	 * @param annotationClass
-	 *            the type of annotation to find
-	 * @return the annotation or {@code null} if none was found
-	 */
-	<A extends Annotation> A getAnnotation(final Class<A> annotationClass);
 
 	/**
 	 * The actual field or method.
@@ -66,15 +56,6 @@ public interface AttributeAccessor {
 	 * @return the value, {@code null} if entity is {@code null}
 	 */
 	<E, T> T getValue(final E entity);
-
-	/**
-	 * Checks if the attribute has a specific annotation.
-	 *
-	 * @param annotationClass
-	 *            the type of annotation to find
-	 * @return {@code true} if that annotation was found
-	 */
-	boolean hasAnnotation(final Class<? extends Annotation> annotationClass);
 
 	/**
 	 * Indicates that this attribute is written to the database.

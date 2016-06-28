@@ -2,6 +2,9 @@ package org.fastnate.generator.provider;
 
 import java.util.Properties;
 
+import javax.persistence.SequenceGenerator;
+import javax.persistence.TableGenerator;
+
 /**
  * Encapsulates details specific to the current JPA implementation.
  *
@@ -10,7 +13,39 @@ import java.util.Properties;
 public interface JpaProvider {
 
 	/**
-	 * The name of the default sequence, if none was specified for a sequence generator.
+	 * The name of the default generator {@link TableGenerator#table()}, if none was specified for a table generator.
+	 *
+	 * @return the default generator table
+	 */
+	String getDefaultGeneratorTable();
+
+	/**
+	 * The name of the default generator {@link TableGenerator#pkColumnName()}, if none was specified for a table
+	 * generator.
+	 *
+	 * @return the default primary column name for the generator table
+	 */
+	String getDefaultGeneratorTablePkColumnName();
+
+	/**
+	 * The name of the default generator {@link TableGenerator#pkColumnValue()}, if none was specified for a table
+	 * generator.
+	 *
+	 * @return the default primary column value for the generator table
+	 */
+	String getDefaultGeneratorTablePkColumnValue();
+
+	/**
+	 * The name of the default generator {@link TableGenerator#valueColumnName()}, if none was specified for a table
+	 * generator.
+	 *
+	 * @return the default value column name for the generator table
+	 */
+	String getDefaultGeneratorTableValueColumnName();
+
+	/**
+	 * The name of the default {@link SequenceGenerator#sequenceName() sequence}, if none was specified for a sequence
+	 * generator.
 	 *
 	 * @return the default sequence name
 	 */

@@ -78,7 +78,7 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 	@SuppressWarnings("unchecked")
 	public static <T, E extends Enum<E>> ValueConverter<T> createConverter(final AttributeAccessor attribute,
 			final Class<T> targetType, final boolean mapKey) {
-		if (attribute.hasAnnotation(Lob.class)) {
+		if (attribute.isAnnotationPresent(Lob.class)) {
 			return (ValueConverter<T>) new LobConverter();
 		}
 		if (String.class == targetType) {
@@ -111,7 +111,7 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 
 	private static boolean isRequired(final AttributeAccessor attribute) {
 		final Basic basic = attribute.getAnnotation(Basic.class);
-		return basic != null && !basic.optional() || attribute.hasAnnotation(NotNull.class)
+		return basic != null && !basic.optional() || attribute.isAnnotationPresent(NotNull.class)
 				|| attribute.getType().isPrimitive();
 	}
 

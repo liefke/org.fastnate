@@ -60,6 +60,16 @@ public enum AccessStyle {
 			}
 
 			@Override
+			public Annotation[] getAnnotations() {
+				return this.field.getAnnotations();
+			}
+
+			@Override
+			public Annotation[] getDeclaredAnnotations() {
+				return this.field.getDeclaredAnnotations();
+			}
+
+			@Override
 			public AnnotatedElement getElement() {
 				return this.field;
 			}
@@ -90,15 +100,10 @@ public enum AccessStyle {
 			}
 
 			@Override
-			public boolean hasAnnotation(final Class<? extends Annotation> annotationClass) {
-				return this.field.isAnnotationPresent(annotationClass);
-			}
-
-			@Override
 			public boolean isPersistent() {
 				final int modifiers = this.field.getModifiers();
 				return !Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)
-						&& !hasAnnotation(Transient.class) && !hasAnnotation(Formula.class);
+						&& !isAnnotationPresent(Transient.class) && !isAnnotationPresent(Formula.class);
 			}
 
 			@Override
@@ -169,6 +174,16 @@ public enum AccessStyle {
 			}
 
 			@Override
+			public Annotation[] getAnnotations() {
+				return this.method.getAnnotations();
+			}
+
+			@Override
+			public Annotation[] getDeclaredAnnotations() {
+				return this.method.getDeclaredAnnotations();
+			}
+
+			@Override
 			public AnnotatedElement getElement() {
 				return this.method;
 			}
@@ -199,15 +214,10 @@ public enum AccessStyle {
 			}
 
 			@Override
-			public boolean hasAnnotation(final Class<? extends Annotation> annotationClass) {
-				return this.method.isAnnotationPresent(annotationClass);
-			}
-
-			@Override
 			public boolean isPersistent() {
 				final int modifiers = this.method.getModifiers();
 				return !Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)
-						&& !hasAnnotation(Transient.class) && !hasAnnotation(Formula.class);
+						&& !isAnnotationPresent(Transient.class) && !isAnnotationPresent(Formula.class);
 			}
 
 			@Override
@@ -242,6 +252,7 @@ public enum AccessStyle {
 			public String toString() {
 				return this.method.toString();
 			}
+
 		}
 
 		@Override

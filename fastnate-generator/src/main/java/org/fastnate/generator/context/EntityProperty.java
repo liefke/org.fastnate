@@ -90,8 +90,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	 * @return {@code true} if an {@link EntityProperty} may be created for the given attribute
 	 */
 	static boolean isEntityProperty(final AttributeAccessor attribute) {
-		return attribute.hasAnnotation(OneToOne.class) || attribute.hasAnnotation(ManyToOne.class)
-				|| attribute.hasAnnotation(Any.class) || attribute.hasAnnotation(ManyToAny.class);
+		return attribute.isAnnotationPresent(OneToOne.class) || attribute.isAnnotationPresent(ManyToOne.class)
+				|| attribute.isAnnotationPresent(Any.class) || attribute.isAnnotationPresent(ManyToAny.class);
 	}
 
 	/** The current context. */

@@ -203,6 +203,9 @@ public class EntitySqlGenerator implements Closeable {
 			stmt.addValue(classDescription.getPrimaryKeyJoinColumn(),
 					classDescription.getEntityReference(entity, null, false));
 		} else {
+			// Write Pre-Inserts for the ID
+			writeStatements(classDescription.getIdProperty().createPreInsertStatements(entity));
+
 			// Add the id
 			classDescription.getIdProperty().addInsertExpression(entity, stmt);
 
@@ -214,6 +217,8 @@ public class EntitySqlGenerator implements Closeable {
 
 		// Now add all other properties
 		for (final Property<E, ?> property : classDescription.getProperties().values()) {
+			writeStatements(property.createPreInsertStatements(entity));
+
 			property.addInsertExpression(entity, stmt);
 		}
 
@@ -221,12 +226,7 @@ public class EntitySqlGenerator implements Closeable {
 		writeStatement(stmt);
 
 		// And all postponed statements
-		final List<EntityStatement> updates = classDescription.createPostInsertStatements(entity);
-		if (!updates.isEmpty()) {
-			for (final EntityStatement update : updates) {
-				writeStatement(update);
-			}
-		}
+		writeStatements(classDescription.createPostInsertStatements(entity));
 
 		for (final Property<E, ?> property : classDescription.getProperties().values()) {
 			// Write all missing entities, even those that have no column (because they are referencing us and
@@ -238,9 +238,7 @@ public class EntitySqlGenerator implements Closeable {
 			}
 
 			// Generate additional statements
-			for (final EntityStatement additionalStmt : property.buildAdditionalStatements(entity)) {
-				writeStatement(additionalStmt);
-			}
+			writeStatements(property.createPostInsertStatements(entity));
 		}
 	}
 
@@ -255,6 +253,12 @@ public class EntitySqlGenerator implements Closeable {
 	 */
 	protected void writeStatement(final EntityStatement stmt) throws IOException {
 		this.writer.write(this.context.getDialect().createSql(stmt));
+	}
+
+	private void writeStatements(final List<EntityStatement> statements) throws IOException {
+		for (final EntityStatement stmt : statements) {
+			writeStatement(stmt);
+		}
 	}
 
 	private <E, T> void writeTableEntities(final E entity, final List<Object> postponedEntities,

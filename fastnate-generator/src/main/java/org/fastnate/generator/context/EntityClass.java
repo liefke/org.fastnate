@@ -39,8 +39,6 @@ import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.context.GenerationState.PendingState;
 import org.fastnate.generator.statements.EntityStatement;
 
-import com.google.common.collect.ImmutableMap;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -78,10 +76,6 @@ public final class EntityClass<E> {
 		}
 
 	}
-
-	/** Contains the default values for a sequence generator, if none is given. */
-	private static final SequenceGenerator DEFAULT_SEQUENCE_GENERATOR = AnnotationDefaults
-			.create(SequenceGenerator.class, ImmutableMap.of("allocationSize", 1));
 
 	/**
 	 * Funds all association overrides that are attached to the given field or class.
@@ -236,9 +230,6 @@ public final class EntityClass<E> {
 	/** All properties of this entity, including {@link #idProperty} and properties from {@link #joinedParentClass}. */
 	private final List<Property<? super E, ?>> allProperties = new ArrayList<>();
 
-	/** Mapping from a {@link SequenceGenerator#name()} to the generator itself. */
-	private final Map<String, SequenceGenerator> sequences = new HashMap<>();
-
 	/** The states of written entities. Only interesting for pending updates and if the ID is not generated. */
 	private final Map<Object, GenerationState> entityStates;
 
@@ -279,8 +270,7 @@ public final class EntityClass<E> {
 		buildOverrides(this.entityClass);
 
 		// Now build the sequences (referenced from GeneratedIdProperty)
-		this.sequences.put("", DEFAULT_SEQUENCE_GENERATOR);
-		buildSequences(this.entityClass);
+		buildGenerators(this.entityClass);
 
 		// Build the inheritance and discriminator properties
 		buildInheritance();
@@ -349,6 +339,21 @@ public final class EntityClass<E> {
 			return getContext().getDialect().quoteString(v.substring(0, 1));
 		}
 		throw new IllegalArgumentException("Unknown discriminator type: " + type);
+	}
+
+	/**
+	 * Fills the generators of the {@link #context}.
+	 *
+	 * @param c
+	 *            the currently inspected class
+	 */
+	private void buildGenerators(final Class<?> c) {
+		// First find sequences of super classes
+		if (c.getSuperclass() != null) {
+			buildGenerators(c.getSuperclass());
+		}
+
+		this.context.getGeneratedIds().registerGenerators(c);
 	}
 
 	/**
@@ -457,7 +462,7 @@ public final class EntityClass<E> {
 		// And now fill the properties of this class
 		if (c.isAnnotationPresent(MappedSuperclass.class) || c.isAnnotationPresent(Entity.class)) {
 			for (final AttributeAccessor field : this.accessStyle.getDeclaredAttributes(c)) {
-				if (!field.hasAnnotation(EmbeddedId.class) && !field.hasAnnotation(Id.class)) {
+				if (!field.isAnnotationPresent(EmbeddedId.class) && !field.isAnnotationPresent(Id.class)) {
 					final Property<E, ?> property = buildProperty(field, getColumnAnnotation(field),
 							this.associationOverrides.get(field.getName()));
 					if (property != null) {
@@ -493,29 +498,13 @@ public final class EntityClass<E> {
 				return new MapProperty<>(this, attribute, override);
 			} else if (EntityProperty.isEntityProperty(attribute)) {
 				return new EntityProperty<>(this.context, attribute, override);
-			} else if (attribute.hasAnnotation(Embedded.class)) {
+			} else if (attribute.isAnnotationPresent(Embedded.class)) {
 				return new EmbeddedProperty<>(this, attribute);
 			} else {
 				return new PrimitiveProperty<>(this.context, this.table, attribute, columnMetadata);
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Fills the {@link #sequences}.
-	 *
-	 * @param c
-	 *            the currently inspected class
-	 */
-	private void buildSequences(final Class<?> c) {
-		// First find sequences of super classes
-		if (c.getSuperclass() != null) {
-			buildSequences(c.getSuperclass());
-		}
-
-		registerSequence(c.getAnnotation(SequenceGenerator.class));
-
 	}
 
 	private void buildUniqueProperties(final UniqueConstraint[] uniqueConstraints) {
@@ -596,15 +585,15 @@ public final class EntityClass<E> {
 
 	private boolean findIdProperty(final Iterable<AttributeAccessor> declaredAttributes) {
 		for (final AttributeAccessor attribute : declaredAttributes) {
-			if (attribute.hasAnnotation(EmbeddedId.class)) {
+			if (attribute.isAnnotationPresent(EmbeddedId.class)) {
 				this.idProperty = new EmbeddedProperty<>(this, attribute);
 				return true;
-			} else if (attribute.hasAnnotation(Id.class)) {
-				if (attribute.hasAnnotation(GeneratedValue.class)) {
+			} else if (attribute.isAnnotationPresent(Id.class)) {
+				if (attribute.isAnnotationPresent(GeneratedValue.class)) {
 					if (attribute.getType().isPrimitive()) {
 						throw new IllegalArgumentException("Generated ID must not be of primitive type.");
 					}
-					registerSequence(attribute.getAnnotation(SequenceGenerator.class));
+					this.context.getGeneratedIds().registerGenerators(attribute);
 					this.idProperty = new GeneratedIdProperty<>(this, attribute, getColumnAnnotation(attribute));
 				} else {
 					this.idProperty = buildProperty(attribute, getColumnAnnotation(attribute),
@@ -663,9 +652,12 @@ public final class EntityClass<E> {
 		final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
 		if (!generatedIdProperty.isReference(entity) && this.uniqueProperties != null) {
 			// Check to write "currval" of sequence if we just have written the same value
-			if (this.context.isPreferSequenceCurentValue() && generatedIdProperty.getGenerator() != null && this.context
-					.getCurrentValue(generatedIdProperty.getGenerator()).equals(generatedIdProperty.getValue(entity))) {
-				return generatedIdProperty.getExpression(entity, whereExpression);
+			if (this.context.isPreferSequenceCurentValue()) {
+				final SequenceGenerator generator = generatedIdProperty.getSequenceGenerator();
+				if (generator != null && this.context.getGeneratedIds().getCurrentValue(generator)
+						.equals(generatedIdProperty.getValue(entity))) {
+					return generatedIdProperty.getExpression(entity, whereExpression);
+				}
 			}
 
 			// Check to write the reference with the unique properties
@@ -819,12 +811,6 @@ public final class EntityClass<E> {
 			this.entityStates.put(id, pendingState);
 		}
 		pendingState.addPendingUpdate(entityToUpdate, propertyToUpdate, arguments);
-	}
-
-	private void registerSequence(final SequenceGenerator generator) {
-		if (generator != null) {
-			this.sequences.put(generator.name(), generator);
-		}
 	}
 
 	@Override

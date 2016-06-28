@@ -4,10 +4,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import lombok.Getter;
-
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
+
+import lombok.Getter;
 
 /**
  * Base class for the description of properties of an {@link EntityClass}.
@@ -48,13 +48,25 @@ public abstract class Property<E, T> {
 	}
 
 	/**
-	 * Creates additional SQL insert statements (e.g. for mapping tables) for the values of the current property.
+	 * Creates additional SQL statements that are necessary after this property is written (e.g. for mapping tables) .
 	 *
 	 * @param entity
 	 *            the inspected entity
 	 * @return the list of addition insert statements
 	 */
-	public List<EntityStatement> buildAdditionalStatements(final E entity) {
+	public List<EntityStatement> createPostInsertStatements(final E entity) {
+		return Collections.emptyList();
+	}
+
+	/**
+	 * Creates SQL statements that are necessary before this property is written (e.g. for updating the table
+	 * generator).
+	 *
+	 * @param entity
+	 *            the inspected entity
+	 * @return the list of addition statements
+	 */
+	public List<EntityStatement> createPreInsertStatements(final E entity) {
 		return Collections.emptyList();
 	}
 

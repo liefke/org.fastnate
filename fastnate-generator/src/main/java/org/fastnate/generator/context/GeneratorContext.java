@@ -9,8 +9,6 @@ import java.util.Properties;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.SequenceGenerator;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -118,19 +116,16 @@ public class GeneratorContext {
 	/** Contains the extracted metadata per entity class. */
 	private final Map<Class<?>, EntityClass<?>> descriptions = new HashMap<>();
 
-	/**
-	 * Identifies the SQL dialect for generating SQL statements. Encapsulates the database specifica.
-	 */
+	/** Identifies the SQL dialect for generating SQL statements. Encapsulates the database specifica. */
 	private GeneratorDialect dialect;
 
-	/**
-	 * Identifies the JPA provider to indicate implementation specific details.
-	 */
+	/** Identifies the JPA provider to indicate implementation specific details. */
 	private JpaProvider provider;
 
-	/**
-	 * The maximum count of columns that are used when referencing an entity using it's unique properties.
-	 */
+	/** Stores the metadata and current values for {@link GeneratedValue}. */
+	private GeneratedIds generatedIds = new GeneratedIds();
+
+	/** The maximum count of columns that are used when referencing an entity using it's unique properties. */
 	private int maxUniqueProperties = 1;
 
 	/**
@@ -155,16 +150,10 @@ public class GeneratorContext {
 	 */
 	private boolean writeNullValues;
 
-	/** Contains the current values for all {@link SequenceGenerator sequences}. */
-	private final Map<String, Long> sequences = new HashMap<>();
-
-	/** Contains the current values for {@link GeneratedValue ids} with {@link GenerationType#IDENTITY}. */
-	private final Map<String, Long> ids = new HashMap<>();
-
 	/** Contains the state of single entities, maps from an entity name to the mapping of an id to its state. */
 	private final Map<String, Map<Object, GenerationState>> states = new HashMap<>();
 
-	/** Contains the settings that where given during creation. Empty if none were given. */
+	/** Contains the settings that where given during creation. Empty if none were provided. */
 	private final Properties settings;
 
 	/**
@@ -233,81 +222,6 @@ public class GeneratorContext {
 				.parseInt(settings.getProperty(UNIQUE_PROPERTIES_MAX_KEY, String.valueOf(this.maxUniqueProperties)));
 		this.preferSequenceCurentValue = Boolean.parseBoolean(
 				settings.getProperty(PREFER_SEQUENCE_CURRENT_VALUE, String.valueOf(this.preferSequenceCurentValue)));
-	}
-
-	/**
-	 * Creates the next value for a generated column (and remembers that value).
-	 *
-	 * @param property
-	 *            the property
-	 * @return the created value
-	 */
-	public Long createNextValue(final GeneratedIdProperty<?> property) {
-		if (property.getGenerator() != null) {
-			return createNextValue(property.getGenerator());
-		}
-		final String columnId = property.getTable() + "." + property.getColumn();
-		final Long currentValue = this.ids.get(columnId);
-		final Long newValue;
-		if (currentValue == null) {
-			newValue = 0L;
-		} else {
-			newValue = currentValue + 1;
-		}
-		this.ids.put(columnId, newValue);
-		return newValue;
-	}
-
-	/**
-	 * Creates the next value for a sequence (and remembers that value).
-	 *
-	 * @param generator
-	 *            the generator of the current column
-	 * @return the created value
-	 */
-	public Long createNextValue(final SequenceGenerator generator) {
-		final String sequenceName = generator.sequenceName();
-		final Long currentValue = this.sequences.get(sequenceName);
-		final Long newValue;
-		if (currentValue == null) {
-			newValue = (long) generator.initialValue();
-		} else {
-			// Allocation size is _not_ necessarily the increment size
-			// As soon as we read hibernate specific properties, we can read the increment size as well
-			newValue = currentValue + generator.allocationSize();
-		}
-		this.sequences.put(sequenceName, newValue);
-		return newValue;
-	}
-
-	/**
-	 * Resolves the current value for a generated column.
-	 *
-	 * @param property
-	 *            the property of the column
-	 * @return the current value or {@code null} if no row was created up to now
-	 */
-	public Long getCurrentValue(final GeneratedIdProperty<?> property) {
-		if (property.getGenerator() != null) {
-			return getCurrentValue(property.getGenerator());
-		}
-		final String columnId = property.getTable() + "." + property.getColumn();
-		final Long currentId = this.ids.get(columnId);
-		if (currentId == null) {
-			throw new IllegalArgumentException("No current value for: " + columnId);
-		}
-		return currentId;
-	}
-
-	/**
-	 * Resolves the current value for a sequence.
-	 *
-	 * @param generator
-	 *            the generator of the current column
-	 * @return the current value or {@code null} if the sequence was not used up to now
-	 */
-	public Long getCurrentValue(final SequenceGenerator generator) {
-		return this.sequences.get(generator.sequenceName());
 	}
 
 	/**
