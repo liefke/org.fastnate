@@ -58,9 +58,11 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 		final JoinedSuperclassTestEntity superEntity = new JoinedSuperclassTestEntity("Super entity",
 				"Saved to master table for super entity");
 		superEntity.setSuperReference(subEntity);
+		superEntity.setSubReference(subEntity);
 		final JoinedSuperclassTestEntity foundSuperEntity = testInheritance(subEntity, superEntity);
 		assertThat(foundSuperEntity.getSuperReference()).isInstanceOf(JoinedSubclassTestEntity.class);
 		assertThat(foundSuperEntity.getSuperReference().getName()).isEqualTo(subEntity.getName());
+		assertThat(foundSuperEntity.getSubReference().getName()).isEqualTo(subEntity.getName());
 	}
 
 	/**

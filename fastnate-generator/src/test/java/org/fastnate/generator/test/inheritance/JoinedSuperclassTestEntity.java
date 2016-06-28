@@ -26,6 +26,9 @@ public class JoinedSuperclassTestEntity extends MappedSuperclassTestEntity imple
 	@OneToOne
 	private JoinedSuperclassTestEntity superReference;
 
+	@OneToOne
+	private JoinedSubclassTestEntity subReference;
+
 	/**
 	 * Creates a new instance of {@link JoinedSuperclassTestEntity}.
 	 *

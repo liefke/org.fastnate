@@ -713,6 +713,14 @@ public final class EntityClass<E> {
 			}
 			throw new ModelException(attribute + " misses MapId for a singular property in " + this.entityClass);
 		}
+		if (this.idProperty == null && this.parentEntityClass != null) {
+			// It seems we are still building the hierarchy
+			this.idProperty = this.context.getDescription(this.parentEntityClass).getIdProperty();
+			if (this.idProperty != null) {
+				return getIdColumn(attribute);
+			}
+		}
+
 		throw new ModelException(attribute + " does not reference an ID column in " + this.entityClass);
 	}
 
