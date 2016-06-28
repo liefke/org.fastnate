@@ -17,7 +17,7 @@ import org.junit.Test;
  */
 public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 
-	private void testInheritance(final SubclassEntity subEntity, final SuperclassEntity superEntity)
+	private <T extends SuperclassEntity> T testInheritance(final SubclassEntity subEntity, final T superEntity)
 			throws IOException {
 		write(subEntity);
 		write(superEntity);
@@ -31,17 +31,18 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 
 		final List<? extends SuperclassEntity> foundEntities = findResults(superclass);
 		assertThat(foundEntities).hasSize(2);
-		final SuperclassEntity foundSuperEntity;
+		final T foundSuperEntity;
 		if (foundEntities.get(0).equals(foundSubEntity)) {
 			assertThat(foundEntities.get(0)).isInstanceOf(subclass);
-			foundSuperEntity = foundEntities.get(1);
+			foundSuperEntity = (T) foundEntities.get(1);
 		} else {
-			foundSuperEntity = foundEntities.get(0);
+			foundSuperEntity = (T) foundEntities.get(0);
 			assertThat(foundEntities.get(1)).isInstanceOf(subclass);
 		}
 		assertThat(foundSuperEntity).isNotInstanceOf(subclass);
 		assertThat(foundSuperEntity.getName()).isEqualTo(superEntity.getName());
 		assertThat(foundSuperEntity.getSuperProperty()).isEqualTo(superEntity.getSuperProperty());
+		return foundSuperEntity;
 	}
 
 	/**
@@ -56,7 +57,10 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 				"Saved to master table for sub entity");
 		final JoinedSuperclassTestEntity superEntity = new JoinedSuperclassTestEntity("Super entity",
 				"Saved to master table for super entity");
-		testInheritance(subEntity, superEntity);
+		superEntity.setSuperReference(subEntity);
+		final JoinedSuperclassTestEntity foundSuperEntity = testInheritance(subEntity, superEntity);
+		assertThat(foundSuperEntity.getSuperReference()).isInstanceOf(JoinedSubclassTestEntity.class);
+		assertThat(foundSuperEntity.getSuperReference().getName()).isEqualTo(subEntity.getName());
 	}
 
 	/**
