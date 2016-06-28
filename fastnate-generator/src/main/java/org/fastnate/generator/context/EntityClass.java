@@ -299,7 +299,6 @@ public final class EntityClass<E> {
 		} else {
 			this.idProperty = this.joinedParentClass.getIdProperty();
 			this.allProperties.add(this.idProperty);
-			this.allProperties.add(this.joinedParentClass.getIdProperty());
 
 			// Add all other properties
 			buildProperties(this.entityClass, this.joinedParentClass.entityClass);
