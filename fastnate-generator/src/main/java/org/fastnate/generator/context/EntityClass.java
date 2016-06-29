@@ -547,16 +547,18 @@ public final class EntityClass<E> {
 	 * @return all statements that have to be written now
 	 */
 	public List<EntityStatement> createPostInsertStatements(final E entity) {
-		final GenerationState oldState;
-		if (this.idProperty instanceof GeneratedIdProperty) {
-			final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
-			generatedIdProperty.postInsert(entity);
-			oldState = this.entityStates.remove(new EntityId(entity));
-		} else {
-			oldState = this.entityStates.put(getStateId(entity), GenerationState.PERSISTED);
-		}
-		if (oldState instanceof PendingState) {
-			return ((PendingState) oldState).generatePendingStatements(entity);
+		if (this.joinedParentClass == null) {
+			final GenerationState oldState;
+			if (this.idProperty instanceof GeneratedIdProperty) {
+				final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
+				generatedIdProperty.postInsert(entity);
+				oldState = this.entityStates.remove(new EntityId(entity));
+			} else {
+				oldState = this.entityStates.put(getStateId(entity), GenerationState.PERSISTED);
+			}
+			if (oldState instanceof PendingState) {
+				return ((PendingState) oldState).generatePendingStatements(entity);
+			}
 		}
 		return Collections.emptyList();
 	}
