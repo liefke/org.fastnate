@@ -56,7 +56,7 @@ public class StringConverter extends AbstractValueConverter<String> {
 		} else {
 			final Column column = attribute.getAnnotation(Column.class);
 			final int columnLength = column != null ? column.length() : DEFAULT_COLUMN_LENGTH;
-			this.nullable = column != null && !column.nullable() || attribute.hasAnnotation(NotNull.class);
+			this.nullable = column != null && !column.nullable() || attribute.isAnnotationPresent(NotNull.class);
 
 			final Size size = attribute.getAnnotation(Size.class);
 			if (size != null) {

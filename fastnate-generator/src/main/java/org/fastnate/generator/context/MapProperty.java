@@ -62,8 +62,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	 * @return {@code true} if an {@link MapProperty} may be created for the given attribute
 	 */
 	static boolean isMapProperty(final AttributeAccessor attribute) {
-		return (attribute.hasAnnotation(OneToMany.class) || attribute.hasAnnotation(ManyToMany.class)
-				|| attribute.hasAnnotation(ElementCollection.class)) && Map.class.isAssignableFrom(attribute.getType());
+		return (attribute.isAnnotationPresent(OneToMany.class) || attribute.isAnnotationPresent(ManyToMany.class)
+				|| attribute.isAnnotationPresent(ElementCollection.class)) && Map.class.isAssignableFrom(attribute.getType());
 	}
 
 	/** Indicates that this property is defined by another property on the target type. */
@@ -204,7 +204,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	}
 
 	@Override
-	public List<EntityStatement> buildAdditionalStatements(final E entity) {
+	public List<EntityStatement> createPostInsertStatements(final E entity) {
 		if (this.mappedBy != null) {
 			return Collections.emptyList();
 		}

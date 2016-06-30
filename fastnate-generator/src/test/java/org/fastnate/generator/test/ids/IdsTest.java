@@ -52,11 +52,13 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testIdentityGenerator() throws Exception {
-		testIds(IdentityTestEntity.class);
+		if (getGenerator().getContext().getDialect().isIdentitySupported()) {
+			testIds(IdentityTestEntity.class);
+		}
 	}
 
-	private <E extends IdTestEntity<E>> E testIds(final Class<E> entityClass) throws IOException,
-			ReflectiveOperationException {
+	private <E extends IdTestEntity<E>> E testIds(final Class<E> entityClass)
+			throws IOException, ReflectiveOperationException {
 		final Constructor<E> entityConstructor = entityClass.getConstructor(String.class);
 		// Write three entities
 		final E entity1 = entityConstructor.newInstance("entity1");
@@ -70,15 +72,19 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 		write(entity3);
 
 		// Read and check the last entity
-		final E foundEntity = findSingleResult("SELECT e FROM " + entityClass.getSimpleName()
-				+ " e WHERE e.name = 'entity3'", entityClass);
+		final E foundEntity = findSingleResult(
+				"SELECT e FROM " + entityClass.getSimpleName() + " e WHERE e.name = 'entity3'", entityClass);
 		assertThat(foundEntity.getOther()).isNotNull();
 		assertThat(foundEntity.getOther().getName()).isEqualTo("entity1");
+
+		getEm().getTransaction().begin();
 
 		// And ensure that another entity may be written afterwards
 		final E entity4 = entityConstructor.newInstance("entity4");
 		entity4.setOther(foundEntity);
 		getEm().persist(entity4);
+
+		getEm().getTransaction().commit();
 
 		return foundEntity;
 	}
@@ -91,7 +97,20 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testSequenceGenerator() throws Exception {
-		testIds(SequenceTestEntity.class);
+		if (getGenerator().getContext().getDialect().isSequenceSupported()) {
+			testIds(SequenceTestEntity.class);
+		}
+	}
+
+	/**
+	 * Tests to write an entity with a table generator.
+	 *
+	 * @throws Exception
+	 *             if Hibernate or the generator throws one
+	 */
+	@Test
+	public void testTableGenerator() throws Exception {
+		testIds(TableTestEntity.class);
 	}
 
 }

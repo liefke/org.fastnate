@@ -87,6 +87,26 @@ public class HibernateProvider implements JpaProvider {
 	}
 
 	@Override
+	public String getDefaultGeneratorTable() {
+		return "hibernate_sequences";
+	}
+
+	@Override
+	public String getDefaultGeneratorTablePkColumnName() {
+		return "sequence_name";
+	}
+
+	@Override
+	public String getDefaultGeneratorTablePkColumnValue() {
+		return "default";
+	}
+
+	@Override
+	public String getDefaultGeneratorTableValueColumnName() {
+		return "next_val";
+	}
+
+	@Override
 	public String getDefaultSequence() {
 		return "hibernate_sequence";
 	}

@@ -57,7 +57,7 @@ public abstract class GeneratorDialect {
 
 	/**
 	 * Adds a quoted character to the result string buffer.
-	 * 
+	 *
 	 * @param result
 	 *            the current result buffer
 	 * @param c
@@ -79,13 +79,18 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
-	 * Builds the SQL expression that is used for creating the next value of the given sequence.
+	 * Builds the SQL expression resp. statement that is used for creating the next value of the given sequence.
+	 *
+	 * Depending on {@link #isNextSequenceValueInInsertSupported()} this will return an expression or a statement.
 	 *
 	 * @param sequence
 	 *            the name of the sequence
-	 * @return the SQL to use in an insert / update statement
+	 * @param incrementSize
+	 *            the expected incrementSize, as given in the schema - used by some dialects to ensure that exactly that
+	 *            inrement is used
+	 * @return the SQL to use in resp. before the insert / update statement
 	 */
-	public String buildNextSequenceValue(final String sequence) {
+	public String buildNextSequenceValue(final String sequence, final int incrementSize) {
 		return "nextval('" + sequence + "')";
 	}
 
@@ -179,7 +184,7 @@ public abstract class GeneratorDialect {
 	 * @return the SQL
 	 */
 	public String createSql(final EntityStatement stmt) {
-		return stmt.toString();
+		return stmt.toSql();
 	}
 
 	/**
@@ -209,6 +214,17 @@ public abstract class GeneratorDialect {
 	 * @return {@code true} if the database supports identities
 	 */
 	public boolean isIdentitySupported() {
+		return true;
+	}
+
+	/**
+	 * Indicates that a sequence may be updated in the insert statement.
+	 *
+	 * @return {@code true} to indicate that {@link #buildNextSequenceValue(String,int)} will return an expression that
+	 *         may be used in an INSERT statement, {@code false} to indicate that
+	 *         {@link #buildNextSequenceValue(String,int)} returns a full statement
+	 */
+	public boolean isNextSequenceValueInInsertSupported() {
 		return true;
 	}
 

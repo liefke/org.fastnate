@@ -9,12 +9,12 @@ import lombok.Setter;
 
 /**
  * Holds the information for an SQL update statement.
- * 
+ *
  * @author Tobias Liefke
  */
 @Getter
 @Setter
-public class UpdateStatement extends EntityStatement {
+public class UpdateStatement extends TableStatement {
 
 	private final String idColumn;
 
@@ -22,7 +22,7 @@ public class UpdateStatement extends EntityStatement {
 
 	/**
 	 * Creates a new instance of UpdateStatement.
-	 * 
+	 *
 	 * @param table
 	 *            the affected table
 	 * @param idColumn
@@ -36,15 +36,11 @@ public class UpdateStatement extends EntityStatement {
 		this.idValue = idValue;
 	}
 
-	/**
-	 * Creates the SQL for this statement.
-	 * 
-	 * @return the resulting SQL
-	 */
 	@Override
-	public String toString() {
+	public String toSql() {
 		final StringBuilder result = new StringBuilder("UPDATE ").append(getTable()).append(" SET ");
-		for (final Iterator<Map.Entry<String, String>> entries = getValues().entrySet().iterator(); entries.hasNext();) {
+		for (final Iterator<Map.Entry<String, String>> entries = getValues().entrySet().iterator(); entries
+				.hasNext();) {
 			final Entry<String, String> entry = entries.next();
 			result.append(entry.getKey()).append(" = ").append(entry.getValue());
 			if (entries.hasNext()) {
