@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<name>FastNate Root</name>
@@ -45,8 +46,8 @@
 		<url>https://github.com/liefke/org.fastnate</url>
 		<connection>scm:git:git://github.com/liefke/org.fastnate.git</connection>
 		<developerConnection>scm:git:git@github.com:liefke/org.fastnate.git</developerConnection>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 
 	<issueManagement>
 		<url>https://github.com/liefke/org.fastnate/issues</url>
@@ -62,12 +63,13 @@
 		<module>fastnate-generator</module>
 		<module>fastnate-maven-plugin</module>
 		<module>fastnate-maven-test</module>
+		<module>fastnate-examples</module>
 	</modules>
 
 	<properties>
 		<!-- Projectroot -->
 		<fastnate.root>${basedir}</fastnate.root>
-	
+
 		<!-- Build specific properties -->
 		<build.number>Local</build.number>
 		<build.svnRevNumber>Unknown</build.svnRevNumber>
@@ -197,9 +199,9 @@
 			</dependency>
 
 			<dependency>
-			   <groupId>javax.el</groupId>
-			   <artifactId>javax.el-api</artifactId>
-			   <version>${javax.el.version}</version>
+				<groupId>javax.el</groupId>
+				<artifactId>javax.el-api</artifactId>
+				<version>${javax.el.version}</version>
 				<scope>test</scope>
 			</dependency>
 
@@ -298,18 +300,18 @@
 				<version>3.4</version>
 			</plugin>
 
-	        <!-- Enable release of Fastnate -->
+			<!-- Enable release of Fastnate -->
 			<plugin>
-	            <groupId>org.apache.maven.plugins</groupId>
-	            <artifactId>maven-release-plugin</artifactId>
-	            <version>2.5</version>
-	            <configuration>
-	                <autoVersionSubmodules>true</autoVersionSubmodules>
-	                <useReleaseProfile>false</useReleaseProfile>
-	                <releaseProfiles>release</releaseProfiles>
-	                <goals>deploy</goals>
-	            </configuration>
-	        </plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<useReleaseProfile>false</useReleaseProfile>
+					<releaseProfiles>release</releaseProfiles>
+					<goals>deploy</goals>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -330,8 +332,8 @@
 					<propertyExpansion>config_loc=${fastnate.root}/src/checkstyle</propertyExpansion>
 				</configuration>
 			</plugin>
-	    </plugins>
-   	</reporting>
+		</plugins>
+	</reporting>
 
 	<profiles>
 		<profile>
