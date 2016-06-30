@@ -1,11 +1,5 @@
 package org.fastnate.generator.statements;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import org.fastnate.generator.EntitySqlGenerator;
 
 /**
@@ -13,26 +7,18 @@ import org.fastnate.generator.EntitySqlGenerator;
  *
  * @author Tobias Liefke
  */
-@Getter
-@RequiredArgsConstructor
 public abstract class EntityStatement {
 
-	/** The main table of this update / insert statement. */
-	private final String table;
-
-	/** The columns and their values. */
-	private final Map<String, String> values = new LinkedHashMap<>();
-
 	/**
-	 * Adds a value to the list of value expressions.
+	 * Prints this statement as SQL.
 	 *
-	 * @param column
-	 *            the column name
-	 * @param value
-	 *            the expression value (as expression, that is including surrounding ' for string literals)
+	 * @return the SQL statement
 	 */
-	public void addValue(final String column, final String value) {
-		this.values.put(column, value);
+	public abstract String toSql();
+
+	@Override
+	public String toString() {
+		return toSql();
 	}
 
 }

@@ -14,17 +14,11 @@ import com.google.common.base.Joiner;
 /**
  * Handles MySQL specific conversions.
  *
- * Attention: MySQL is currently not fully supported. Especially
- * <ul>
- * <li>time and date functions</li>
- * </ul>
- * are not covered.
- *
  * @see <a href="http://dev.mysql.com/doc/">MySQL - Reference Manuals</a>
  *
  * @author Tobias Liefke
  */
-public final class MySqlDialect extends GeneratorDialect {
+public class MySqlDialect extends GeneratorDialect {
 
 	private static final char MAX_ESCAPE = '\\';
 
@@ -43,6 +37,16 @@ public final class MySqlDialect extends GeneratorDialect {
 		ESCAPES['\\'] = "\\\\";
 	}
 
+	@Override
+	public String buildCurrentSequenceValue(final String sequence) {
+		return "(SELECT max(next_val) - 1 FROM " + sequence + ")";
+	}
+
+	@Override
+	public String buildNextSequenceValue(final String sequence, final int incrementSize) {
+		return "UPDATE " + sequence + " SET next_val = next_val + " + incrementSize;
+	}
+
 	/**
 	 * Create MySQL specific binary expression.
 	 */
@@ -59,17 +63,18 @@ public final class MySqlDialect extends GeneratorDialect {
 		if (!(stmt instanceof InsertStatement)) {
 			return stmt.toString();
 		}
-		final Map<String, String> values = stmt.getValues();
+		final InsertStatement statement = (InsertStatement) stmt;
+		final Map<String, String> values = statement.getValues();
 		if (values.isEmpty()) {
-			return stmt.toString();
+			return "INSERT INTO " + statement.getTable() + " VALUES ();\n";
 		}
-		final Pattern subselectPattern = Pattern.compile("\\(SELECT\\s+(.*)\\s+FROM\\s+" + stmt.getTable() + "\\s*\\)",
-				Pattern.CASE_INSENSITIVE);
+		final Pattern subselectPattern = Pattern
+				.compile("\\(SELECT\\s+(.*)\\s+FROM\\s+" + statement.getTable() + "\\s*\\)", Pattern.CASE_INSENSITIVE);
 		if (!subselectPattern.matcher(values.values().toString()).find()) {
 			return stmt.toString();
 		}
 
-		final StringBuilder result = new StringBuilder("INSERT INTO ").append(stmt.getTable());
+		final StringBuilder result = new StringBuilder("INSERT INTO ").append(statement.getTable());
 		result.append(" (");
 		// Create MySQL compatible INSERTs
 		JOINER.appendTo(result, values.keySet()).append(") SELECT ");
@@ -82,13 +87,18 @@ public final class MySqlDialect extends GeneratorDialect {
 				rewrite.add(value);
 			}
 		}
-		JOINER.appendTo(result, rewrite).append(" FROM ").append(stmt.getTable()).append(";\n");
+		JOINER.appendTo(result, rewrite).append(" FROM ").append(statement.getTable()).append(";\n");
 		return result.toString();
 	}
 
 	@Override
-	public boolean isSequenceSupported() {
+	public boolean isNextSequenceValueInInsertSupported() {
 		return false;
+	}
+
+	@Override
+	public boolean isSequenceSupported() {
+		return true;
 	}
 
 	/**

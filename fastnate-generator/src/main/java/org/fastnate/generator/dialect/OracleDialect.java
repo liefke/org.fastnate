@@ -20,7 +20,7 @@ public final class OracleDialect extends GeneratorDialect {
 	}
 
 	@Override
-	public String buildNextSequenceValue(final String sequence) {
+	public String buildNextSequenceValue(final String sequence, final int incrementSize) {
 		return sequence + ".nextval";
 	}
 

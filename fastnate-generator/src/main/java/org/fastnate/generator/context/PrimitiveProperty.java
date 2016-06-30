@@ -24,6 +24,7 @@ import org.fastnate.generator.converter.SerializableConverter;
 import org.fastnate.generator.converter.StringConverter;
 import org.fastnate.generator.converter.UnsupportedTypeConverter;
 import org.fastnate.generator.converter.ValueConverter;
+import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.statements.InsertStatement;
 
 import lombok.Getter;
@@ -180,6 +181,15 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 				statement.addValue(this.column, "null");
 			}
 		}
+	}
+
+	/**
+	 * Resolves the current dialect from the context.
+	 * 
+	 * @return the dialect of the current generation context
+	 */
+	protected GeneratorDialect getDialect() {
+		return getContext().getDialect();
 	}
 
 	@Override

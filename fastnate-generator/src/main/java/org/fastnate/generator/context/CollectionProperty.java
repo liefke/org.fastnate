@@ -20,6 +20,7 @@ import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.converter.ValueConverter;
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
+import org.fastnate.generator.statements.TableStatement;
 import org.fastnate.generator.statements.UpdateStatement;
 
 import com.google.common.base.Preconditions;
@@ -193,36 +194,6 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 		}
 	}
 
-	@Override
-	public List<EntityStatement> createPostInsertStatements(final E entity) {
-		if (this.mappedBy != null && this.orderColumn == null) {
-			return Collections.emptyList();
-		}
-
-		final List<EntityStatement> result = new ArrayList<>();
-		final String sourceId = EntityConverter.getEntityReference(entity, getMappedId(), getContext(), false);
-		int index = 0;
-		final Collection<T> collection = getValue(entity);
-		// Check for uniqueness, if no order column is given
-		if (this.orderColumn == null && collection instanceof List
-				&& new HashSet<>(collection).size() < collection.size()) {
-			throw new IllegalArgumentException(
-					"At least one duplicate value in " + this + " of " + entity + ": " + collection);
-		}
-		for (final T value : collection) {
-			if (isEmbedded()) {
-				result.add(createEmbeddedPropertiesStatement(sourceId, index++, value));
-			} else {
-				final EntityStatement statement = createDirectPropertyStatement(entity, sourceId, index++, value);
-				if (statement != null) {
-					result.add(statement);
-				}
-			}
-		}
-
-		return result;
-	}
-
 	private EntityStatement createDirectPropertyStatement(final E entity, final String sourceId, final int index,
 			final T value) {
 		final String target;
@@ -250,7 +221,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 			this.idColumn = ((SingularProperty<?, ?>) mappedByProperty).getColumn();
 		}
 
-		final EntityStatement stmt;
+		final TableStatement stmt;
 		if (this.useTargetTable) {
 			// Unidirectional, but from target table
 			if (value == null) {
@@ -283,6 +254,36 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 			property.addInsertExpression(value, stmt);
 		}
 		return stmt;
+	}
+
+	@Override
+	public List<EntityStatement> createPostInsertStatements(final E entity) {
+		if (this.mappedBy != null && this.orderColumn == null) {
+			return Collections.emptyList();
+		}
+
+		final List<EntityStatement> result = new ArrayList<>();
+		final String sourceId = EntityConverter.getEntityReference(entity, getMappedId(), getContext(), false);
+		int index = 0;
+		final Collection<T> collection = getValue(entity);
+		// Check for uniqueness, if no order column is given
+		if (this.orderColumn == null && collection instanceof List
+				&& new HashSet<>(collection).size() < collection.size()) {
+			throw new IllegalArgumentException(
+					"At least one duplicate value in " + this + " of " + entity + ": " + collection);
+		}
+		for (final T value : collection) {
+			if (isEmbedded()) {
+				result.add(createEmbeddedPropertiesStatement(sourceId, index++, value));
+			} else {
+				final EntityStatement statement = createDirectPropertyStatement(entity, sourceId, index++, value);
+				if (statement != null) {
+					result.add(statement);
+				}
+			}
+		}
+
+		return result;
 	}
 
 	@Override

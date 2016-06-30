@@ -1,8 +1,8 @@
 package org.fastnate.generator.statements;
 
-import lombok.Getter;
-
 import com.google.common.base.Joiner;
+
+import lombok.Getter;
 
 /**
  * Holds the information for an SQL Insert statement.
@@ -10,7 +10,7 @@ import com.google.common.base.Joiner;
  * @author Tobias Liefke
  */
 @Getter
-public class InsertStatement extends EntityStatement {
+public class InsertStatement extends TableStatement {
 
 	private static final Joiner JOINER = Joiner.on(", ");
 
@@ -24,13 +24,8 @@ public class InsertStatement extends EntityStatement {
 		super(table);
 	}
 
-	/**
-	 * Creates the SQL for this statement.
-	 *
-	 * @return the resulting SQL
-	 */
 	@Override
-	public String toString() {
+	public String toSql() {
 		final StringBuilder result = new StringBuilder("INSERT INTO ").append(getTable());
 		if (getValues().isEmpty()) {
 			// Can happen if we have an generated identity column and only null values
