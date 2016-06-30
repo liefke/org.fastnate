@@ -78,15 +78,17 @@ public class GeneratedIds {
 	 *
 	 * @param columnId
 	 *            the ID of the column (including table name)
+	 * @param incrementSize
+	 *            the size to increment the value
 	 * @return the created value
 	 */
-	public Long createNextValue(final String columnId) {
+	public Long createNextValue(final String columnId, final int incrementSize) {
 		final Long currentValue = this.idValues.get(columnId);
 		final Long newValue;
 		if (currentValue == null) {
 			newValue = 0L;
 		} else {
-			newValue = currentValue + 1;
+			newValue = currentValue + incrementSize;
 		}
 		this.idValues.put(columnId, newValue);
 		return newValue;

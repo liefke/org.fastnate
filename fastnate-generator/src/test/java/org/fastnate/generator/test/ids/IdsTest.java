@@ -77,10 +77,14 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(foundEntity.getOther()).isNotNull();
 		assertThat(foundEntity.getOther().getName()).isEqualTo("entity1");
 
+		getEm().getTransaction().begin();
+
 		// And ensure that another entity may be written afterwards
 		final E entity4 = entityConstructor.newInstance("entity4");
 		entity4.setOther(foundEntity);
 		getEm().persist(entity4);
+
+		getEm().getTransaction().commit();
 
 		return foundEntity;
 	}
