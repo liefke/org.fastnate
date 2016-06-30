@@ -1,0 +1,12 @@
+<!DOCTYPE project>
+<!--
+	Build file for uploading the website of Fastnate to the webserver.
+-->
+<project name="website" default="upload">
+	<property file="${basedir}/local.properties" />
+	<target name="upload" if="ftp.user">
+		<ftp server="fastnate.org" userid="${ftp.user}" password="${ftp.password}" passive="true">
+			<fileset dir="${basedir}" includes="*.html" />
+		</ftp>
+	</target>
+</project>
