@@ -4,9 +4,40 @@
 -->
 <project name="website" default="upload">
 	<property file="${basedir}/local.properties" />
-	<target name="upload" if="ftp.user">
+	<property name="wiki.dir" value="${basedir}/../wiki" />
+	<available property="wiki.dir.exists" file="${wiki.dir}" />
+	
+	<macrodef name="insertHeadlines">
+		<attribute name="page"/>
+		<attribute name="linkText" default="@{page}" />
+		<sequential>
+			<loadfile property="@{page}.links" srcFile="${wiki.dir}/@{page}.md">
+				<filterchain>
+					<containsregex pattern="^###?\s*(.*)$" byline="true" replace='\1' />
+				    <scriptfilter language="javascript"><![CDATA[
+				    	self.setToken(self.getToken().split("\n").map(function(line) {
+				    		return '					<li><a href="https://github.com/liefke/org.fastnate/wiki/@{page}#' + 
+				    			line.toLowerCase().replace(/ +/g, '-').replace(/[^-A-Za-z0-9]*/g, '') + '">' + line + '</a></li>';
+				    	}).join("\n"));
+			    	]]>
+				    </scriptfilter>
+				</filterchain>
+			</loadfile>
+			<property name="@{page}.pattern">@{page}">@{linkText}&lt;/a>.*?&lt;/ul></property>
+			<property name="@{page}.replace">@{page}">@{linkText}&lt;/a>:&lt;ul>
+${@{page}.links}				&lt;/ul></property>
+			<replaceregexp byline="false" flags="s" file="${basedir}/index.html" match="${@{page}.pattern}" replace="${@{page}.replace}" />
+		</sequential>
+	</macrodef>
+	
+	<target name="upload" if="ftp.user" depends="insertWikiLinks" description="Uploads all *.html files to the webserver using FTP.">
 		<ftp server="fastnate.org" userid="${ftp.user}" password="${ftp.password}" passive="true">
 			<fileset dir="${basedir}" includes="*.html" />
 		</ftp>
+	</target>
+	
+	<target name="insertWikiLinks" if="wiki.dir.exists" description="Inserts the headlines of the WIKI documentation into index.html">
+		<insertHeadlines page="FAQ" />
+		<insertHeadlines page="HOWTO" linktext="How-Tos" />
 	</target>
 </project>
