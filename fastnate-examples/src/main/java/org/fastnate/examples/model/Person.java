@@ -70,7 +70,7 @@ public class Person {
 	/**
 	 * Sets the supervisor of this {@link Person}.
 	 *
-	 * Removes this person from the {@link #getSubordinates() subordinates} of the previous supervisor.
+	 * Removes this person from the {@code subordinates} of the previous supervisor.
 	 *
 	 * @param supervisor
 	 *            the new supervisor
