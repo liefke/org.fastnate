@@ -32,7 +32,7 @@ public class MySqlDialect extends GeneratorDialect {
 		ESCAPES['\t'] = "\\t";
 		ESCAPES['\n'] = "\\n";
 		ESCAPES['\r'] = "\\r";
-		ESCAPES['\u0026'] = "\\Z";
+		ESCAPES['\u001A'] = "\\Z";
 		ESCAPES['\''] = "''";
 		ESCAPES['\\'] = "\\\\";
 	}
