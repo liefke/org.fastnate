@@ -44,7 +44,7 @@ public class VersionProperty<E, T> extends PrimitiveProperty<E, T> {
 		if (defaultValue == null) {
 			final Class<?> type = attribute.getType();
 			if (Number.class.isAssignableFrom(type)) {
-				return "1";
+				return "0";
 			}
 			if (Date.class.isAssignableFrom(type)) {
 				final Temporal temporal = attribute.getAnnotation(Temporal.class);
