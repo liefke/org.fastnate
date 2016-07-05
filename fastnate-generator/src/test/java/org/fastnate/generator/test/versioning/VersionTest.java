@@ -32,7 +32,7 @@ public class VersionTest extends AbstractEntitySqlGeneratorTest {
 
 		getEm().getTransaction().begin();
 		final VersionTestEntity result = findSingleResult(VersionTestEntity.class);
-		assertThat(result.getVer()).isEqualTo(1);
+		assertThat(result.getVer()).isEqualTo(0);
 
 		// And check that hibernate can still write our entity
 		result.setContent("after");
@@ -40,7 +40,7 @@ public class VersionTest extends AbstractEntitySqlGeneratorTest {
 		getEm().getTransaction().commit();
 
 		final VersionTestEntity result2 = findSingleResult(VersionTestEntity.class);
-		assertThat(result2.getVer()).isEqualTo(2);
+		assertThat(result2.getVer()).isEqualTo(1);
 	}
 
 }
