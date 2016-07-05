@@ -160,12 +160,7 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 
 		this.converter = createConverter(attribute, (Class<T>) attribute.getType(), false);
 
-		final DefaultValue defaultValueAnnotation = attribute.getAnnotation(DefaultValue.class);
-		if (defaultValueAnnotation != null) {
-			this.defaultValue = defaultValueAnnotation.value();
-		} else {
-			this.defaultValue = null;
-		}
+		this.defaultValue = getDefaultValue(attribute);
 	}
 
 	@Override
@@ -184,8 +179,25 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 	}
 
 	/**
+	 * Finds the default value from the given attribute.
+	 *
+	 * @param attribute
+	 *            the current attribute of the property
+	 * @return the default value or {@code null} if none is set
+	 *
+	 * @see DefaultValue#value()
+	 */
+	protected String getDefaultValue(final AttributeAccessor attribute) {
+		final DefaultValue defaultValueAnnotation = attribute.getAnnotation(DefaultValue.class);
+		if (defaultValueAnnotation != null) {
+			return defaultValueAnnotation.value();
+		}
+		return null;
+	}
+
+	/**
 	 * Resolves the current dialect from the context.
-	 * 
+	 *
 	 * @return the dialect of the current generation context
 	 */
 	protected GeneratorDialect getDialect() {

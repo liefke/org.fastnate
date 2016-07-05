@@ -33,6 +33,7 @@ import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import javax.persistence.Version;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang.StringUtils;
@@ -499,6 +500,8 @@ public final class EntityClass<E> {
 				return new EntityProperty<>(this.context, attribute, override);
 			} else if (attribute.isAnnotationPresent(Embedded.class)) {
 				return new EmbeddedProperty<>(this, attribute);
+			} else if (attribute.isAnnotationPresent(Version.class)) {
+				return new VersionProperty<>(this.context, this.table, attribute, columnMetadata);
 			} else {
 				return new PrimitiveProperty<>(this.context, this.table, attribute, columnMetadata);
 			}
