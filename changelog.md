@@ -21,3 +21,4 @@ Fastnate Changelog
 * #7 Support for GenerationType.TABLE
 * #9 fixed wrong ID calculation for InheritanceType.JOINED
 * #10 Support for referencing subclasses with InheritanceType.JOINED 
+* #11 Support for @Version
