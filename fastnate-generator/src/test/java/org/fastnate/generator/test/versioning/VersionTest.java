@@ -25,7 +25,7 @@ public class VersionTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testVersion() throws IOException {
-		// Check that both version is iniatialized
+		// Check that version is iniatialized
 		final VersionTestEntity entity = new VersionTestEntity();
 		entity.setContent("before");
 		write(entity);
@@ -34,7 +34,7 @@ public class VersionTest extends AbstractEntitySqlGeneratorTest {
 		final VersionTestEntity result = findSingleResult(VersionTestEntity.class);
 		assertThat(result.getVer()).isEqualTo(0);
 
-		// And check that hibernate can still write our entity
+		// And check that the JPA framework can still write our entity
 		result.setContent("after");
 		getEm().merge(result);
 		getEm().getTransaction().commit();
