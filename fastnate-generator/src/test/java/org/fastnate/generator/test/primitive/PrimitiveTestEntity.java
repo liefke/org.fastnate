@@ -104,6 +104,7 @@ public class PrimitiveTestEntity {
 	 */
 	public PrimitiveTestEntity(final String name) {
 		this.name = name;
+		this.testChar = ' ';
 	}
 
 	@Override

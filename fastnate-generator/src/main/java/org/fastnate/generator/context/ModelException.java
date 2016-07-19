@@ -7,23 +7,39 @@ package org.fastnate.generator.context;
  */
 public class ModelException extends RuntimeException {
 
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * Throws a {@link ModelException} if the given condition is not met.
 	 *
 	 * @param condition
 	 *            the condition to check
 	 * @param errorMessage
-	 *            the message to add to the exception, if the condition is not {@code true}
+	 *            the message to include in the exception, if the condition is not {@code true}, each of <code>{}</code>
+	 *            is replaced by one of the given parameters
+	 * @param parameters
+	 *            the optional parameters for the error message
 	 * @throws ModelException
 	 *             if the condition is {@code false}
 	 */
-	public static void test(final boolean condition, final String errorMessage) {
+	public static void test(final boolean condition, final String errorMessage, final Object... parameters) {
 		if (!condition) {
-			throw new ModelException(errorMessage);
+			// Use simple string concatenation in loop - as our exception is thrown only once
+			// and readabilty beats performance here
+			int last = 0;
+			String error = errorMessage;
+			for (final Object parameter : parameters) {
+				final int next = error.indexOf("{}", last);
+				if (next < 0) {
+					break;
+				}
+				final String paramString = String.valueOf(parameter);
+				error = error.substring(0, next) + paramString + error.substring(next + 2);
+				last = next + paramString.length();
+			}
+			throw new ModelException(error);
 		}
 	}
-
-	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Creates a new instance of {@link ModelException}.

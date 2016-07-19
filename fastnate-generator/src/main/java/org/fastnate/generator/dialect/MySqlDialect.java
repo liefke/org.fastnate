@@ -1,6 +1,7 @@
 package org.fastnate.generator.dialect;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -8,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
+import org.fastnate.generator.statements.PlainStatement;
 
 import com.google.common.base.Joiner;
 
@@ -38,8 +40,15 @@ public class MySqlDialect extends GeneratorDialect {
 	}
 
 	@Override
-	public String buildCurrentSequenceValue(final String sequence) {
-		return "(SELECT max(next_val) - 1 FROM " + sequence + ")";
+	public List<? extends EntityStatement> adjustNextSequenceValue(final String sequenceName,
+			final long currentSequenceValue, final long nextSequenceValue, final int incrementSize) {
+		return Collections
+				.singletonList(new PlainStatement("UPDATE " + sequenceName + " SET next_val = " + nextSequenceValue));
+	}
+
+	@Override
+	public String buildCurrentSequenceValue(final String sequence, final int incrementSize) {
+		return "(SELECT max(next_val) - " + incrementSize + " FROM " + sequence + ")";
 	}
 
 	@Override

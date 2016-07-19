@@ -1,5 +1,7 @@
 package org.fastnate.generator.test.ids;
 
+import java.io.Serializable;
+
 import javax.annotation.Nullable;
 import javax.persistence.MappedSuperclass;
 
@@ -23,6 +25,13 @@ public abstract class IdTestEntity<O extends IdTestEntity<O>> {
 	@Getter
 	@Setter
 	private String name;
+
+	/**
+	 * The ID of this entity.
+	 *
+	 * @return the ID - the type depends on the kind of generation
+	 */
+	public abstract Serializable getId();
 
 	/**
 	 * The other entity of the same type.

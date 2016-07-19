@@ -40,7 +40,7 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testFixedId() throws Exception {
-		final FixedIdTestEntity foundEntity = testIds(FixedIdTestEntity.class);
+		final FixedIdTestEntity foundEntity = testIds(FixedIdTestEntity.class, false);
 		assertThat(foundEntity.getId()).isEqualTo(foundEntity.getName());
 	}
 
@@ -53,11 +53,11 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	@Test
 	public void testIdentityGenerator() throws Exception {
 		if (getGenerator().getContext().getDialect().isIdentitySupported()) {
-			testIds(IdentityTestEntity.class);
+			testIds(IdentityTestEntity.class, true);
 		}
 	}
 
-	private <E extends IdTestEntity<E>> E testIds(final Class<E> entityClass)
+	private <E extends IdTestEntity<E>> E testIds(final Class<E> entityClass, final boolean checkIncreasingIds)
 			throws IOException, ReflectiveOperationException {
 		final Constructor<E> entityConstructor = entityClass.getConstructor(String.class);
 		// Write three entities
@@ -71,11 +71,19 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 		entity3.setOther(entity1);
 		write(entity3);
 
+		getGenerator().close();
+
 		// Read and check the last entity
 		final E foundEntity = findSingleResult(
 				"SELECT e FROM " + entityClass.getSimpleName() + " e WHERE e.name = 'entity3'", entityClass);
 		assertThat(foundEntity.getOther()).isNotNull();
 		assertThat(foundEntity.getOther().getName()).isEqualTo("entity1");
+
+		// Check that we create the IDs correctly
+		if (checkIncreasingIds) {
+			assertThat(((Number) foundEntity.getId()).longValue())
+					.isEqualTo(((Number) foundEntity.getOther().getId()).longValue() + 2);
+		}
 
 		getEm().getTransaction().begin();
 
@@ -85,6 +93,11 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 		getEm().persist(entity4);
 
 		getEm().getTransaction().commit();
+
+		if (checkIncreasingIds) {
+			assertThat(((Number) entity4.getId()).longValue())
+					.isEqualTo(((Number) foundEntity.getId()).longValue() + 1);
+		}
 
 		return foundEntity;
 	}
@@ -98,7 +111,7 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	@Test
 	public void testSequenceGenerator() throws Exception {
 		if (getGenerator().getContext().getDialect().isSequenceSupported()) {
-			testIds(SequenceTestEntity.class);
+			testIds(SequenceTestEntity.class, true);
 		}
 	}
 
@@ -110,7 +123,7 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testTableGenerator() throws Exception {
-		testIds(TableTestEntity.class);
+		testIds(TableTestEntity.class, true);
 	}
 
 }

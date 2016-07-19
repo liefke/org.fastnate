@@ -73,6 +73,9 @@ public class EntitySqlGenerator implements Closeable {
 	 */
 	@Override
 	public void close() throws IOException {
+		for (final EntityStatement statement : this.context.getFinalStatements()) {
+			writeStatement(statement);
+		}
 		Closeables.close(this.writer, false);
 	}
 
@@ -255,7 +258,7 @@ public class EntitySqlGenerator implements Closeable {
 		this.writer.write(this.context.getDialect().createSql(stmt));
 	}
 
-	private void writeStatements(final List<EntityStatement> statements) throws IOException {
+	private void writeStatements(final List<? extends EntityStatement> statements) throws IOException {
 		for (final EntityStatement stmt : statements) {
 			writeStatement(stmt);
 		}

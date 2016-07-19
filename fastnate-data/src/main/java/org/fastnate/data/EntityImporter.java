@@ -13,7 +13,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -313,7 +312,7 @@ public final class EntityImporter {
 					iterator.remove();
 				} else {
 					final Constructor<?>[] constructors = providerClass.getConstructors();
-					ModelException.test(constructors.length > 0, "No public constructor found for " + providerClass);
+					ModelException.test(constructors.length > 0, "No public constructor found for {}", providerClass);
 					for (final Constructor<?> constructor : constructors) {
 						if (addProvider(constructor)) {
 							iterator.remove();
@@ -324,8 +323,8 @@ public final class EntityImporter {
 			}
 
 			// Prevent endless loops
-			ModelException.test(previousSize > providers.size(),
-					"No matching data provider in dependencies of " + Arrays.toString(providers.toArray()));
+			ModelException.test(previousSize > providers.size(), "No matching data provider in dependencies of {}",
+					providers);
 		}
 	}
 

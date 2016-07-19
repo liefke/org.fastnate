@@ -22,7 +22,7 @@ import lombok.Setter;
 public class TableTestEntity extends IdTestEntity<TableTestEntity> {
 
 	@Id
-	@TableGenerator(name = "TableTest", table = "TestIdTable")
+	@TableGenerator(name = "TableTest", table = "TestIdTable", allocationSize = 2)
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "TableTest")
 	private Long id;
 

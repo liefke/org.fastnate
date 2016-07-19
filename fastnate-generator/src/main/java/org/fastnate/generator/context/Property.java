@@ -66,7 +66,7 @@ public abstract class Property<E, T> {
 	 *            the inspected entity
 	 * @return the list of addition statements
 	 */
-	public List<EntityStatement> createPreInsertStatements(final E entity) {
+	public List<? extends EntityStatement> createPreInsertStatements(final E entity) {
 		return Collections.emptyList();
 	}
 

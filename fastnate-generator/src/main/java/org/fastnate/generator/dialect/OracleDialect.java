@@ -1,8 +1,13 @@
 package org.fastnate.generator.dialect;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.TemporalType;
+
+import org.fastnate.generator.statements.EntityStatement;
+import org.fastnate.generator.statements.PlainStatement;
 
 /**
  * Handles Oracle specific conversions.
@@ -15,7 +20,17 @@ public final class OracleDialect extends GeneratorDialect {
 	private static final int MAX_VARCHAR_LENGTH = 2000;
 
 	@Override
-	public String buildCurrentSequenceValue(final String sequence) {
+	public List<? extends EntityStatement> adjustNextSequenceValue(final String sequenceName,
+			final long currentSequenceValue, final long nextSequenceValue, final int incrementSize) {
+		return Arrays.asList(
+				new PlainStatement("ALTER SEQUENCE " + sequenceName + " INCREMENT BY "
+						+ (nextSequenceValue - currentSequenceValue - incrementSize)),
+				new PlainStatement("SELECT " + sequenceName + ".nextval FROM dual"),
+				new PlainStatement("ALTER SEQUENCE " + sequenceName + " INCREMENT BY " + incrementSize));
+	}
+
+	@Override
+	public String buildCurrentSequenceValue(final String sequence, final int incrementSize) {
 		return sequence + ".currval";
 	}
 
@@ -77,4 +92,5 @@ public final class OracleDialect extends GeneratorDialect {
 		}
 		return super.quoteString(value);
 	}
+
 }

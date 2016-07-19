@@ -2,7 +2,9 @@ package org.fastnate.generator.dialect;
 
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -10,6 +12,7 @@ import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
 import org.fastnate.generator.statements.EntityStatement;
+import org.fastnate.generator.statements.PlainStatement;
 
 import lombok.Getter;
 
@@ -68,13 +71,35 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * Adjusts the given sequence to ensure that the next value is exactly the given value.
+	 *
+	 * @param sequenceName
+	 *            the name of the sequence
+	 * @param currentSequenceValue
+	 *            the current value of the sequence
+	 * @param nextSequenceValue
+	 *            the next value of the sequence
+	 * @param incrementSize
+	 *            the increment size of the sequence
+	 * @return all statements necessary to adjust the sequence
+	 */
+	public List<? extends EntityStatement> adjustNextSequenceValue(final String sequenceName,
+			final long currentSequenceValue, final long nextSequenceValue, final int incrementSize) {
+		return Collections.singletonList(
+				new PlainStatement("ALTER SEQUENCE " + sequenceName + " RESTART WITH " + nextSequenceValue));
+	}
+
+	/**
 	 * Builds the SQL expression that is used for referencing the current value of the given sequence.
 	 *
 	 * @param sequence
 	 *            the name of the sequence
+	 * @param incrementSize
+	 *            the expected incrementSize, as given in the schema - used by some dialects to ensure that exactly that
+	 *            inrement is used
 	 * @return the SQL expression to use in statement
 	 */
-	public String buildCurrentSequenceValue(final String sequence) {
+	public String buildCurrentSequenceValue(final String sequence, final int incrementSize) {
 		return "currval('" + sequence + "')";
 	}
 

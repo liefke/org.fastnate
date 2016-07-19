@@ -53,7 +53,7 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		final PrimitiveTestEntity testEntity = new PrimitiveTestEntity("Test Lobs");
 
 		testEntity.setLobChars("Many \r\n Characters".toCharArray());
-		testEntity.setLobBytes("\0\1\2\3\4\5\6\7\t\r\n\b\f\u0027 Bytes".getBytes("ISO-8859-1"));
+		testEntity.setLobBytes("\1\2\3\4\5\6\7\t\r\n\b\f\u0027 Bytes".getBytes("ISO-8859-1"));
 
 		write(testEntity);
 

@@ -98,7 +98,8 @@ public class HibernateProvider implements JpaProvider {
 
 	@Override
 	public String getDefaultGeneratorTablePkColumnValue() {
-		return "default";
+		// Hibernate is usually returning the table name as a default column value
+		return "";
 	}
 
 	@Override

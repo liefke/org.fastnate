@@ -2,13 +2,20 @@ package org.fastnate.generator.context;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.AnnotatedElement;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.TableGenerator;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -18,12 +25,17 @@ import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.dialect.H2Dialect;
 import org.fastnate.generator.provider.HibernateProvider;
 import org.fastnate.generator.provider.JpaProvider;
+import org.fastnate.generator.statements.EntityStatement;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.google.common.collect.ImmutableMap;
+
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,6 +48,40 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 @Slf4j
 public class GeneratorContext {
+
+	@RequiredArgsConstructor
+	private static final class GeneratorId {
+
+		private final String id;
+
+		private final String table;
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (obj instanceof GeneratorId) {
+				final GeneratorId other = (GeneratorId) obj;
+				return this.id.equals(other.id) && Objects.equals(this.table, other.table);
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			if (this.table == null) {
+				return this.id.hashCode();
+			}
+			return this.id.hashCode() << 2 | this.table.hashCode();
+		}
+
+		@Override
+		public String toString() {
+			if (this.table == null) {
+				return this.id;
+			}
+			return this.id + '.' + this.table;
+		}
+
+	}
 
 	/** The settings key for the {@link #provider}. */
 	public static final String PROVIDER_KEY = "fastnate.generator.jpa.provider";
@@ -122,9 +168,6 @@ public class GeneratorContext {
 	/** Identifies the JPA provider to indicate implementation specific details. */
 	private JpaProvider provider;
 
-	/** Stores the metadata and current values for {@link GeneratedValue}. */
-	private GeneratedIds generatedIds = new GeneratedIds();
-
 	/** The maximum count of columns that are used when referencing an entity using it's unique properties. */
 	private int maxUniqueProperties = 1;
 
@@ -155,6 +198,16 @@ public class GeneratorContext {
 
 	/** Contains the settings that where given during creation. Empty if none were provided. */
 	private final Properties settings;
+
+	/** Mapping from the name of a generator to the generator itself. */
+	@Getter(AccessLevel.NONE)
+	private final Map<GeneratorId, IdGenerator> generators = new HashMap<>();
+
+	/** The default sequence generator, if none is explicitly specified in a {@link GeneratedValue}. */
+	private SequenceIdGenerator defaultSequenceGenerator;
+
+	/** The default table generator, if none is explicitly specified in a {@link GeneratedValue}. */
+	private TableIdGenerator defaultTableGenerator;
 
 	/**
 	 * Creates a default generator context.
@@ -224,6 +277,26 @@ public class GeneratorContext {
 				settings.getProperty(PREFER_SEQUENCE_CURRENT_VALUE, String.valueOf(this.preferSequenceCurentValue)));
 	}
 
+	private IdGenerator getDefaultSequenceGenerator() {
+		if (this.defaultSequenceGenerator == null) {
+			this.defaultSequenceGenerator = new SequenceIdGenerator(
+					AnnotationDefaults.create(SequenceGenerator.class, ImmutableMap.of("sequenceName",
+							this.provider.getDefaultSequence(), "allocationSize", Integer.valueOf(1))),
+					this.dialect);
+		}
+		return this.defaultSequenceGenerator;
+	}
+
+	private IdGenerator getDefaultTableGenerator() {
+		if (this.defaultTableGenerator == null) {
+			this.defaultTableGenerator = new TableIdGenerator(
+					AnnotationDefaults.create(TableGenerator.class,
+							ImmutableMap.of("pkColumnValue", "default", "allocationSize", Integer.valueOf(1))),
+					this.dialect, this.provider);
+		}
+		return this.defaultTableGenerator;
+	}
+
 	/**
 	 * Finds the description for a class.
 	 *
@@ -287,6 +360,66 @@ public class GeneratorContext {
 	}
 
 	/**
+	 * Builds all statements that are necessary at the end.
+	 *
+	 * Used for example to align sequences.
+	 *
+	 * @return the list of statements
+	 */
+	public List<EntityStatement> getFinalStatements() {
+		final List<EntityStatement> result = new ArrayList<>();
+		for (final IdGenerator generator : this.generators.values()) {
+			result.addAll(generator.alignNextValue());
+		}
+		return result;
+	}
+
+	/**
+	 * Finds the correct generator for the given annotation.
+	 *
+	 * @param generatedValue
+	 *            the annotation of the current primary key
+	 * @param table
+	 *            the name of the current table, as fallback
+	 * @return the generator that is responsible for managing the values
+	 */
+	@SuppressWarnings("null")
+	public IdGenerator getGenerator(final GeneratedValue generatedValue, final String table) {
+		GenerationType strategy = generatedValue.strategy();
+		final String name = generatedValue.generator();
+		if (StringUtils.isNotEmpty(name)) {
+			ModelException.test(strategy != GenerationType.IDENTITY,
+					"Generator for GenerationType.IDENTITY not allowed");
+			IdGenerator generator = this.generators.get(new GeneratorId(name, table));
+			if (generator == null) {
+				generator = this.generators.get(new GeneratorId(name, null));
+				ModelException.test(generator != null, "Generator '{}' not found", name);
+
+				final IdGenerator derived = generator.derive(table);
+				if (derived != generator) {
+					this.generators.put(new GeneratorId(name, table), derived);
+					return derived;
+				}
+			}
+			return generator;
+		}
+		if (strategy == GenerationType.AUTO) {
+			strategy = this.dialect.getAutoGenerationType();
+		}
+		switch (strategy) {
+		case IDENTITY:
+			return new IdentityValue();
+		case TABLE:
+			return getDefaultTableGenerator();
+		case SEQUENCE:
+			return getDefaultSequenceGenerator();
+		case AUTO:
+		default:
+			throw new ModelException("Unknown GenerationType: " + strategy);
+		}
+	}
+
+	/**
 	 * The entity states for the given entity class.
 	 *
 	 * @param entityClass
@@ -302,4 +435,25 @@ public class GeneratorContext {
 		return entityStates;
 	}
 
+	/**
+	 * Registers the {@link TableGenerator} and {@link SequenceGenerator} declared at the given element.
+	 *
+	 * If neither annotation is present, nothing happens.
+	 *
+	 * @param element
+	 *            the inspected class, method or field
+	 */
+	public void registerGenerators(final AnnotatedElement element) {
+		final SequenceGenerator sequenceGenerator = element.getAnnotation(SequenceGenerator.class);
+		if (sequenceGenerator != null) {
+			this.generators.put(new GeneratorId(sequenceGenerator.name(), null),
+					new SequenceIdGenerator(sequenceGenerator, this.dialect));
+		}
+
+		final TableGenerator tableGenerator = element.getAnnotation(TableGenerator.class);
+		if (tableGenerator != null) {
+			this.generators.put(new GeneratorId(tableGenerator.name(), null),
+					new TableIdGenerator(tableGenerator, this.dialect, this.provider));
+		}
+	}
 }

@@ -30,7 +30,6 @@ import javax.persistence.InheritanceType;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
 import javax.persistence.PrimaryKeyJoinColumn;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
@@ -282,7 +281,7 @@ public final class EntityClass<E> {
 		// Find the ID property unless we have a joined parent class - which contains our id
 		if (this.joinedParentClass == null) {
 			buildIdProperty(this.entityClass);
-			ModelException.test(this.idProperty != null, "No id found for " + this.entityClass);
+			ModelException.test(this.idProperty != null, "No id found for {}", this.entityClass);
 			this.allProperties.add(this.idProperty);
 
 			// Add all other properties
@@ -353,7 +352,7 @@ public final class EntityClass<E> {
 			buildGenerators(c.getSuperclass());
 		}
 
-		this.context.getGeneratedIds().registerGenerators(c);
+		this.context.registerGenerators(c);
 	}
 
 	/**
@@ -597,7 +596,7 @@ public final class EntityClass<E> {
 					if (attribute.getType().isPrimitive()) {
 						throw new IllegalArgumentException("Generated ID must not be of primitive type.");
 					}
-					this.context.getGeneratedIds().registerGenerators(attribute);
+					this.context.registerGenerators(attribute);
 					this.idProperty = new GeneratedIdProperty<>(this, attribute, getColumnAnnotation(attribute));
 				} else {
 					this.idProperty = buildProperty(attribute, getColumnAnnotation(attribute),
@@ -637,18 +636,17 @@ public final class EntityClass<E> {
 			final Map<String, ?> embeddedProperties = ((EmbeddedProperty<E, ?>) this.idProperty)
 					.getEmbeddedProperties();
 			if (idField == null) {
-				ModelException.test(embeddedProperties.size() != 1,
-						"Missing MapsId annotation for access to " + this.idProperty);
+				ModelException.test(embeddedProperties.size() != 1, "Missing MapsId annotation for access to {}",
+						this.idProperty);
 				property = (Property<E, ?>) embeddedProperties.values().iterator().next();
 			} else {
 				property = (Property<E, ?>) embeddedProperties.get(idField);
-				ModelException.test(property != null,
-						"MapsId reference " + idField + " not found in " + this.idProperty);
+				ModelException.test(property != null, "MapsId reference {} not found in {}", idField, this.idProperty);
 			}
 		}
 		@SuppressWarnings("null")
 		final String expression = property.getExpression(entity, whereExpression);
-		ModelException.test(expression != null, "Can't find any id in " + this.idProperty + " for " + entity);
+		ModelException.test(expression != null, "Can't find any id in {} for {}", this.idProperty, entity);
 		return expression;
 	}
 
@@ -657,9 +655,9 @@ public final class EntityClass<E> {
 		if (!generatedIdProperty.isReference(entity) && this.uniqueProperties != null) {
 			// Check to write "currval" of sequence if we just have written the same value
 			if (this.context.isPreferSequenceCurentValue()) {
-				final SequenceGenerator generator = generatedIdProperty.getSequenceGenerator();
-				if (generator != null && this.context.getGeneratedIds().getCurrentValue(generator)
-						.equals(generatedIdProperty.getValue(entity))) {
+				final IdGenerator generator = generatedIdProperty.getGenerator();
+				if (generator instanceof SequenceIdGenerator
+						&& generator.getCurrentValue() == generatedIdProperty.getValue(entity).longValue()) {
 					return generatedIdProperty.getExpression(entity, whereExpression);
 				}
 			}

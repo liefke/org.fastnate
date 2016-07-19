@@ -5,17 +5,10 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.TableGenerator;
 
-import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
-import org.fastnate.generator.statements.PlainStatement;
-import org.fastnate.generator.statements.TableStatement;
-import org.fastnate.generator.statements.UpdateStatement;
 
 import lombok.Getter;
 
@@ -31,25 +24,9 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 
 	private static final long UNKOWN_ID_MARKER = -1L;
 
-	private final GeneratedIds generatedIds;
-
 	private final boolean explicitIds;
 
-	private final String generatorId;
-
-	private final int allocationSize;
-
-	private final SequenceGenerator sequenceGenerator;
-
-	private final TableGenerator tableGenerator;
-
-	private final String generatorTable;
-
-	private final String generatorPkColumn;
-
-	private final String generatorPkValue;
-
-	private final String generatorValueColumn;
+	private final IdGenerator generator;
 
 	/**
 	 * Creates a new instance of {@link GeneratedIdProperty}.
@@ -65,125 +42,37 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 			final Column column) {
 		super(entityClass.getContext(), entityClass.getTable(), attribute, column);
 		this.explicitIds = getContext().isExplicitIds();
-		this.generatedIds = entityClass.getContext().getGeneratedIds();
-
-		final GeneratedValue generation = attribute.getAnnotation(GeneratedValue.class);
-		GenerationType strategy = generation.strategy();
-		if (strategy == GenerationType.AUTO) {
-			strategy = getDialect().getAutoGenerationType();
-		}
-		if (strategy == GenerationType.TABLE) {
-			this.tableGenerator = this.generatedIds.getTableGenerators().get(generation.generator());
-			ModelException.test(this.tableGenerator != null, "Missing table generator: " + generation.generator());
-			this.generatorTable = StringUtils.defaultIfEmpty(this.tableGenerator.table(),
-					getContext().getProvider().getDefaultGeneratorTable());
-			this.generatorValueColumn = StringUtils.defaultIfEmpty(this.tableGenerator.valueColumnName(),
-					getContext().getProvider().getDefaultGeneratorTableValueColumnName());
-			this.generatorPkColumn = StringUtils.defaultIfEmpty(this.tableGenerator.pkColumnName(),
-					getContext().getProvider().getDefaultGeneratorTablePkColumnName());
-			this.generatorPkValue = getDialect()
-					.quoteString(StringUtils.defaultIfEmpty(this.tableGenerator.pkColumnValue(),
-							getContext().getProvider().getDefaultGeneratorTablePkColumnValue()));
-			this.generatorId = this.generatorTable + '.' + this.generatorPkColumn + '.' + this.generatorPkValue;
-			this.allocationSize = this.tableGenerator.allocationSize();
-			this.sequenceGenerator = null;
-		} else {
-			this.tableGenerator = null;
-			this.generatorTable = null;
-			this.generatorPkColumn = null;
-			this.generatorPkValue = null;
-			this.generatorValueColumn = null;
-			if (strategy == GenerationType.SEQUENCE) {
-				this.sequenceGenerator = this.generatedIds.getSequenceGenerators().get(generation.generator());
-				ModelException.test(this.sequenceGenerator != null,
-						"Missing sequence generator: " + generation.generator());
-				this.generatorId = StringUtils.defaultIfEmpty(this.sequenceGenerator.sequenceName(),
-						getContext().getProvider().getDefaultSequence());
-				this.allocationSize = this.sequenceGenerator.allocationSize();
-			} else { // strategy == GenerationType.IDENTITY
-				this.sequenceGenerator = null;
-				this.generatorId = getTable() + '.' + getColumn();
-				this.allocationSize = 1;
-			}
-		}
+		this.generator = entityClass.getContext().getGenerator(attribute.getAnnotation(GeneratedValue.class),
+				getTable());
 	}
 
 	@Override
 	public void addInsertExpression(final E entity, final InsertStatement statement) {
+		ensureIsNew(entity);
 		if (this.explicitIds) {
-			// If we have generated explict IDs, lets do that now
-			ensureIsNew(entity);
-			final Long id;
-			if (this.sequenceGenerator != null) {
-				// GenerationType.SEQUENCE
-				id = this.generatedIds.createNextValue(this.sequenceGenerator);
-			} else {
-				// GenerationType.IDENTITY / TABLE
-				id = this.generatedIds.createNextValue(this.generatorId,
-						this.tableGenerator != null ? this.tableGenerator.allocationSize() : 1);
-			}
-
+			// If we generate explict IDs, lets do that now
+			final Number id = this.generator.createNextValue();
 			setValue(entity, id);
 			statement.addValue(getColumn(), String.valueOf(id));
-		} else if (this.tableGenerator != null) {
-			// Already created the id in createPreInsertStatements
-			statement.addValue(getColumn(), String.valueOf(getValue(entity)));
-		} else if (this.sequenceGenerator != null) {
-			// If we have a real sequence, we can increment that one now (else we will do it in pre or postInsert)
-			if (getDialect().isNextSequenceValueInInsertSupported()) {
-				ensureIsNew(entity);
-				setValue(entity, this.generatedIds.createNextValue(this.sequenceGenerator));
-				statement.addValue(getColumn(),
-						getDialect().buildNextSequenceValue(this.generatorId, this.allocationSize));
-			} else {
-				statement.addValue(getColumn(), getExpression(entity, false));
-			}
-		} // else -> we have an IDENTITY column which is incremented by default
+		} else if (!this.generator.isPostIncrement()) {
+			final Number id = this.generator.createNextValue();
+			setValue(entity, id);
+			this.generator.addNextValue(statement, getColumn(), id);
+		}
 	}
 
 	@Override
-	public List<EntityStatement> createPreInsertStatements(final E entity) {
-		if (!this.explicitIds) {
-			if (this.tableGenerator != null) {
-				ensureIsNew(entity);
-				final Long nextValue = this.generatedIds.createNextValue(this.generatorId,
-						this.tableGenerator.allocationSize());
-				final TableStatement statement;
-				if (nextValue == 0) {
-					statement = new InsertStatement(this.generatorTable);
-					statement.addValue(this.generatorPkColumn, this.generatorPkValue);
-				} else {
-					statement = new UpdateStatement(this.generatorTable, this.generatorPkColumn, this.generatorPkValue);
-				}
-				statement.addValue(this.generatorValueColumn, String.valueOf(nextValue));
-				setValue(entity, nextValue);
-				return Collections.singletonList(statement);
-			}
-			if (this.sequenceGenerator != null && !getDialect().isNextSequenceValueInInsertSupported()) {
-				setValue(entity, this.generatedIds.createNextValue(this.sequenceGenerator));
-				return Collections.singletonList(
-						new PlainStatement(getDialect().buildNextSequenceValue(this.generatorId, this.allocationSize)));
-			}
+	public List<? extends EntityStatement> createPreInsertStatements(final E entity) {
+		if (this.explicitIds) {
+			return Collections.emptyList();
 		}
-		return Collections.emptyList();
+		return this.generator.createPreInsertStatements();
 	}
 
 	private void ensureIsNew(final E entity) {
 		if (!isNew(entity)) {
 			throw new IllegalArgumentException("Tried to create entity twice: " + entity);
 		}
-	}
-
-	/**
-	 * Resolves the current value for this column.
-	 *
-	 * @return the current value or {@code null} if no row was created up to now
-	 */
-	private Long getCurrentValue() {
-		if (this.sequenceGenerator != null) {
-			return this.generatedIds.getCurrentValue(this.sequenceGenerator);
-		}
-		return this.generatedIds.getCurrentValue(this.generatorId);
 	}
 
 	/**
@@ -211,21 +100,11 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 		}
 
 		final GeneratorContext context = getContext();
-		if (context.isExplicitIds() || this.tableGenerator != null) {
+		if (context.isExplicitIds()) {
 			return targetId.toString();
 		}
 
-		final long diff = getCurrentValue() - targetId.longValue();
-
-		if (this.sequenceGenerator != null && (!whereExpression || context.getDialect().isSequenceInWhereSupported())) {
-			final String reference = context.getDialect().buildCurrentSequenceValue(this.generatorId);
-			if (diff == 0) {
-				return reference;
-			}
-			return "(" + reference + " - " + diff + ")";
-		}
-
-		return "(SELECT max(" + getColumn() + ")" + (diff == 0 ? "" : " - " + diff) + " FROM " + getTable() + ")";
+		return this.generator.getExpression(getTable(), getColumn(), targetId, whereExpression);
 	}
 
 	/**
@@ -290,10 +169,9 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	 *            the current entity
 	 */
 	public void postInsert(final E entity) {
-		final GeneratorContext context = getContext();
-		if (!context.isExplicitIds() && this.sequenceGenerator == null && this.tableGenerator == null) {
+		if (!this.explicitIds && this.generator.isPostIncrement()) {
 			// We have an identity column -> the database increments the ID after the insert
-			setValue(entity, this.generatedIds.createNextValue(this.generatorId, 1));
+			setValue(entity, this.generator.createNextValue());
 		}
 	}
 
