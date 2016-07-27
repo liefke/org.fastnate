@@ -118,7 +118,12 @@ public class ImportDataMojo extends AbstractMojo {
 	@Parameter
 	private String changeDetector;
 
-	/** Any additional settings for the EntitySqlGenerator, see {@link GeneratorContext}. */
+	/**
+	 * Any additional settings for the EntitySqlGenerator, see {@link GeneratorContext} for an overview of available
+	 * settings.
+	 *
+	 * Add a setting with: <code>&lt;setting_name&gt;setting_value&lt;/setting_name&gt;</code>
+	 */
 	@Parameter
 	private Map<String, String> additionalSettings;
 
