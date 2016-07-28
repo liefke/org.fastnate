@@ -1,7 +1,7 @@
 package org.fastnate.generator.context;
 
 /**
- * Possible values for {@link GeneratorContext}{@code .getUniquePropertyQuality()}.
+ * Possible values for {@link GeneratorContext#setUniquePropertyQuality}.
  */
 public enum UniquePropertyQuality {
 	/** Only required primitives are allowed. */

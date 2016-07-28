@@ -318,7 +318,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/**
 	 * Indicates that this propery is a {@link ElementCollection} that references {@link Embeddable}s.
 	 *
-	 * @return true if {@code getEmbeddedProperties()} returns a list of properties
+	 * @return true if {@link #getEmbeddedProperties()} returns a list of properties
 	 */
 	public boolean isEmbedded() {
 		return this.embeddedProperties != null;

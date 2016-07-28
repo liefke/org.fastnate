@@ -622,7 +622,8 @@ public final class EntityClass<E> {
 	 *            the field that contains the id, only interesting if the id is an {@link EmbeddedProperty}
 	 * @param whereExpression
 	 *            indicates that the reference is used in a "where" statement
-	 * @return the expression - either by using the {@code unique properties} or the {@code id} of the entity
+	 * @return the expression - either by using the {@link #getUniqueProperties() unique properties} or the
+	 *         {@link #getIdProperty() id} of the entity
 	 */
 	public String getEntityReference(final E entity, final String idField, final boolean whereExpression) {
 		if (this.joinedParentClass != null) {
