@@ -277,6 +277,25 @@
 				</configuration>
 			</plugin>
 
+			<!-- Delombok for JavaDoc plugin -->
+			<plugin>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok-maven-plugin</artifactId>
+				<version>1.16.10.0</version>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>delombok</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<addOutputDirectory>false</addOutputDirectory>
+					<sourceDirectory>src/main/java</sourceDirectory>
+				</configuration>
+			</plugin>
+
 			<!-- Add Javadoc -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -291,6 +310,10 @@
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<defaultVersion>${project.version}</defaultVersion>
+					<sourcepath>target/generated-sources/delombok</sourcepath>
+				</configuration>
 			</plugin>
 
 			<!-- Generate documentation for maven plugin(s). -->
