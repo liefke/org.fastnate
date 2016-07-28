@@ -1,5 +1,11 @@
 package org.fastnate.generator.dialect;
 
+import java.util.Collections;
+import java.util.List;
+
+import org.fastnate.generator.statements.EntityStatement;
+import org.fastnate.generator.statements.PlainStatement;
+
 /**
  * Handles PostgreSQL specific conversions.
  *
@@ -13,6 +19,13 @@ public final class PostgresDialect extends GeneratorDialect {
 			throw new IllegalArgumentException("PostgreSQL does not support '\\0' characters");
 		}
 		super.addQuotedCharacter(result, c);
+	}
+
+	@Override
+	public List<? extends EntityStatement> adjustNextIdentityValue(final String tableName, final String columnName,
+			final long nextValue) {
+		return Collections
+				.singletonList(new PlainStatement("ALTER SEQUENCE " + tableName + "_id_seq RESTART WITH " + nextValue));
 	}
 
 	@Override

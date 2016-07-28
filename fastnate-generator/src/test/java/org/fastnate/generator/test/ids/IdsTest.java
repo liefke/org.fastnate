@@ -71,7 +71,7 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 		entity3.setOther(entity1);
 		write(entity3);
 
-		getGenerator().close();
+		getGenerator().writeAlignmentStatements();
 
 		// Read and check the last entity
 		final E foundEntity = findSingleResult(

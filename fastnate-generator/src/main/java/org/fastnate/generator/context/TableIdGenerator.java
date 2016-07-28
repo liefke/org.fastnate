@@ -77,7 +77,16 @@ public class TableIdGenerator extends IdGenerator {
 
 	@Override
 	public List<? extends EntityStatement> alignNextValue() {
-		if (this.currentTableValue > this.initialValue && this.currentTableValue > this.nextValue) {
+		if (this.currentTableValue == this.initialValue) {
+			if (this.nextValue > this.initialValue) {
+				this.currentTableValue = this.nextValue;
+				final InsertStatement statement = new InsertStatement(this.generatorTable);
+				statement.addValue(this.pkColumnName, this.pkColumnValue);
+				statement.addValue(this.valueColumnName,
+						String.valueOf(this.currentTableValue + this.allocationSize - 1));
+				return Collections.singletonList(statement);
+			}
+		} else if (this.currentTableValue > this.nextValue) {
 			final UpdateStatement statement = new UpdateStatement(this.generatorTable, this.pkColumnName,
 					this.pkColumnValue);
 			this.currentTableValue = this.nextValue;

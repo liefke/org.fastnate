@@ -86,6 +86,7 @@ public class PrimitiveTestEntity {
 	private char[] lobChars;
 
 	@Lob
+	// For PostgreSQL: @Column(columnDefinition = "BYTEA")
 	private byte[] lobBytes;
 
 	private SerializableTestObject serializale;
@@ -104,7 +105,8 @@ public class PrimitiveTestEntity {
 	 */
 	public PrimitiveTestEntity(final String name) {
 		this.name = name;
-		this.testChar = ' ';
+		// PostgreSQL denies "null" characters and H2 trims whitespace characters
+		this.testChar = 'x';
 	}
 
 	@Override

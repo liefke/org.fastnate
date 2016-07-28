@@ -69,13 +69,11 @@ public class EntitySqlGenerator implements Closeable {
 	 * Writes any missing SQL and closes the target writer.
 	 *
 	 * @throws IOException
-	 *             if the target writer throws one in {@link Writer#close()}.
+	 *             if the target writer throws one
 	 */
 	@Override
 	public void close() throws IOException {
-		for (final EntityStatement statement : this.context.getFinalStatements()) {
-			writeStatement(statement);
-		}
+		writeAlignmentStatements();
 		Closeables.close(this.writer, false);
 	}
 
@@ -178,6 +176,18 @@ public class EntitySqlGenerator implements Closeable {
 	public <E> void write(final Iterable<? extends E> entities) throws IOException {
 		for (final E entity : entities) {
 			write(entity);
+		}
+	}
+
+	/**
+	 * Writes all statements that are necessary to align ID generators in the database with the current IDs.
+	 *
+	 * @throws IOException
+	 *             if the target writer throws one
+	 */
+	public void writeAlignmentStatements() throws IOException {
+		for (final EntityStatement statement : this.context.getAlignmentStatements()) {
+			writeStatement(statement);
 		}
 	}
 

@@ -71,6 +71,23 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * Adjusts the next value of the given identity column to ensure that it is bigger than the last generated value.
+	 *
+	 * @param tableName
+	 *            the name of the table of the column
+	 * @param columnName
+	 *            the name of the (auto increment) identity column
+	 * @param nextValue
+	 *            the next value of the identity column
+	 * @return all statements that are necessary to adjust the next value
+	 */
+	public List<? extends EntityStatement> adjustNextIdentityValue(final String tableName, final String columnName,
+			final long nextValue) {
+		// Most of the dialects do nothing
+		return Collections.emptyList();
+	}
+
+	/**
 	 * Adjusts the given sequence to ensure that the next value is exactly the given value.
 	 *
 	 * @param sequenceName
@@ -145,15 +162,15 @@ public abstract class GeneratorDialect {
 		}
 		final Date date;
 		switch (type) {
-		case DATE:
-			date = value instanceof java.sql.Date ? (java.sql.Date) value : new java.sql.Date(value.getTime());
-			break;
-		case TIME:
-			date = value instanceof Time ? (Time) value : new Time(value.getTime());
-			break;
-		case TIMESTAMP:
-		default:
-			date = value instanceof Timestamp ? (Timestamp) value : new Timestamp(value.getTime());
+			case DATE:
+				date = value instanceof java.sql.Date ? (java.sql.Date) value : new java.sql.Date(value.getTime());
+				break;
+			case TIME:
+				date = value instanceof Time ? (Time) value : new Time(value.getTime());
+				break;
+			case TIMESTAMP:
+			default:
+				date = value instanceof Timestamp ? (Timestamp) value : new Timestamp(value.getTime());
 		}
 		return '\'' + date.toString() + '\'';
 	}

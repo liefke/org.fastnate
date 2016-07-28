@@ -68,13 +68,16 @@ public class SequenceIdGenerator extends IdGenerator {
 
 	@Override
 	public List<? extends EntityStatement> alignNextValue() {
-		if (this.currentSequenceValue >= this.nextValue) {
-			final long currentValue = this.currentSequenceValue;
-			this.currentSequenceValue = this.nextValue - 1;
-			return this.dialect.adjustNextSequenceValue(this.sequenceName, currentValue,
-					this.currentSequenceValue + this.allocationSize, this.allocationSize);
+		if (this.nextValue > this.initialValue) {
+			if (this.currentSequenceValue >= this.nextValue || this.currentSequenceValue < this.initialValue) {
+				final long currentValue = this.currentSequenceValue;
+				this.currentSequenceValue = this.nextValue - 1;
+				return this.dialect.adjustNextSequenceValue(this.sequenceName, currentValue,
+						this.currentSequenceValue + this.allocationSize, this.allocationSize);
+			}
 		}
-		return null;
+
+		return Collections.emptyList();
 	}
 
 	@Override

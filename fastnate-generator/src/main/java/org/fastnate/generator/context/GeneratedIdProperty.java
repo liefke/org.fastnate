@@ -24,7 +24,7 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 
 	private static final long UNKOWN_ID_MARKER = -1L;
 
-	private final boolean explicitIds;
+	private final boolean absoluteIds;
 
 	private final IdGenerator generator;
 
@@ -41,15 +41,15 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	public GeneratedIdProperty(final EntityClass<E> entityClass, final AttributeAccessor attribute,
 			final Column column) {
 		super(entityClass.getContext(), entityClass.getTable(), attribute, column);
-		this.explicitIds = getContext().isExplicitIds();
+		this.absoluteIds = !getContext().isWriteRelativeIds();
 		this.generator = entityClass.getContext().getGenerator(attribute.getAnnotation(GeneratedValue.class),
-				getTable());
+				getTable(), getColumn());
 	}
 
 	@Override
 	public void addInsertExpression(final E entity, final InsertStatement statement) {
 		ensureIsNew(entity);
-		if (this.explicitIds) {
+		if (this.absoluteIds) {
 			// If we generate explict IDs, lets do that now
 			final Number id = this.generator.createNextValue();
 			setValue(entity, id);
@@ -63,7 +63,7 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 
 	@Override
 	public List<? extends EntityStatement> createPreInsertStatements(final E entity) {
-		if (this.explicitIds) {
+		if (this.absoluteIds) {
 			return Collections.emptyList();
 		}
 		return this.generator.createPreInsertStatements();
@@ -99,8 +99,7 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 			return String.valueOf(UNKOWN_ID_MARKER - 1 - targetId.longValue());
 		}
 
-		final GeneratorContext context = getContext();
-		if (context.isExplicitIds()) {
+		if (this.absoluteIds) {
 			return targetId.toString();
 		}
 
@@ -169,7 +168,7 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	 *            the current entity
 	 */
 	public void postInsert(final E entity) {
-		if (!this.explicitIds && this.generator.isPostIncrement()) {
+		if (!this.absoluteIds && this.generator.isPostIncrement()) {
 			// We have an identity column -> the database increments the ID after the insert
 			setValue(entity, this.generator.createNextValue());
 		}
