@@ -7,6 +7,7 @@ import java.io.StringWriter;
 import java.util.Properties;
 
 import org.fastnate.data.test.TestData;
+import org.fastnate.generator.context.GeneratorContext;
 import org.junit.Test;
 
 /**
@@ -33,6 +34,8 @@ public class EntityImporterTest {
 		final String postfix = "// This is the postfix";
 		settings.setProperty(EntityImporter.POSTFIX_KEY, postfix);
 
+		settings.setProperty(GeneratorContext.RELATIVE_IDS_KEY, "true");
+
 		final EntityImporter entityImporter = new EntityImporter(settings);
 		final StringWriter sqlWriter = new StringWriter();
 		entityImporter.importData(sqlWriter);
@@ -48,9 +51,8 @@ public class EntityImporterTest {
 				"INSERT INTO TestEntity (name, parent_id) VALUES ('Successor', (SELECT max(id) - 1 FROM TestEntity))");
 
 		// Check CSVData
-		assertThat(sql).contains(
-				"INSERT INTO TestEntity (bool, name, integ, parent_id) "
-						+ "VALUES (0, 'CSV Child;Example', 0, (SELECT max(id) FROM TestEntity))");
+		assertThat(sql).contains("INSERT INTO TestEntity (bool, name, integ, parent_id) "
+				+ "VALUES (0, 'CSV Child;Example', 0, (SELECT max(id) FROM TestEntity))");
 
 	}
 
