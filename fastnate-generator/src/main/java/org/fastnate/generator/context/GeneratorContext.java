@@ -83,19 +83,43 @@ public class GeneratorContext {
 
 	}
 
-	/** The settings key for the {@link #provider}. */
+	/**
+	 * The settings key for the JPA provider.
+	 *
+	 * Contains either the fully qualified class name of an extension of {@link JpaProvider} or the simple name of one
+	 * of the classes from {@code org.fastnate.generator.provider}.
+	 *
+	 * Defaults to {@code HibernateProvider}.
+	 */
 	public static final String PROVIDER_KEY = "fastnate.generator.jpa.provider";
 
 	/** The settings key for the path to the persistence.xml, either relative to the current directory or absolute. */
 	public static final String PERSISTENCE_FILE_KEY = "fastnate.generator.persistence.file";
 
 	/**
-	 * The settings key for the name of the persistence unit in the persistence.xml. The first is used, if none is
-	 * given.
+	 * The settings key for the name of the persistence unit in the persistence.xml. The first persistence unit is used,
+	 * if none is explicitly set.
 	 */
 	public static final String PERSISTENCE_UNIT_KEY = "fastnate.generator.persistence.unit";
 
-	/** The settings key for the {@link #dialect}. */
+	/**
+	 * The settings key for the target SQL dialect.
+	 *
+	 * <p>
+	 * Contains either the fully qualified name of a class that extends {@link GeneratorDialect} or the simple class
+	 * name of one of the classes from {@code org.fastnate.generator.dialect}. The suffix 'Dialect' may be omitted in
+	 * that case. For example 'MySql' would map to {@code org.fastnate.generator.dialect.MySqlDialect}.
+	 * </p>
+	 *
+	 * <p>
+	 * If no dialect is set explicitly then the configured {@link #PERSISTENCE_FILE_KEY persistence.xml} is scanned for
+	 * a connection URL or provider specific dialect, which would be converted to our known dialects.
+	 * </p>
+	 *
+	 * <p>
+	 * If nothing is found, H2 is used as default.
+	 * </p>
+	 */
 	public static final String DIALECT_KEY = "fastnate.generator.dialect";
 
 	/** The settings key for {@link #writeNullValues}. */
