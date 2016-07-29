@@ -629,11 +629,12 @@ public final class EntityClass<E> {
 		if (this.joinedParentClass != null) {
 			return this.joinedParentClass.getEntityReference(entity, idField, whereExpression);
 		}
-		if (this.idProperty instanceof GeneratedIdProperty) {
-			return getGeneratedIdReference(entity, whereExpression);
-		}
 		Property<? super E, ?> property = this.idProperty;
-		if (this.idProperty instanceof EmbeddedProperty) {
+		if (property instanceof GeneratedIdProperty) {
+			if (this.context.isWriteRelativeIds()) {
+				return getGeneratedIdReference(entity, whereExpression);
+			}
+		} else if (property instanceof EmbeddedProperty) {
 			final Map<String, ?> embeddedProperties = ((EmbeddedProperty<E, ?>) this.idProperty)
 					.getEmbeddedProperties();
 			if (idField == null) {
