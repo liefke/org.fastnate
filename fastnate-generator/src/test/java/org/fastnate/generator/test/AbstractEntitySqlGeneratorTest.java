@@ -11,6 +11,7 @@ import javax.persistence.criteria.CriteriaQuery;
 
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
+import org.hibernate.cfg.AvailableSettings;
 import org.junit.After;
 import org.junit.Before;
 
@@ -85,18 +86,45 @@ public class AbstractEntitySqlGeneratorTest {
 	}
 
 	/**
-	 * Build a entity manager factory (with a connected database) for testing.
+	 * Properties for configuring the {@link #getGenerator() generator}.
+	 *
+	 * @return the test specific properties for the generator
+	 */
+	protected Properties getGeneratorProperties() {
+		return new Properties(System.getProperties());
+	}
+
+	/**
+	 * Build a entity manager factory (with an empty connected database) for testing.
 	 */
 	@Before
-	public void setUp() {
+	public void setup() {
+		setup("create");
+	}
+
+	/**
+	 * Build a entity manager factory (with a connected database) for testing.
+	 *
+	 * @param schemaCreation
+	 *            indicates that how to initialize the database ("create" vs. "")
+	 */
+	protected void setup(final String schemaCreation) {
 		final Properties properties = new Properties(System.getProperties());
-		this.emf = Persistence
-				.createEntityManagerFactory(properties.getProperty(GeneratorContext.PERSISTENCE_UNIT_KEY, "test-h2"));
+		properties.setProperty(AvailableSettings.HBM2DDL_AUTO, schemaCreation);
+
+		final GeneratorContext context = new GeneratorContext(getGeneratorProperties());
+		context.setMaxUniqueProperties(0);
+		if (!context.getDialect().isIdentitySupported()) {
+			// Adjust entity manager to allow Identity in model
+			properties.setProperty(AvailableSettings.DIALECT_RESOLVERS,
+					AllowMissingIdentitySupportDialectResolver.class.getName());
+		}
+
+		this.emf = Persistence.createEntityManagerFactory(
+				properties.getProperty(GeneratorContext.PERSISTENCE_UNIT_KEY, "test-h2"), properties);
 		this.em = this.emf.createEntityManager();
 		@SuppressWarnings("resource")
 		final SqlEmWriter sqlWriter = new SqlEmWriter(this.em);
-		final GeneratorContext context = new GeneratorContext(properties);
-		context.setMaxUniqueProperties(0);
 		this.generator = new EntitySqlGenerator(sqlWriter, context);
 	}
 
@@ -107,9 +135,11 @@ public class AbstractEntitySqlGeneratorTest {
 	public void tearDown() {
 		if (this.em != null) {
 			this.em.close();
+			this.em = null;
 		}
 		if (this.emf != null) {
 			this.emf.close();
+			this.emf = null;
 		}
 	}
 

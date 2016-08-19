@@ -5,7 +5,6 @@
 	xmlns="http://java.sun.com/xml/ns/persistence">
 	<persistence-unit name="test-h2" transaction-type="RESOURCE_LOCAL">
 		<properties>
-            <property name="hibernate.hbm2ddl.auto" value="create"/>
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="false"/>
 			<property name="hibernate.use_sql_comments" value="true" />
@@ -18,7 +17,6 @@
 	</persistence-unit>
 	<persistence-unit name="test-oracle" transaction-type="RESOURCE_LOCAL">
 		<properties>
-            <property name="hibernate.hbm2ddl.auto" value="create"/>
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="false"/>
 			<property name="hibernate.use_sql_comments" value="true" />
@@ -30,7 +28,6 @@
 	</persistence-unit>
 	<persistence-unit name="test-postgres" transaction-type="RESOURCE_LOCAL">
 		<properties>
-            <property name="hibernate.hbm2ddl.auto" value="create"/>
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="false"/>
 			<property name="hibernate.use_sql_comments" value="true" />
@@ -42,7 +39,6 @@
 	</persistence-unit>
 	<persistence-unit name="test-mysql" transaction-type="RESOURCE_LOCAL">
 		<properties>
-            <property name="hibernate.hbm2ddl.auto" value="create"/>
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="false"/>
 			<property name="hibernate.use_sql_comments" value="true" />
