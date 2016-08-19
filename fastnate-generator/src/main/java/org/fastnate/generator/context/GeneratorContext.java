@@ -325,9 +325,11 @@ public class GeneratorContext {
 	private IdGenerator getDefaultSequenceGenerator() {
 		if (this.defaultSequenceGenerator == null) {
 			this.defaultSequenceGenerator = new SequenceIdGenerator(
-					AnnotationDefaults.create(SequenceGenerator.class, ImmutableMap.of("sequenceName",
-							this.provider.getDefaultSequence(), "allocationSize", Integer.valueOf(1))),
-					this.dialect);
+					AnnotationDefaults
+							.create(SequenceGenerator.class,
+									ImmutableMap.of("sequenceName", this.provider.getDefaultSequence(),
+											"allocationSize", Integer.valueOf(1))),
+					this.dialect, this.writeRelativeIds);
 		}
 		return this.defaultSequenceGenerator;
 	}
@@ -337,7 +339,7 @@ public class GeneratorContext {
 			this.defaultTableGenerator = new TableIdGenerator(
 					AnnotationDefaults.create(TableGenerator.class,
 							ImmutableMap.of("pkColumnValue", "default", "allocationSize", Integer.valueOf(1))),
-					this.dialect, this.provider);
+					this.dialect, this.provider, this.writeRelativeIds);
 		}
 		return this.defaultTableGenerator;
 	}
@@ -481,13 +483,13 @@ public class GeneratorContext {
 		final SequenceGenerator sequenceGenerator = element.getAnnotation(SequenceGenerator.class);
 		if (sequenceGenerator != null) {
 			this.generators.put(new GeneratorId(sequenceGenerator.name(), null),
-					new SequenceIdGenerator(sequenceGenerator, this.dialect));
+					new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
 		}
 
 		final TableGenerator tableGenerator = element.getAnnotation(TableGenerator.class);
 		if (tableGenerator != null) {
 			this.generators.put(new GeneratorId(tableGenerator.name(), null),
-					new TableIdGenerator(tableGenerator, this.dialect, this.provider));
+					new TableIdGenerator(tableGenerator, this.dialect, this.provider, this.writeRelativeIds));
 		}
 	}
 }

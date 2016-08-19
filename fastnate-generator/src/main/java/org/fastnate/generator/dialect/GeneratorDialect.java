@@ -240,6 +240,16 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * Returns the string to use when no table is required, e.g. for "SELECT 1, 2 FROM DUAL" this would return "FROM
+	 * DUAL".
+	 *
+	 * @return the SQL to use in "SELECT x [OPTIONALTABLE] WHERE ..."
+	 */
+	public String getOptionalTable() {
+		return "";
+	}
+
+	/**
 	 * Indicates that the empty string is equal to {@code null} in this database.
 	 *
 	 * Important for {@link NotNull} constraints, where an empty string would result in the same constraint violation.

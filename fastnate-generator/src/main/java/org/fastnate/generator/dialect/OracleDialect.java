@@ -45,19 +45,24 @@ public final class OracleDialect extends GeneratorDialect {
 			return "CURRENT_TIMESTAMP";
 		}
 		switch (type) {
-		case DATE:
-			return "to_date(" + super.convertTemporalValue(value, type) + ", 'YYYY-MM-DD')";
-		case TIME:
-			return "to_date(" + super.convertTemporalValue(value, type) + ", 'HH24:MI:SS')";
-		case TIMESTAMP:
-		default:
-			return "to_timestamp(" + super.convertTemporalValue(value, type) + ", 'YYYY-MM-DD HH24:MI:SS.FF9')";
+			case DATE:
+				return "to_date(" + super.convertTemporalValue(value, type) + ", 'YYYY-MM-DD')";
+			case TIME:
+				return "to_date(" + super.convertTemporalValue(value, type) + ", 'HH24:MI:SS')";
+			case TIMESTAMP:
+			default:
+				return "to_timestamp(" + super.convertTemporalValue(value, type) + ", 'YYYY-MM-DD HH24:MI:SS.FF9')";
 		}
 	}
 
 	@Override
 	public String createBlobExpression(final byte[] blob) {
 		return createHexBlobExpression("hextoraw('", blob, "')");
+	}
+
+	@Override
+	public String getOptionalTable() {
+		return "FROM DUAL";
 	}
 
 	@Override

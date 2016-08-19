@@ -101,6 +101,11 @@ public class MySqlDialect extends GeneratorDialect {
 	}
 
 	@Override
+	public String getOptionalTable() {
+		return "FROM DUAL";
+	}
+
+	@Override
 	public boolean isNextSequenceValueInInsertSupported() {
 		return false;
 	}

@@ -25,6 +25,8 @@ public class SequenceIdGenerator extends IdGenerator {
 
 	private final String sequenceName;
 
+	private final boolean relativeIds;
+
 	private long nextValue;
 
 	private long currentSequenceValue;
@@ -36,9 +38,13 @@ public class SequenceIdGenerator extends IdGenerator {
 	 *            the annotation that contains our settings
 	 * @param dialect
 	 *            the current database dialect
+	 * @param relativeIds
+	 *            indicates that the sequence is always used, instead of absolute IDs
 	 */
-	public SequenceIdGenerator(final SequenceGenerator generator, final GeneratorDialect dialect) {
+	public SequenceIdGenerator(final SequenceGenerator generator, final GeneratorDialect dialect,
+			final boolean relativeIds) {
 		this.dialect = dialect;
+		this.relativeIds = relativeIds;
 		this.allocationSize = generator.allocationSize();
 		this.nextValue = this.initialValue = generator.initialValue();
 		this.currentSequenceValue = this.initialValue - 1;
@@ -68,7 +74,7 @@ public class SequenceIdGenerator extends IdGenerator {
 
 	@Override
 	public List<? extends EntityStatement> alignNextValue() {
-		if (this.nextValue > this.initialValue) {
+		if (!this.relativeIds && this.nextValue > this.initialValue) {
 			if (this.currentSequenceValue >= this.nextValue || this.currentSequenceValue < this.initialValue) {
 				final long currentValue = this.currentSequenceValue;
 				this.currentSequenceValue = this.nextValue - 1;
@@ -117,7 +123,7 @@ public class SequenceIdGenerator extends IdGenerator {
 		}
 
 		final long diff = this.nextValue - 1 - targetId.longValue();
-		return "(SELECT max(" + column + ")" + (diff == 0 ? "" : " - " + diff) + " FROM " + table + ")";
+		return "(SELECT max(" + column + ')' + (diff == 0 ? "" : " - " + diff) + " FROM " + table + ')';
 	}
 
 	@Override
