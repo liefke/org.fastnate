@@ -22,3 +22,7 @@ Fastnate Changelog
 * #9 fixed wrong ID calculation for InheritanceType.JOINED
 * #10 Support for referencing subclasses with InheritanceType.JOINED 
 * #11 Support for @Version
+* #12 Increment generated IDs by one
+	* Write absolute IDs by default
+	* Full support for relative IDs in all GenerationTypes
+* Simplified unit testing against H2, MySQL, PostgreSQL and Oracle
