@@ -16,7 +16,7 @@ Fastnate Changelog
 ### 1.1.0 (2016-06-08)
 * Changed how @Column and @Size on one single attribute are interpreted (aligned with Hibernate)
 
-### 1.2.0 (xxx-xxx-xxx)
+### 1.2.0 (2016-09-06)
 * Better support for MySQL
 * #7 Support for GenerationType.TABLE
 * #9 fixed wrong ID calculation for InheritanceType.JOINED
