@@ -20,7 +20,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Organisation {
 
-	/** The ID of the organisation from CSV file */
+	/** The ID of the organisation from CSV file. */
 	@Id
 	private Long id;
 
