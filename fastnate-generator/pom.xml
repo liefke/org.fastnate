@@ -92,6 +92,37 @@
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
 		</dependency>
+		
+		<!-- Database drivers for testing -->
+		
+		<!-- Oracle -->
+		<dependency>
+			<!-- 
+				Due to license reasons, the following driver is not part of Maven-Central.
+			    See here how to add it to you local repository:
+					https://stackoverflow.com/questions/1074869/find-oracle-jdbc-driver-in-maven-repository
+			-->
+		    <groupId>com.oracle</groupId>
+		    <artifactId>ojdbc14</artifactId>
+		    <version>10.2.0.4.0</version>
+		    <scope>test</scope>
+		</dependency>
+
+		<!-- Postgres -->
+		<dependency>
+		    <groupId>postgresql</groupId>
+		    <artifactId>postgresql</artifactId>
+		    <version>9.1-901.jdbc4</version>
+		    <scope>test</scope>
+		</dependency>		
+		
+		<!-- MySQL -->
+		<dependency>
+		    <groupId>mysql</groupId>
+		    <artifactId>mysql-connector-java</artifactId>
+		    <version>5.1.27</version>
+		    <scope>test</scope>
+		</dependency>		
 
 	</dependencies>
 
