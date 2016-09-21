@@ -482,14 +482,20 @@ public class GeneratorContext {
 	public void registerGenerators(final AnnotatedElement element) {
 		final SequenceGenerator sequenceGenerator = element.getAnnotation(SequenceGenerator.class);
 		if (sequenceGenerator != null) {
-			this.generators.put(new GeneratorId(sequenceGenerator.name(), null),
-					new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
+			final GeneratorId key = new GeneratorId(sequenceGenerator.name(), null);
+			if (!this.generators.containsKey(key)) {
+				this.generators.put(key,
+						new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
+			}
 		}
 
 		final TableGenerator tableGenerator = element.getAnnotation(TableGenerator.class);
 		if (tableGenerator != null) {
-			this.generators.put(new GeneratorId(tableGenerator.name(), null),
-					new TableIdGenerator(tableGenerator, this.dialect, this.provider, this.writeRelativeIds));
+			final GeneratorId key = new GeneratorId(tableGenerator.name(), null);
+			if (!this.generators.containsKey(key)) {
+				this.generators.put(key,
+						new TableIdGenerator(tableGenerator, this.dialect, this.provider, this.writeRelativeIds));
+			}
 		}
 	}
 }
