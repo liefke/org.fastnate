@@ -34,11 +34,11 @@ public abstract class GeneratorDialect {
 	public static final Date NOW = new Date();
 
 	private static void finishPart(final StringBuilder result, final String value, final int start, final int end,
-			final boolean isOpen, final boolean close) {
+			final boolean isOpen, final boolean close, final String concatOperator) {
 		if (start < end) {
 			if (!isOpen) {
 				if (start > 0) {
-					result.append(" || ");
+					result.append(concatOperator);
 				}
 				result.append('\'');
 			}
@@ -50,7 +50,7 @@ public abstract class GeneratorDialect {
 			result.append('\'');
 		} else if (!isOpen && !close) {
 			if (start > 0) {
-				result.append(" || ");
+				result.append(concatOperator);
 			}
 			result.append('\'');
 		}
@@ -102,6 +102,10 @@ public abstract class GeneratorDialect {
 	 */
 	public List<? extends EntityStatement> adjustNextSequenceValue(final String sequenceName,
 			final long currentSequenceValue, final long nextSequenceValue, final int incrementSize) {
+		if (isEmulatingSequences()) {
+			return Collections.singletonList(
+					new PlainStatement("UPDATE " + sequenceName + " SET next_val = " + nextSequenceValue));
+		}
 		return Collections.singletonList(
 				new PlainStatement("ALTER SEQUENCE " + sequenceName + " RESTART WITH " + nextSequenceValue));
 	}
@@ -117,6 +121,9 @@ public abstract class GeneratorDialect {
 	 * @return the SQL expression to use in statement
 	 */
 	public String buildCurrentSequenceValue(final String sequence, final int incrementSize) {
+		if (isEmulatingSequences()) {
+			return "(SELECT max(next_val) - " + incrementSize + " FROM " + sequence + ")";
+		}
 		return "currval('" + sequence + "')";
 	}
 
@@ -133,6 +140,9 @@ public abstract class GeneratorDialect {
 	 * @return the SQL to use in resp. before the insert / update statement
 	 */
 	public String buildNextSequenceValue(final String sequence, final int incrementSize) {
+		if (isEmulatingSequences()) {
+			return "UPDATE " + sequence + " SET next_val = next_val + " + incrementSize;
+		}
 		return "nextval('" + sequence + "')";
 	}
 
@@ -240,6 +250,16 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * The operator used to concat two Strings.
+	 *
+	 * @return the operator to use for "string1 OPERATOR string2" (including any necessary whitespace) or {@code null}
+	 *         if this dialect does not have such an operator
+	 */
+	public String getConcatOperator() {
+		return " || ";
+	}
+
+	/**
 	 * Returns the string to use when no table is required, e.g. for "SELECT 1, 2 FROM DUAL" this would return "FROM
 	 * DUAL".
 	 *
@@ -261,6 +281,16 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * Indicates that tables are used in place of sequences, if {@link GenerationType#SEQUENCE} is defined for a
+	 * {@link GeneratedValue}.
+	 *
+	 * @return {@code true} if sequences are emulated with tables, {@code false} if sequences are supported
+	 */
+	protected boolean isEmulatingSequences() {
+		return false;
+	}
+
+	/**
 	 * Indicates that identity columns are supported by the database.
 	 *
 	 * @return {@code true} if the database supports identities
@@ -277,7 +307,7 @@ public abstract class GeneratorDialect {
 	 *         {@link #buildNextSequenceValue(String,int)} returns a full statement
 	 */
 	public boolean isNextSequenceValueInInsertSupported() {
-		return true;
+		return !isEmulatingSequences();
 	}
 
 	/**
@@ -299,6 +329,15 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * Indicates if this dialect supports writing absolute values to an {@link GenerationType#IDENTITY} column.
+	 * 
+	 * @return {@code true} if we can write fix values for identity columns
+	 */
+	public boolean isSettingIdentityAllowed() {
+		return true;
+	}
+
+	/**
 	 * Quotes the given string.
 	 *
 	 * @param value
@@ -312,19 +351,20 @@ public abstract class GeneratorDialect {
 		final StringBuilder result = new StringBuilder(value.length() + 2);
 		int start = 0;
 		boolean isOpen = false;
+		final String concatOperator = getConcatOperator();
 		for (int i = 0; i < value.length(); i++) {
 			final char c = value.charAt(i);
 			if (c < ' ' && c != '\t') {
 				// Unprintable character, especially newlines
 				if (i > 0) {
-					finishPart(result, value, start, i, isOpen, true);
+					finishPart(result, value, start, i, isOpen, true, concatOperator);
 					isOpen = false;
-					result.append(" || ");
+					result.append(concatOperator);
 				}
 				addQuotedCharacter(result, c);
 			} else if (c == '\'') {
 				// Escape quotes
-				finishPart(result, value, start, i, isOpen, false);
+				finishPart(result, value, start, i, isOpen, false, concatOperator);
 				isOpen = true;
 				result.append("''");
 			} else {
@@ -332,7 +372,7 @@ public abstract class GeneratorDialect {
 			}
 			start = i + 1;
 		}
-		finishPart(result, value, start, value.length(), isOpen, true);
+		finishPart(result, value, start, value.length(), isOpen, true, concatOperator);
 		return result.toString();
 	}
 }

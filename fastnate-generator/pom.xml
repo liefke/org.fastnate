@@ -122,7 +122,20 @@
 		    <artifactId>mysql-connector-java</artifactId>
 		    <version>5.1.27</version>
 		    <scope>test</scope>
-		</dependency>		
+		</dependency>
+		
+		<!-- MsSQL -->
+		<dependency>
+			<!-- 
+				Due to license reasons, the following driver is not part of Maven-Central.
+				Download it from Microsoft and call:
+				  mvn install:install-file -DgroupId=com.microsoft.jdbc -DartifactId=sqljdbc -Dversion=4.0 -Dpackaging=jar -Dfile=sqljdbc4.jar -DgeneratePom=true
+   			-->
+		    <groupId>com.microsoft.jdbc</groupId>
+		    <artifactId>sqljdbc</artifactId>
+		    <version>4.0</version>
+		    <scope>test</scope>
+		</dependency>
 
 	</dependencies>
 

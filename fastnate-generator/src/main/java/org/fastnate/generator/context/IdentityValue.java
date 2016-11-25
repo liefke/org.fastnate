@@ -37,7 +37,8 @@ public class IdentityValue extends IdGenerator {
 
 	@Override
 	public List<? extends EntityStatement> alignNextValue() {
-		if (this.needsAlignment && !this.context.isWriteRelativeIds()) {
+		if (this.needsAlignment && !this.context.isWriteRelativeIds()
+				&& this.context.getDialect().isSettingIdentityAllowed()) {
 			return this.context.getDialect().adjustNextIdentityValue(this.tableName, this.columnName,
 					this.currentValue + 1);
 		}

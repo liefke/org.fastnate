@@ -48,4 +48,13 @@
             <property name="hibernate.connection.password" value="fastnate"/>
 		</properties>
 	</persistence-unit>
+	<persistence-unit name="test-mssql" transaction-type="RESOURCE_LOCAL">
+		<properties>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="false"/>
+			<property name="hibernate.use_sql_comments" value="true" />
+            <property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+            <property name="hibernate.connection.url" value="jdbc:sqlserver://localhost\fastnate:1433;integratedSecurity=true;"/>
+		</properties>
+	</persistence-unit>
 </persistence> 

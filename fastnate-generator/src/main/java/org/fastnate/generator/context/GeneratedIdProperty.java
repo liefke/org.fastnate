@@ -41,7 +41,7 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	public GeneratedIdProperty(final EntityClass<E> entityClass, final AttributeAccessor attribute,
 			final Column column) {
 		super(entityClass.getContext(), entityClass.getTable(), attribute, column);
-		this.absoluteIds = !getContext().isWriteRelativeIds();
+		this.absoluteIds = !getContext().isWriteRelativeIds() && getContext().getDialect().isSettingIdentityAllowed();
 		this.generator = entityClass.getContext().getGenerator(attribute.getAnnotation(GeneratedValue.class),
 				getTable(), getColumn());
 	}

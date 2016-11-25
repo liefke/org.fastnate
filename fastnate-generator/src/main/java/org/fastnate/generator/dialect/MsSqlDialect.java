@@ -1,5 +1,9 @@
 package org.fastnate.generator.dialect;
 
+import java.util.Date;
+
+import javax.persistence.TemporalType;
+
 /**
  * Handles MS SQL specific conversions.
  *
@@ -8,6 +12,50 @@ package org.fastnate.generator.dialect;
  */
 public final class MsSqlDialect extends GeneratorDialect {
 
-	// No special support up to now
+	@Override
+	protected void addQuotedCharacter(final StringBuilder result, final char c) {
+		result.append("CHAR(").append((byte) c).append(')');
+	}
+
+	@Override
+	public String buildCurrentSequenceValue(final String sequence, final int incrementSize) {
+		if (isEmulatingSequences()) {
+			return super.buildCurrentSequenceValue(sequence, incrementSize);
+		}
+		return "(SELECT current_value FROM sys.sequences WHERE name = '" + sequence + "')";
+	}
+
+	@Override
+	public String buildNextSequenceValue(final String sequence, final int incrementSize) {
+		if (isEmulatingSequences()) {
+			return super.buildNextSequenceValue(sequence, incrementSize);
+		}
+		return "NEXT VALUE FOR " + sequence;
+	}
+
+	@Override
+	public String convertTemporalValue(final Date value, final TemporalType type) {
+		return super.convertTemporalValue(value, type).replace("-", "");
+	}
+
+	@Override
+	public String createBlobExpression(final byte[] blob) {
+		return createHexBlobExpression("0x", blob, "");
+	}
+
+	@Override
+	public String getConcatOperator() {
+		return " + ";
+	}
+
+	@Override
+	protected boolean isEmulatingSequences() {
+		return true;
+	}
+
+	@Override
+	public boolean isSettingIdentityAllowed() {
+		return false;
+	}
 
 }
