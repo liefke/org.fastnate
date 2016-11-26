@@ -1,18 +1,26 @@
 package org.fastnate.maven.test;
 
+import java.io.File;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import lombok.Getter;
+import java.util.Date;
+import java.util.Locale;
 
 import org.fastnate.data.AbstractDataProvider;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Data provider for the maven test.
  *
  * @author Tobias Liefke
  */
+@RequiredArgsConstructor
 public class MavenTestData extends AbstractDataProvider {
+
+	private final File dataDir;
 
 	@Getter
 	private final Collection<MavenTestEntity> entities = new ArrayList<>();
@@ -22,7 +30,12 @@ public class MavenTestData extends AbstractDataProvider {
 		this.entities.add(new MavenTestEntity("Test 1"));
 		this.entities.add(new MavenTestEntity("Test 2"));
 		this.entities.add(new MavenTestEntity("Test 3"));
-		this.entities.add(new MavenTestEntity("Test 4"));
+
+		// Test that changes to test.properties are respected
+		final File testPropertiesFile = new File(this.dataDir, "../resources/test.properties");
+		this.entities.add(new MavenTestEntity("test.properties last modified: "
+				+ DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG, Locale.ENGLISH)
+						.format(new Date(testPropertiesFile.lastModified()))));
 	}
 
 }

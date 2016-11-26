@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -110,6 +111,14 @@ public class ImportDataMojo extends AbstractMojo {
 	/** The path to one or more SQL files, or an SQL snippet itself - to put that after the generated SQL. */
 	@Parameter
 	private String postfix;
+
+	/**
+	 * A list of patterns for files which are monitored and start the generation when changed.
+	 *
+	 * See {@link #changeDetector} for more complicated change detection.
+	 */
+	@Parameter
+	private String[] relevantFiles;
 
 	/**
 	 * The implementation class of {@link DataChangeDetector}, to check if a changed file is relevant for SQL
@@ -261,6 +270,16 @@ public class ImportDataMojo extends AbstractMojo {
 	}
 
 	private boolean detectRelevantFileChanges() {
+		if (ArrayUtils.isNotEmpty(this.relevantFiles)) {
+			final Scanner scanner = this.context.newScanner(this.project.getBasedir());
+			scanner.setIncludes(this.relevantFiles);
+			scanner.scan();
+			if (scanner.getIncludedFiles().length > 0) {
+				getLog().debug("detectChanges(): changes detected for relevant file " + scanner.getIncludedFiles()[0]);
+				return true;
+			}
+		}
+
 		if (detectRelevantClassFileChanges()) {
 			return true;
 		}
@@ -331,7 +350,7 @@ public class ImportDataMojo extends AbstractMojo {
 				if (directory != null && !directory.exists()) {
 					directory.mkdirs();
 				}
-				try (final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+				try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
 						this.context.newFileOutputStream(outputFile), Charset.forName(outputEncoding)))) {
 					final Class<?> importerClass = Thread.currentThread().getContextClassLoader()
 							.loadClass("org.fastnate.data.EntityImporter");

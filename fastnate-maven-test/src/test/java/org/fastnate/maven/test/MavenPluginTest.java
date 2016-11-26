@@ -2,6 +2,7 @@ package org.fastnate.maven.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.File;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -47,12 +48,12 @@ public class MavenPluginTest {
 	 */
 	@Test
 	public void testEmbedded() {
-		final CriteriaQuery<MavenTestEntity> criteriaQuery = this.em.getCriteriaBuilder().createQuery(
-				MavenTestEntity.class);
+		final CriteriaQuery<MavenTestEntity> criteriaQuery = this.em.getCriteriaBuilder()
+				.createQuery(MavenTestEntity.class);
 		criteriaQuery.select(criteriaQuery.from(MavenTestEntity.class));
 		final List<MavenTestEntity> entities = this.em.createQuery(criteriaQuery).getResultList();
 		final int csvEntityCount = 2;
-		final MavenTestData mavenTestData = new MavenTestData();
+		final MavenTestData mavenTestData = new MavenTestData(new File("src/main/data"));
 		mavenTestData.buildEntities();
 		assertThat(entities).hasSize(csvEntityCount + mavenTestData.getEntities().size());
 	}
