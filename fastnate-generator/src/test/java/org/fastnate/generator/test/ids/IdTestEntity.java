@@ -47,7 +47,7 @@ public abstract class IdTestEntity<O extends IdTestEntity<O>> {
 	 * @param other
 	 *            another entity of the same type, for testing references with the id
 	 */
-	public abstract void setOther(@Nullable final O other);
+	public abstract void setOther(@Nullable O other);
 
 	@Override
 	public String toString() {

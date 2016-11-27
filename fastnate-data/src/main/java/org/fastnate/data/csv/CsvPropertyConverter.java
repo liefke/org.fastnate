@@ -17,5 +17,5 @@ public interface CsvPropertyConverter<T> {
 	 *            the value in CSV
 	 * @return the value in Java
 	 */
-	T convert(final Class<? extends T> targetType, final String value);
+	T convert(Class<? extends T> targetType, String value);
 }

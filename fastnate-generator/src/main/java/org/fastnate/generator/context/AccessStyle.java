@@ -289,6 +289,6 @@ public enum AccessStyle {
 	 *            the class to inspect
 	 * @return all non static attributes found in the given class
 	 */
-	public abstract <E> Iterable<AttributeAccessor> getDeclaredAttributes(final Class<E> inspectedClass);
+	public abstract <E> Iterable<AttributeAccessor> getDeclaredAttributes(Class<E> inspectedClass);
 
 }

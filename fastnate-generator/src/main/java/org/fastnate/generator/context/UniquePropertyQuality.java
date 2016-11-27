@@ -72,5 +72,5 @@ public enum UniquePropertyQuality {
 	 *            the property to check
 	 * @return {@code true} if that property is allowed as unique property
 	 */
-	public abstract boolean isAllowed(final Property<?, ?> property);
+	public abstract boolean isAllowed(Property<?, ?> property);
 }

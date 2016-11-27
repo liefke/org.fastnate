@@ -21,7 +21,7 @@ public interface ValueConverter<T> {
 	 *            the current context (contains the database dialect).
 	 * @return the expression (that is including surrounding ' for string literals)
 	 */
-	String getExpression(final String defaultValue, final GeneratorContext context);
+	String getExpression(String defaultValue, GeneratorContext context);
 
 	/**
 	 * Builds the expression for writing the given value into an SQL clause.
@@ -32,6 +32,6 @@ public interface ValueConverter<T> {
 	 *            the current context (contains the database dialect).
 	 * @return the expression (that is including surrounding ' for string literals)
 	 */
-	String getExpression(final T value, final GeneratorContext context);
+	String getExpression(T value, GeneratorContext context);
 
 }

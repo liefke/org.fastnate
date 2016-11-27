@@ -55,7 +55,7 @@ public interface AttributeAccessor extends AnnotatedElement {
 	 *            the entity to inspect
 	 * @return the value, {@code null} if entity is {@code null}
 	 */
-	<E, T> T getValue(final E entity);
+	<E, T> T getValue(E entity);
 
 	/**
 	 * Indicates that this attribute is written to the database.
@@ -72,6 +72,6 @@ public interface AttributeAccessor extends AnnotatedElement {
 	 * @param value
 	 *            the new value
 	 */
-	<E, T> void setValue(final E entity, final T value);
+	<E, T> void setValue(E entity, T value);
 
 }

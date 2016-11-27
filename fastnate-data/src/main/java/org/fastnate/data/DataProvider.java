@@ -31,16 +31,6 @@ public interface DataProvider {
 	void buildEntities() throws IOException;
 
 	/**
-	 * Adds all {@link #buildEntities() entities} to the SQL file using the given generator.
-	 *
-	 * @param sqlGenerator
-	 *            the SQL file generator
-	 * @throws IOException
-	 *             if the generator throws one
-	 */
-	void writeEntities(final EntitySqlGenerator sqlGenerator) throws IOException;
-
-	/**
 	 * An additional helper to sort the output by its precedence.
 	 *
 	 * Providers with a smaller order criteria will write their data before providers with a higher order criteria,
@@ -49,5 +39,15 @@ public interface DataProvider {
 	 * @return the order criteria
 	 */
 	int getOrder();
+
+	/**
+	 * Adds all {@link #buildEntities() entities} to the SQL file using the given generator.
+	 *
+	 * @param sqlGenerator
+	 *            the SQL file generator
+	 * @throws IOException
+	 *             if the generator throws one
+	 */
+	void writeEntities(EntitySqlGenerator sqlGenerator) throws IOException;
 
 }

@@ -69,7 +69,7 @@ public abstract class AbstractCsvReader<R> {
 	 *            contains the mapping from the header names to the current row data
 	 * @return the list of entities from that row
 	 */
-	protected abstract Collection<? extends R> createEntities(final Map<String, String> row);
+	protected abstract Collection<? extends R> createEntities(Map<String, String> row);
 
 	/**
 	 * Defines the default encoding for CSV files, if it can't be determined from the BOM.
@@ -129,7 +129,7 @@ public abstract class AbstractCsvReader<R> {
 		for (final File importFile : this.importFiles) {
 			log.info("Reading entities from {}...", importFile);
 
-			try (final CsvListReader csvList = openCsvListReader(importFile)) {
+			try (CsvListReader csvList = openCsvListReader(importFile)) {
 				final String[] header = csvList.getHeader(true);
 				if (ArrayUtils.isEmpty(header)) {
 					log.error("Ignoring {}, as no header was found", importFile);

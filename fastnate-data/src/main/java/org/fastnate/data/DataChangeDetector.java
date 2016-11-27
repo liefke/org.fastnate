@@ -16,6 +16,6 @@ public interface DataChangeDetector {
 	 *            the (source) file to check
 	 * @return {@code true} if the given file is relevant for SQL generation
 	 */
-	boolean isDataFile(final File file);
+	boolean isDataFile(File file);
 
 }
