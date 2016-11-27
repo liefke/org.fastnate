@@ -93,7 +93,7 @@
 						<configuration>
 							<packages>org.fastnate.maven.test</packages>
 							<relevantFiles>
-								<relevantFile>src/main/resources/test.properties</relevantFile>
+								<relevantFile>main/resources/test.properties</relevantFile>
 							</relevantFiles>
 							<changeDetector>org.fastnate.maven.test.TestDetector</changeDetector>
 						</configuration>

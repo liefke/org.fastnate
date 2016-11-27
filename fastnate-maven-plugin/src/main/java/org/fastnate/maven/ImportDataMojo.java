@@ -116,6 +116,9 @@ public class ImportDataMojo extends AbstractMojo {
 	 * A list of patterns for files which are monitored and start the generation when changed.
 	 *
 	 * See {@link #changeDetector} for more complicated change detection.
+	 *
+	 * All patterns are relative to the "src" directory, as Eclipse Bug 508238 prevents patterns relative to the base
+	 * directory.
 	 */
 	@Parameter
 	private String[] relevantFiles;
@@ -271,7 +274,8 @@ public class ImportDataMojo extends AbstractMojo {
 
 	private boolean detectRelevantFileChanges() {
 		if (ArrayUtils.isNotEmpty(this.relevantFiles)) {
-			final Scanner scanner = this.context.newScanner(this.project.getBasedir());
+			// Use src directory, due to Eclipse Bug 508238
+			final Scanner scanner = this.context.newScanner(new File(this.project.getBasedir(), "src"));
 			scanner.setIncludes(this.relevantFiles);
 			scanner.scan();
 			if (scanner.getIncludedFiles().length > 0) {
