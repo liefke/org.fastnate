@@ -128,12 +128,13 @@
 		<dependency>
 			<!-- 
 				Due to license reasons, the following driver is not part of Maven-Central.
-				Download it from Microsoft and call:
-				  mvn install:install-file -DgroupId=com.microsoft.jdbc -DartifactId=sqljdbc -Dversion=4.0 -Dpackaging=jar -Dfile=sqljdbc4.jar -DgeneratePom=true
+				Use the one from http://clojars.org/repo/ or download it from Microsoft and call:
+				  mvn install:install-file -DgroupId=com.microsoft -DartifactId=sqljdbc4 
+				  	-Dversion=3.0 -Dpackaging=jar -Dfile=sqljdbc4.jar -DgeneratePom=true
    			-->
-		    <groupId>com.microsoft.jdbc</groupId>
-		    <artifactId>sqljdbc</artifactId>
-		    <version>4.0</version>
+		    <groupId>com.microsoft</groupId>
+		    <artifactId>sqljdbc4</artifactId>
+		    <version>3.0</version>
 		    <scope>test</scope>
 		</dependency>
 
