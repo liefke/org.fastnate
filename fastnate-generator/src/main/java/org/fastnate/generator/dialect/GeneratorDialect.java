@@ -11,13 +11,11 @@ import javax.persistence.GenerationType;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.fastnate.generator.RelativeDate;
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.PlainStatement;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Handles database specific conversions.
@@ -31,29 +29,11 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public abstract class GeneratorDialect {
 
-	@Getter
-	@RequiredArgsConstructor
-	private static final class DatePrecision {
-
-		private final String name;
-
-		private final long value;
-	}
-
 	/**
 	 * @deprecated Use {@link RelativeDate#NOW} instead
 	 */
 	@Deprecated
 	public static final Date NOW = new Date();
-
-	private static final DatePrecision[] DATE_PRECISIONS = { //
-			new DatePrecision("MILLISECOND", 1), //
-			new DatePrecision("SECOND", DateUtils.MILLIS_PER_SECOND), //
-			new DatePrecision("MINUTE", DateUtils.MILLIS_PER_MINUTE), //
-			new DatePrecision("HOUR", DateUtils.MILLIS_PER_HOUR), //
-			new DatePrecision("DAY", DateUtils.MILLIS_PER_DAY), //
-			new DatePrecision("WEEK", 7 * DateUtils.MILLIS_PER_DAY),
-			new DatePrecision("YEAR", 365 * DateUtils.MILLIS_PER_DAY) };
 
 	private static void finishPart(final StringBuilder result, final String value, final int start, final int end,
 			final boolean isOpen, final boolean close, final String concatOperator) {
@@ -76,18 +56,6 @@ public abstract class GeneratorDialect {
 			}
 			result.append('\'');
 		}
-	}
-
-	private static DatePrecision getPrecision(final long difference) {
-		DatePrecision previousPrecision = DATE_PRECISIONS[0];
-		for (int i = 1; i < DATE_PRECISIONS.length; i++) {
-			final DatePrecision precision = DATE_PRECISIONS[i];
-			if (difference % precision.getValue() != 0) {
-				break;
-			}
-			previousPrecision = precision;
-		}
-		return previousPrecision;
 	}
 
 	private final char[] letter = "0123456789ABCDEF".toCharArray();
@@ -221,9 +189,9 @@ public abstract class GeneratorDialect {
 		if (value instanceof RelativeDate) {
 			final RelativeDate relativeDate = (RelativeDate) value;
 			final long difference = relativeDate.getDifference();
-			final DatePrecision precision = getPrecision(difference);
+			final RelativeDate.Precision precision = relativeDate.getPrecision();
 			return createAddDateExpression(convertTemporalValue(((RelativeDate) value).getReferenceDate(), type),
-					difference / precision.getValue(), precision.getName());
+					difference / precision.getMillis(), precision.getUnit());
 		}
 		final Date date;
 		switch (type) {

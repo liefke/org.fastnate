@@ -99,9 +99,10 @@ public class DateEntityTest extends AbstractEntitySqlGeneratorTest {
 		final DateTestEntity testEntity = new DateTestEntity();
 
 		final int days = 31;
-		testEntity.setDate(new RelativeDate(RelativeDate.TODAY, -days * DateUtils.MILLIS_PER_DAY));
-		final long twoHours = 2 * DateUtils.MILLIS_PER_HOUR;
-		testEntity.setTimestamp(new RelativeDate(RelativeDate.NOW, twoHours));
+		testEntity.setDate(new RelativeDate(RelativeDate.TODAY, -days, RelativeDate.DAYS));
+
+		final int hours = 2;
+		testEntity.setTimestamp(new RelativeDate(RelativeDate.NOW, hours, RelativeDate.HOURS));
 
 		final long writeTime = System.currentTimeMillis();
 		write(testEntity);
@@ -112,8 +113,8 @@ public class DateEntityTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getDate()).isEqualTo(DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DATE), -days));
 
 		// The timestamp is nearly the time of writing (and not the time of generation)
-		assertThat(Math.abs(result.getTimestamp().getTime() - writeTime - twoHours))
-				.as("Deviation from two ours from now").isLessThan(2 * DateUtils.MILLIS_PER_SECOND);
+		assertThat(Math.abs(result.getTimestamp().getTime() - writeTime - hours * DateUtils.MILLIS_PER_HOUR))
+				.as("Deviation from two hours from now").isLessThan(2 * DateUtils.MILLIS_PER_SECOND);
 	}
 
 }

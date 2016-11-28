@@ -2,7 +2,11 @@ package org.fastnate.generator;
 
 import java.util.Date;
 
+import org.apache.commons.lang.time.DateUtils;
+
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Used for date calculation when writing entities.
@@ -20,6 +24,18 @@ import lombok.Getter;
  * @author Tobias Liefke
  */
 public class RelativeDate extends Date {
+
+	/** The precision of a difference between a reference date and a date property. */
+	@Getter
+	@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+	public static final class Precision {
+
+		/** The name of the unit of this precision. */
+		private final String unit;
+
+		/** The precision of the unit in milliseconds. */
+		private final long millis;
+	}
 
 	/** Marker for {@link RelativeDate#NOW} and {@link RelativeDate#TODAY}. */
 	public static final class ReferenceDate extends Date {
@@ -77,15 +93,35 @@ public class RelativeDate extends Date {
 
 	private static final long serialVersionUID = 1L;
 
-	/**
-	 * Represents the constant for writing the "now" function to SQL.
-	 */
+	/** Represents the constant for writing the "now" function to SQL. */
 	public static final ReferenceDate NOW = new ReferenceDate(System.currentTimeMillis() - 1);
 
-	/**
-	 * Represents the constant for writing the "today" function to SQL.
-	 */
+	/** Represents the constant for writing the "today" function to SQL. */
 	public static final ReferenceDate TODAY = new ReferenceDate(System.currentTimeMillis() - 2);
+
+	/** Used for adding milliseconds to a reference date. */
+	public static final Precision MILLISECONDS = new Precision("MILLISECOND", 1);
+
+	/** Used for adding seconds to a reference date. */
+	public static final Precision SECONDS = new Precision("SECOND", DateUtils.MILLIS_PER_SECOND);
+
+	/** Used for adding minutes to a reference date. */
+	public static final Precision MINUTES = new Precision("MINUTE", DateUtils.MILLIS_PER_MINUTE);
+
+	/** Used for adding hours to a reference date. */
+	public static final Precision HOURS = new Precision("HOUR", DateUtils.MILLIS_PER_HOUR);
+
+	/** Used for adding days to a reference date. */
+	public static final Precision DAYS = new Precision("DAY", DateUtils.MILLIS_PER_DAY);
+
+	/** Used for adding weeks to a reference date. */
+	public static final Precision WEEKS = new Precision("WEEK", 7 * DateUtils.MILLIS_PER_DAY);
+
+	/** Used for adding years to a reference date. */
+	public static final Precision YEARS = new Precision("YEAR", 365 * DateUtils.MILLIS_PER_DAY);
+
+	/** All known precisions, from the smallest to the biggest. */
+	private static final Precision[] PRECISIONS = { MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS, WEEKS, YEARS };
 
 	/** The date that is the base for this date. Only the difference to this date is written to the SQL file. */
 	@Getter
@@ -108,10 +144,25 @@ public class RelativeDate extends Date {
 	 * @param referenceDate
 	 *            the reference date
 	 * @param deltaInMillis
-	 *            the difference to the reference date, which is written to SQL
+	 *            the difference to the reference date in milliseconds
 	 */
 	public RelativeDate(final ReferenceDate referenceDate, final long deltaInMillis) {
 		super(deltaInMillis + referenceDate.getTime());
+		this.referenceDate = referenceDate;
+	}
+
+	/**
+	 * Creates a new difference to a given reference date.
+	 *
+	 * @param referenceDate
+	 *            the reference date
+	 * @param delta
+	 *            the difference to the reference date
+	 * @param precision
+	 *            the unit of the delta, one of the constants defined above
+	 */
+	public RelativeDate(final ReferenceDate referenceDate, final long delta, final Precision precision) {
+		super(referenceDate.getTime() + delta * precision.getMillis());
 		this.referenceDate = referenceDate;
 	}
 
@@ -122,6 +173,24 @@ public class RelativeDate extends Date {
 	 */
 	public long getDifference() {
 		return getTime() - this.referenceDate.getTime();
+	}
+
+	/**
+	 * Finds the highest possible unit of the difference between the reference date and this date.
+	 *
+	 * @return the highest possible unit to use without loosing information
+	 */
+	public Precision getPrecision() {
+		final long difference = getTime() - this.referenceDate.getTime();
+		Precision previousPrecision = PRECISIONS[0];
+		for (int i = 1; i < PRECISIONS.length; i++) {
+			final Precision precision = PRECISIONS[i];
+			if (difference % precision.getMillis() != 0) {
+				break;
+			}
+			previousPrecision = precision;
+		}
+		return previousPrecision;
 	}
 
 }

@@ -7,7 +7,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
-import org.fastnate.generator.dialect.GeneratorDialect;
+import org.fastnate.generator.RelativeDate;
 
 /**
  * Represents a property marked with {@link Version}.
@@ -49,7 +49,7 @@ public class VersionProperty<E, T> extends PrimitiveProperty<E, T> {
 			if (Date.class.isAssignableFrom(type)) {
 				final Temporal temporal = attribute.getAnnotation(Temporal.class);
 				final TemporalType temporalType = temporal != null ? temporal.value() : TemporalType.TIMESTAMP;
-				return getContext().getDialect().convertTemporalValue(GeneratorDialect.NOW, temporalType);
+				return getContext().getDialect().convertTemporalValue(RelativeDate.NOW, temporalType);
 			}
 		}
 		return defaultValue;
