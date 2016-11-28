@@ -3,10 +3,7 @@ package org.fastnate.generator.test.primitive;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.assertj.core.api.Assertions;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.junit.Test;
@@ -44,6 +41,8 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 
 	/**
 	 * Tests to write BLOBs and CLOBs.
+	 *
+	 * Expected to fail with PostgreSQL.
 	 *
 	 * @throws IOException
 	 *             if the generator throws one
@@ -127,39 +126,6 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getSerializale().getStringProperty())
 				.isEqualTo(testEntity.getSerializale().getStringProperty());
 		assertThat(result.getSerializale().getIntProperty()).isEqualTo(testEntity.getSerializale().getIntProperty());
-	}
-
-	/**
-	 * Tests to write temporal properties in an entity.
-	 *
-	 * @throws IOException
-	 *             if the generator throws one
-	 */
-	@Test
-	public void testTemporalProperties() throws IOException {
-		final PrimitiveTestEntity testEntity = new PrimitiveTestEntity("Test Temporals");
-
-		final long oneHour = DateUtils.MILLIS_PER_HOUR;
-		final long oneDay = DateUtils.MILLIS_PER_DAY;
-		final long time = oneDay + oneHour;
-		testEntity.setDate(new Date(time));
-		testEntity.setTime(new Date(time));
-		testEntity.setTimestamp(new Date(time));
-
-		write(testEntity);
-
-		final PrimitiveTestEntity result = findSingleResult(PrimitiveTestEntity.class);
-
-		// Check that only the parts of the date are written
-		assertThat(result.getDate()).isEqualTo(DateUtils.truncate(testEntity.getDate(), Calendar.DATE));
-
-		// Check that the time is correclty written
-		assertThat(result.getTime()).isEqualTo(new Date(oneHour));
-
-		// Ignore the millis for timestamp comparison
-		assertThat(new Date(
-				result.getTimestamp().getTime() - result.getTimestamp().getTime() % DateUtils.MILLIS_PER_SECOND))
-						.isEqualTo(testEntity.getTimestamp());
 	}
 
 	/**

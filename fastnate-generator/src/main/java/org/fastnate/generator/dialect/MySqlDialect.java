@@ -37,6 +37,11 @@ public class MySqlDialect extends GeneratorDialect {
 		ESCAPES['\\'] = "\\\\";
 	}
 
+	@Override
+	protected String createAddDateExpression(final String referenceDate, final long value, final String unit) {
+		return "DATE_ADD(" + referenceDate + ", INTERVAL " + value + ' ' + unit + ')';
+	}
+
 	/**
 	 * Create MySQL specific binary expression.
 	 */

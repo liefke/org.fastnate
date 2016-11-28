@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.persistence.TemporalType;
 
+import org.fastnate.generator.RelativeDate;
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.PlainStatement;
 
@@ -41,18 +42,25 @@ public final class OracleDialect extends GeneratorDialect {
 
 	@Override
 	public String convertTemporalValue(final Date value, final TemporalType type) {
-		if (NOW.equals(value)) {
-			return "CURRENT_TIMESTAMP";
+		final String expression = super.convertTemporalValue(value, type);
+		if (value instanceof RelativeDate.ReferenceDate || value instanceof RelativeDate) {
+			return expression;
 		}
+
 		switch (type) {
 			case DATE:
-				return "to_date(" + super.convertTemporalValue(value, type) + ", 'YYYY-MM-DD')";
+				return "to_date(" + expression + ", 'YYYY-MM-DD')";
 			case TIME:
-				return "to_date(" + super.convertTemporalValue(value, type) + ", 'HH24:MI:SS')";
+				return "to_date(" + expression + ", 'HH24:MI:SS')";
 			case TIMESTAMP:
 			default:
-				return "to_timestamp(" + super.convertTemporalValue(value, type) + ", 'YYYY-MM-DD HH24:MI:SS.FF9')";
+				return "to_timestamp(" + expression + ", 'YYYY-MM-DD HH24:MI:SS.FF9')";
 		}
+	}
+
+	@Override
+	protected String createAddDateExpression(final String referenceDate, final long value, final String unit) {
+		return referenceDate + ' ' + (value < 0 ? '-' : '+') + " INTERVAL '" + Math.abs(value) + "' " + unit;
 	}
 
 	@Override

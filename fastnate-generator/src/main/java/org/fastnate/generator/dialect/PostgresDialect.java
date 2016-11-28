@@ -34,6 +34,11 @@ public final class PostgresDialect extends GeneratorDialect {
 	}
 
 	@Override
+	protected String createAddDateExpression(final String referenceDate, final long value, final String unit) {
+		return referenceDate + ' ' + (value < 0 ? '-' : '+') + " INTERVAL '" + Math.abs(value) + ' ' + unit + '\'';
+	}
+
+	@Override
 	public String createBlobExpression(final byte[] blob) {
 		return createHexBlobExpression("decode('", blob, "', 'hex')");
 	}

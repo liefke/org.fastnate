@@ -1,7 +1,5 @@
 package org.fastnate.generator.test.primitive;
 
-import java.util.Date;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -9,8 +7,6 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Lob;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -30,11 +26,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PrimitiveTestEntity {
-
-	/**
-	 * Name query to find entity by :name.
-	 */
-	public static final String NQ_ENTITY_BY_NAME = "singularEntityByName";
 
 	private static final int NAME_LENGTH = 30;
 
@@ -69,18 +60,6 @@ public class PrimitiveTestEntity {
 	private float testFloat;
 
 	private double testDouble;
-
-	@Temporal(TemporalType.DATE)
-	@Column(name = "dateColumn")
-	private Date date;
-
-	@Temporal(TemporalType.TIME)
-	@Column(name = "timeColumn")
-	private Date time;
-
-	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "timestampColumn")
-	private Date timestamp;
 
 	@Lob
 	private char[] lobChars;
@@ -122,7 +101,7 @@ public class PrimitiveTestEntity {
 
 	@Override
 	public String toString() {
-		return "TestSingularEntity: " + (this.id == null ? '@' + hashCode() : this.id);
+		return "PrimitiveTestEntity: " + (this.id == null ? '@' + hashCode() : this.id);
 	}
 
 }

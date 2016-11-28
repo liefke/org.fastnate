@@ -4,6 +4,8 @@ import java.util.Date;
 
 import javax.persistence.TemporalType;
 
+import org.fastnate.generator.RelativeDate;
+
 /**
  * Handles MS SQL specific conversions.
  *
@@ -34,8 +36,16 @@ public final class MsSqlDialect extends GeneratorDialect {
 	}
 
 	@Override
+	protected String convertTemporalValue(final Date value) {
+		return super.convertTemporalValue(value).replace("-", "");
+	}
+
+	@Override
 	public String convertTemporalValue(final Date value, final TemporalType type) {
-		return super.convertTemporalValue(value, type).replace("-", "");
+		if (value == RelativeDate.TODAY) {
+			return "CAST(GETDATE() AS DATE)";
+		}
+		return super.convertTemporalValue(value, type);
 	}
 
 	@Override
