@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,7 +18,6 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.ByteOrderMark;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang.ArrayUtils;
@@ -77,7 +77,7 @@ public abstract class AbstractCsvReader<R> {
 	 * @return the default encoding
 	 */
 	protected Charset getDefaultEncoding() {
-		return Charsets.UTF_8;
+		return StandardCharsets.UTF_8;
 	}
 
 	/**
