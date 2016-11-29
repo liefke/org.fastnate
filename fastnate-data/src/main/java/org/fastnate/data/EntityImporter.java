@@ -2,9 +2,10 @@ package org.fastnate.data;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -210,6 +211,10 @@ public final class EntityImporter {
 		return null;
 	}
 
+	private Charset getEncoding() {
+		return Charset.forName(this.settings.getProperty(OUTPUT_ENCODING_KEY, "UTF-8"));
+	}
+
 	/**
 	 * Imports the data and creates the default SQL file.
 	 *
@@ -233,8 +238,8 @@ public final class EntityImporter {
 		if (directory != null && !directory.exists()) {
 			directory.mkdirs();
 		}
-		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(targetFile),
-				Charset.forName(this.settings.getProperty(OUTPUT_ENCODING_KEY, "UTF-8"))))) {
+		try (BufferedWriter writer = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(targetFile), getEncoding()))) {
 			importData(writer);
 			log.info("'{}' generated.", targetFile.getAbsolutePath());
 		}
@@ -354,7 +359,8 @@ public final class EntityImporter {
 						sqlFile = new File(this.dataFolder, fileName);
 					}
 					if (sqlFile.isFile()) {
-						try (FileReader input = new FileReader(sqlFile)) {
+						try (InputStreamReader input = new InputStreamReader(new FileInputStream(sqlFile),
+								getEncoding())) {
 							generator.writeComment(fileName);
 							IOUtils.copy(input, generator.getWriter());
 							generator.getWriter().write("\n");
