@@ -22,10 +22,19 @@ import lombok.Getter;
 @Getter
 public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 
+	/** Marker for the ID of an entity which needs to be referenced by its unique properties. */
 	private static final long UNKOWN_ID_MARKER = -1L;
 
+	/** Shortcut for the inverse of {@link GeneratorContext#isWriteRelativeIds()}. */
 	private final boolean absoluteIds;
 
+	/** Indicates that the ID is never "null", because we have a primitive ID value. */
+	private final boolean primitive;
+
+	/** The containing entity class. */
+	private final EntityClass<E> entityClass;
+
+	/** The generator used for generating new values of this property. */
 	private final IdGenerator generator;
 
 	/**
@@ -41,7 +50,9 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	public GeneratedIdProperty(final EntityClass<E> entityClass, final AttributeAccessor attribute,
 			final Column column) {
 		super(entityClass.getContext(), entityClass.getTable(), attribute, column);
+		this.entityClass = entityClass;
 		this.absoluteIds = !getContext().isWriteRelativeIds() && getContext().getDialect().isSettingIdentityAllowed();
+		this.primitive = attribute.getType().isPrimitive();
 		this.generator = entityClass.getContext().getGenerator(attribute.getAnnotation(GeneratedValue.class),
 				getTable(), getColumn());
 	}
@@ -114,7 +125,8 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	 * @return {@code true} if the id of the given entity is not set up to now
 	 */
 	public boolean isNew(final E entity) {
-		return getValue(entity) == null;
+		final Number id = getValue(entity);
+		return id == null || this.primitive && id.longValue() == 0;
 	}
 
 	/**

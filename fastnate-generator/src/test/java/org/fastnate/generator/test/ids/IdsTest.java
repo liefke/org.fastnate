@@ -127,6 +127,17 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 *             if Hibernate or the generator throws one
 	 */
 	@Test
+	public void testPrimitiveIds() throws Exception {
+		testIds(PrimitiveIdTestEntity.class, "primitiveIdEntity");
+	}
+
+	/**
+	 * Tests to write an entity with a sequence generator.
+	 *
+	 * @throws Exception
+	 *             if Hibernate or the generator throws one
+	 */
+	@Test
 	public void testSequenceGenerator() throws Exception {
 		if (getGenerator().getContext().getDialect().isSequenceSupported()) {
 			testIds(SequenceTestEntity.class, "sequenceEntity");

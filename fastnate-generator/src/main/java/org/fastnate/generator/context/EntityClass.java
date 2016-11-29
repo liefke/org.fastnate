@@ -543,7 +543,13 @@ public final class EntityClass<E> {
 			if (this.idProperty instanceof GeneratedIdProperty) {
 				final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
 				generatedIdProperty.postInsert(entity);
-				oldState = this.entityStates.remove(new EntityId(entity));
+				if (generatedIdProperty.isPrimitive() && generatedIdProperty.getValue(entity).longValue() == 0) {
+					// Mark the first entity of the generation as persisted,
+					// as we can't distinguish it from new instances otherwise
+					oldState = this.entityStates.put(new EntityId(entity), GenerationState.PERSISTED);
+				} else {
+					oldState = this.entityStates.remove(new EntityId(entity));
+				}
 			} else {
 				oldState = this.entityStates.put(getStateId(entity), GenerationState.PERSISTED);
 			}
@@ -593,9 +599,6 @@ public final class EntityClass<E> {
 				return true;
 			} else if (attribute.isAnnotationPresent(Id.class)) {
 				if (attribute.isAnnotationPresent(GeneratedValue.class)) {
-					if (attribute.getType().isPrimitive()) {
-						throw new IllegalArgumentException("Generated ID must not be of primitive type.");
-					}
 					this.context.registerGenerators(attribute);
 					this.idProperty = new GeneratedIdProperty<>(this, attribute, getColumnAnnotation(attribute));
 				} else {
@@ -781,7 +784,14 @@ public final class EntityClass<E> {
 	 */
 	public boolean isNew(final E entity) {
 		if (this.idProperty instanceof GeneratedIdProperty) {
-			return ((GeneratedIdProperty<E>) this.idProperty).isNew(entity);
+			final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
+			// If the property "seems" to be new - according to a "0" in a primitive ID - we have to check the state,
+			// as the first written ID could be "0" as well
+			if (!generatedIdProperty.isNew(entity)) {
+				return false;
+			} else if (!generatedIdProperty.isPrimitive()) {
+				return true;
+			}
 		}
 		return this.entityStates.get(getStateId(entity)) != GenerationState.PERSISTED;
 	}
