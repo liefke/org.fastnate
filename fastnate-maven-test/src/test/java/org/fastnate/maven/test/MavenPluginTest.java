@@ -52,10 +52,12 @@ public class MavenPluginTest {
 				.createQuery(MavenTestEntity.class);
 		criteriaQuery.select(criteriaQuery.from(MavenTestEntity.class));
 		final List<MavenTestEntity> entities = this.em.createQuery(criteriaQuery).getResultList();
+		final int prefixCount = 1;
 		final int csvEntityCount = 2;
+		final int postfixCount = 1;
 		final MavenTestData mavenTestData = new MavenTestData(new File("src/main/data"));
 		mavenTestData.buildEntities();
-		assertThat(entities).hasSize(csvEntityCount + mavenTestData.getEntities().size());
+		assertThat(entities).hasSize(prefixCount + csvEntityCount + mavenTestData.getEntities().size() + postfixCount);
 	}
 
 }
