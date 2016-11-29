@@ -108,11 +108,15 @@ public class ImportDataMojo extends AbstractMojo {
 	@Parameter(defaultValue = "UTF-8")
 	private String encoding;
 
-	/** The path to one or more SQL files, or an SQL snippet itself - to put that before the generated SQL. */
+	/**
+	 * One or more SQL files in the data folder, or an SQL snippet itself - to put that <i>before</i> the generated SQL.
+	 */
 	@Parameter
 	private String prefix;
 
-	/** The path to one or more SQL files, or an SQL snippet itself - to put that after the generated SQL. */
+	/**
+	 * One or more SQL files in the data folder, or an SQL snippet itself - to put that <i>after</i> the generated SQL.
+	 */
 	@Parameter
 	private String postfix;
 

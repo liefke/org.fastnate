@@ -96,6 +96,8 @@
 								<relevantFile>main/resources/test.properties</relevantFile>
 							</relevantFiles>
 							<changeDetector>org.fastnate.maven.test.TestDetector</changeDetector>
+							<prefix>prefix.sql</prefix>
+							<postfix>postfix.sql</postfix>
 						</configuration>
 					</execution>
 				</executions>

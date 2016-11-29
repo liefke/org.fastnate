@@ -1,0 +1,1 @@
+INSERT INTO MavenTestEntity (id, name) VALUES (0, 'prefix');

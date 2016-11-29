@@ -269,6 +269,8 @@ public final class EntityImporter {
 					log.info("Generated SQL for {}", provider.getClass());
 				}
 
+				generator.writeAlignmentStatements();
+
 				writePropertyPart(generator, POSTFIX_KEY);
 
 				// CHECKSTYLE OFF: IllegalCatch
@@ -347,7 +349,10 @@ public final class EntityImporter {
 			if (propertyValue.endsWith(".sql")) {
 				final String[] fileNames = propertyValue.split("[\\n\\" + File.pathSeparatorChar + ",;]+");
 				for (final String fileName : fileNames) {
-					final File sqlFile = new File(fileName);
+					File sqlFile = new File(fileName);
+					if (!sqlFile.isAbsolute()) {
+						sqlFile = new File(this.dataFolder, fileName);
+					}
 					if (sqlFile.isFile()) {
 						try (FileReader input = new FileReader(sqlFile)) {
 							generator.writeComment(fileName);
@@ -355,8 +360,7 @@ public final class EntityImporter {
 							generator.getWriter().write("\n");
 						}
 					} else {
-						log.warn("Couldn't find file: " + fileName);
-						generator.writeComment("Missing file: " + fileName);
+						generator.writeComment("Ignored missing file: " + fileName);
 					}
 				}
 			} else {

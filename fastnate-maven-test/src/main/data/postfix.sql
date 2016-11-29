@@ -1,0 +1,1 @@
+INSERT INTO MavenTestEntity (id, name) VALUES (nextval('hibernate_sequence'), 'postfix');
