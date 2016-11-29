@@ -84,6 +84,10 @@ public class ImportDataMojo extends AbstractMojo {
 	@Component
 	private PluginDescriptor descriptor;
 
+	/** Indicates to skip the execution of this plugin, even if it is configured for a phase. */
+	@Parameter
+	private boolean skip;
+
 	/** The name of the database dialect. */
 	@Parameter
 	private String dialect;
@@ -318,6 +322,10 @@ public class ImportDataMojo extends AbstractMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
+		if (this.skip) {
+			return;
+		}
+
 		// Install correct classpath
 		final ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
 		try (URLClassLoader classloader = buildClassLoader()) {
