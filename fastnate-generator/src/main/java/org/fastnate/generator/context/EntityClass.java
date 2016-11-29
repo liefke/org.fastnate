@@ -634,7 +634,9 @@ public final class EntityClass<E> {
 			if (this.context.isWriteRelativeIds()) {
 				return getGeneratedIdReference(entity, whereExpression);
 			}
-		} else if (property instanceof EmbeddedProperty) {
+			return property.getExpression(entity, whereExpression);
+		}
+		if (property instanceof EmbeddedProperty) {
 			final Map<String, ?> embeddedProperties = ((EmbeddedProperty<E, ?>) this.idProperty)
 					.getEmbeddedProperties();
 			if (idField == null) {
@@ -648,7 +650,7 @@ public final class EntityClass<E> {
 		}
 		@SuppressWarnings("null")
 		final String expression = property.getExpression(entity, whereExpression);
-		ModelException.test(expression != null, "Can't find any id in {} for {}", this.idProperty, entity);
+		ModelException.test(expression != null, "Can't find any id for {} in property '{}'", this.idProperty, entity);
 		return expression;
 	}
 
