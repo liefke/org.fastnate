@@ -245,7 +245,7 @@ public class EntitySqlGenerator implements Closeable {
 			// Write all missing entities, even those that have no column (because they are referencing us and
 			// we are created now)
 			for (final Object referencedEntity : property.findReferencedEntities(entity)) {
-				if (!postponedEntities.contains(referencedEntity)) {
+				if (referencedEntity != null && !postponedEntities.contains(referencedEntity)) {
 					write(referencedEntity, postponedEntities);
 				}
 			}
