@@ -25,7 +25,7 @@ public class PrimitiveIdTestEntity extends IdTestEntity<PrimitiveIdTestEntity> {
 	@Id
 	@TableGenerator(name = "PrimitiveIdTest", table = "TestPrimitiveIdTable", allocationSize = ALLOCATION_SIZE)
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "PrimitiveIdTest")
-	private long id;
+	private int id;
 
 	@ManyToOne
 	@Setter

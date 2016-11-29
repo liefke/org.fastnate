@@ -51,16 +51,16 @@ public abstract class IdGenerator {
 	 */
 	public <N extends Number> N createNextValue(final Class<N> propertyClass) {
 		final long nextValue = createNextValue();
-		if (propertyClass == Long.class) {
+		if (propertyClass == Long.class || propertyClass == long.class) {
 			return (N) Long.valueOf(nextValue);
 		}
-		if (propertyClass == Integer.class) {
+		if (propertyClass == Integer.class || propertyClass == int.class) {
 			return (N) Integer.valueOf((int) nextValue);
 		}
-		if (propertyClass == Short.class) {
+		if (propertyClass == Short.class || propertyClass == short.class) {
 			return (N) Short.valueOf((short) nextValue);
 		}
-		if (propertyClass == Byte.class) {
+		if (propertyClass == Byte.class || propertyClass == byte.class) {
 			return (N) Byte.valueOf((byte) nextValue);
 		}
 		throw new ModelException("Can't handle number class for generated value: " + propertyClass);

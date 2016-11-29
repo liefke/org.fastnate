@@ -31,6 +31,9 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	/** Indicates that the ID is never "null", because we have a primitive ID value. */
 	private final boolean primitive;
 
+	/** The type of the numbers. */
+	private final Class<? extends Number> type;
+
 	/** The containing entity class. */
 	private final EntityClass<E> entityClass;
 
@@ -52,7 +55,8 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 		super(entityClass.getContext(), entityClass.getTable(), attribute, column);
 		this.entityClass = entityClass;
 		this.absoluteIds = !getContext().isWriteRelativeIds() && getContext().getDialect().isSettingIdentityAllowed();
-		this.primitive = attribute.getType().isPrimitive();
+		this.type = (Class<? extends Number>) attribute.getType();
+		this.primitive = this.type.isPrimitive();
 		this.generator = entityClass.getContext().getGenerator(attribute.getAnnotation(GeneratedValue.class),
 				getTable(), getColumn());
 	}
@@ -62,11 +66,11 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 		ensureIsNew(entity);
 		if (this.absoluteIds) {
 			// If we generate explict IDs, lets do that now
-			final Number id = this.generator.createNextValue();
+			final Number id = this.generator.createNextValue(this.type);
 			setValue(entity, id);
 			statement.addValue(getColumn(), String.valueOf(id));
 		} else if (!this.generator.isPostIncrement()) {
-			final Number id = this.generator.createNextValue();
+			final Number id = this.generator.createNextValue(this.type);
 			setValue(entity, id);
 			this.generator.addNextValue(statement, getColumn(), id);
 		}
@@ -182,7 +186,7 @@ public class GeneratedIdProperty<E> extends PrimitiveProperty<E, Number> {
 	public void postInsert(final E entity) {
 		if (!this.absoluteIds && this.generator.isPostIncrement()) {
 			// We have an identity column -> the database increments the ID after the insert
-			setValue(entity, this.generator.createNextValue());
+			setValue(entity, this.generator.createNextValue(this.type));
 		}
 	}
 
