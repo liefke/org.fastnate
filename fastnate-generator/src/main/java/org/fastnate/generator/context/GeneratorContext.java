@@ -478,13 +478,18 @@ public class GeneratorContext {
 	 *
 	 * @param element
 	 *            the inspected class, method or field
+	 * @param table
+	 *            the table of the current entity
 	 */
-	public void registerGenerators(final AnnotatedElement element) {
+	public void registerGenerators(final AnnotatedElement element, final String table) {
 		final SequenceGenerator sequenceGenerator = element.getAnnotation(SequenceGenerator.class);
 		if (sequenceGenerator != null) {
 			final GeneratorId key = new GeneratorId(sequenceGenerator.name(), null);
 			if (!this.generators.containsKey(key)) {
 				this.generators.put(key,
+						new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
+			} else {
+				this.generators.put(new GeneratorId(sequenceGenerator.name(), table),
 						new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
 			}
 		}

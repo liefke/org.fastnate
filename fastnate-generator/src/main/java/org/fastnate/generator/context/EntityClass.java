@@ -352,7 +352,7 @@ public final class EntityClass<E> {
 			buildGenerators(c.getSuperclass());
 		}
 
-		this.context.registerGenerators(c);
+		this.context.registerGenerators(c, this.table);
 	}
 
 	/**
@@ -599,7 +599,7 @@ public final class EntityClass<E> {
 				return true;
 			} else if (attribute.isAnnotationPresent(Id.class)) {
 				if (attribute.isAnnotationPresent(GeneratedValue.class)) {
-					this.context.registerGenerators(attribute);
+					this.context.registerGenerators(attribute, this.table);
 					this.idProperty = new GeneratedIdProperty<>(this, attribute, getColumnAnnotation(attribute));
 				} else {
 					this.idProperty = buildProperty(attribute, getColumnAnnotation(attribute),
