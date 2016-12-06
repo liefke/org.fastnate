@@ -355,11 +355,6 @@ public class ImportDataMojo extends AbstractMojo {
 			if (detectChanges(settings, outputFile)) {
 
 				// Build the SQL file
-				if (settings.getProperty(GeneratorContext.DIALECT_KEY) == null) {
-					getLog().warn("No explicit database dialect specified, using default: H2");
-					settings.setProperty(GeneratorContext.DIALECT_KEY, "H2Dialect");
-				}
-
 				final String outputEncoding = settings.getProperty(EntityImporter.OUTPUT_ENCODING_KEY, "UTF-8");
 				getLog().info("Writing entities to " + outputFile + " with encoding " + outputEncoding);
 				final File directory = outputFile.getParentFile();
