@@ -5,7 +5,7 @@ package org.fastnate.data.csv;
  *
  * @author Tobias Liefke
  */
-public final class CsvCharacterConverter implements CsvPropertyConverter<Character> {
+public class CsvCharacterConverter implements CsvPropertyConverter<Character> {
 
 	@Override
 	public Character convert(final Class<? extends Character> targetType, final String value) {

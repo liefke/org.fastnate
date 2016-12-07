@@ -16,7 +16,7 @@ import org.fastnate.generator.statements.PlainStatement;
  * @see <a href="http://www.oracle.com/technetwork/indexes/documentation/index.html">Oracle - Documentation</a>
  * @author Tobias Liefke
  */
-public final class OracleDialect extends GeneratorDialect {
+public class OracleDialect extends GeneratorDialect {
 
 	private static final int MAX_VARCHAR_LENGTH = 2000;
 

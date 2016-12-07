@@ -13,7 +13,7 @@ import org.apache.commons.lang.StringUtils;
  *
  * @author Tobias Liefke
  */
-public final class CsvDateConverter extends CsvFormatConverter<Date> {
+public class CsvDateConverter extends CsvFormatConverter<Date> {
 
 	/**
 	 * Creates a new instance of {@link CsvDateConverter}.

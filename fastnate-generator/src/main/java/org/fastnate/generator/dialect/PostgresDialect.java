@@ -11,7 +11,7 @@ import org.fastnate.generator.statements.PlainStatement;
  *
  * @see <a href="http://www.postgresql.org/docs/">PostgreSQL - Online manuals</a>
  */
-public final class PostgresDialect extends GeneratorDialect {
+public class PostgresDialect extends GeneratorDialect {
 
 	@Override
 	protected void addQuotedCharacter(final StringBuilder result, final char c) {

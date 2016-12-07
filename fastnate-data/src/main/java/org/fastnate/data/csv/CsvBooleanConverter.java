@@ -5,7 +5,7 @@ package org.fastnate.data.csv;
  *
  * @author Tobias Liefke
  */
-public final class CsvBooleanConverter implements CsvPropertyConverter<Boolean> {
+public class CsvBooleanConverter implements CsvPropertyConverter<Boolean> {
 
 	@Override
 	public Boolean convert(final Class<? extends Boolean> targetType, final String value) {

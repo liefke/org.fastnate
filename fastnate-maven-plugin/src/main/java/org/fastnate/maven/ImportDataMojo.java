@@ -195,7 +195,8 @@ public class ImportDataMojo extends AbstractMojo {
 		// Check data files
 		final String dataFolderPath = newSettings.getProperty(EntityImporter.DATA_FOLDER_KEY);
 		if (dataFolderPath != null) {
-			final Scanner dataFolderScanner = this.context.newScanner(new File(dataFolderPath));
+			final Scanner dataFolderScanner = this.context
+					.newScanner(new File(this.project.getBasedir(), dataFolderPath));
 			dataFolderScanner.scan();
 			if (dataFolderScanner.getIncludedDirectories().length > 0
 					|| dataFolderScanner.getIncludedFiles().length > 0) {
@@ -221,9 +222,11 @@ public class ImportDataMojo extends AbstractMojo {
 		}
 
 		if (propertyValue.endsWith(".sql")) {
+			final File baseDir = new File(this.project.getBasedir(),
+					properties.getProperty(EntityImporter.DATA_FOLDER_KEY, "src/data"));
 			final String[] fileNames = propertyValue.split("[\\n\\" + File.pathSeparatorChar + ",;]+");
 			for (final String fileName : fileNames) {
-				final File file = new File(fileName);
+				final File file = new File(baseDir, fileName);
 				if (this.context.hasDelta(file) && !this.context.isUptodate(outputFile, file)) {
 					return true;
 				}

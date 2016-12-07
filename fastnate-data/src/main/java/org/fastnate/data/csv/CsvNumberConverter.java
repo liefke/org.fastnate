@@ -10,7 +10,7 @@ import org.apache.commons.lang.StringUtils;
  *
  * @author Tobias Liefke
  */
-public final class CsvNumberConverter implements CsvPropertyConverter<Number> {
+public class CsvNumberConverter implements CsvPropertyConverter<Number> {
 
 	@Override
 	public Number convert(final Class<? extends Number> targetType, final String value) {
@@ -23,13 +23,13 @@ public final class CsvNumberConverter implements CsvPropertyConverter<Number> {
 		if (targetType == Number.class) {
 			return new Float(value);
 		}
-		final Class<? extends Number> wrapperType = targetType.isPrimitive() ? ClassUtils
-				.primitiveToWrapper(targetType) : targetType;
-				try {
-					return wrapperType.getConstructor(String.class).newInstance(value);
-				} catch (final InstantiationException | IllegalAccessException | InvocationTargetException
-						| NoSuchMethodException e) {
-					throw new IllegalArgumentException(e);
-				}
+		final Class<? extends Number> wrapperType = targetType.isPrimitive() ? ClassUtils.primitiveToWrapper(targetType)
+				: targetType;
+		try {
+			return wrapperType.getConstructor(String.class).newInstance(value);
+		} catch (final InstantiationException | IllegalAccessException | InvocationTargetException
+				| NoSuchMethodException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 }

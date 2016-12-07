@@ -5,7 +5,7 @@ package org.fastnate.data.csv;
  *
  * @author Tobias Liefke
  */
-public final class CsvEnumConverter implements CsvPropertyConverter<Enum<?>> {
+public class CsvEnumConverter implements CsvPropertyConverter<Enum<?>> {
 
 	@Override
 	@SuppressWarnings("rawtypes")

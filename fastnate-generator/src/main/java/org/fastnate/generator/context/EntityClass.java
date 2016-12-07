@@ -50,7 +50,7 @@ import lombok.RequiredArgsConstructor;
  *            The described class
  */
 @Getter
-public final class EntityClass<E> {
+public class EntityClass<E> {
 
 	/**
 	 * Helper object to use as key in the state map, if we have a {@link GeneratedIdProperty}.

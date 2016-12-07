@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
  *            the type of the value
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public final class CsvMapConverter<K, T> implements CsvPropertyConverter<T> {
+public class CsvMapConverter<K, T> implements CsvPropertyConverter<T> {
 
 	/**
 	 * Creates a new instance of a CsvMapConverter that uses numbers to lookup the values.

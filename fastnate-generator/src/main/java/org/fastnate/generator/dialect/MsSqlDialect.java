@@ -12,7 +12,7 @@ import org.fastnate.generator.RelativeDate;
  * @see <a href="http://msdn.microsoft.com/de-de/sqlserver">MS SQL - MS Technet</a>
  * @author Tobias Liefke
  */
-public final class MsSqlDialect extends GeneratorDialect {
+public class MsSqlDialect extends GeneratorDialect {
 
 	@Override
 	protected void addQuotedCharacter(final StringBuilder result, final char c) {

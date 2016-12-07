@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Getter
-public final class EntityImporter {
+public class EntityImporter {
 
 	/**
 	 * The String in the SQL, if the generation was aborted.
