@@ -10,6 +10,7 @@ import javax.persistence.Persistence;
 import javax.persistence.criteria.CriteriaQuery;
 
 import org.fastnate.generator.EntitySqlGenerator;
+import org.fastnate.generator.WriterEntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
 import org.hibernate.cfg.AvailableSettings;
 import org.junit.After;
@@ -125,7 +126,7 @@ public class AbstractEntitySqlGeneratorTest {
 		this.em = this.emf.createEntityManager();
 		@SuppressWarnings("resource")
 		final SqlEmWriter sqlWriter = new SqlEmWriter(this.em);
-		this.generator = new EntitySqlGenerator(sqlWriter, context);
+		this.generator = new WriterEntitySqlGenerator(sqlWriter, context);
 	}
 
 	/**

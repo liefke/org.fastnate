@@ -2,7 +2,6 @@ package org.fastnate.generator;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -15,8 +14,6 @@ import org.fastnate.generator.context.Property;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
-
-import com.google.common.io.Closeables;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +30,7 @@ import lombok.RequiredArgsConstructor;
  * @author Tobias Liefke
  */
 @RequiredArgsConstructor
-public class EntitySqlGenerator implements Closeable {
+public abstract class EntitySqlGenerator implements Closeable {
 
 	private static <E> boolean isPostponedInsert(final List<Object> postInsertEntities, final E entity) {
 		final int index = postInsertEntities.indexOf(entity);
@@ -47,26 +44,12 @@ public class EntitySqlGenerator implements Closeable {
 		return isPostInsert;
 	}
 
-	/** Used to write the SQL statements. */
-	@Getter
-	private final Writer writer;
-
-	/** Used to keep the statement of indices and to remember the database dialect. */
+	/** Used to keep the state of indices and to store any configuration. */
 	@Getter
 	private final GeneratorContext context;
 
 	/**
-	 * Creates a new instance of this {@link EntitySqlGenerator}.
-	 *
-	 * @param writer
-	 *            the writer of the file to generate
-	 */
-	public EntitySqlGenerator(final Writer writer) {
-		this(writer, new GeneratorContext());
-	}
-
-	/**
-	 * Writes any missing SQL and closes the target writer.
+	 * Writes any missing SQL and closes any open resources.
 	 *
 	 * @throws IOException
 	 *             if the target writer throws one
@@ -74,7 +57,7 @@ public class EntitySqlGenerator implements Closeable {
 	@Override
 	public void close() throws IOException {
 		writeAlignmentStatements();
-		Closeables.close(this.writer, false);
+
 	}
 
 	/**
@@ -192,16 +175,14 @@ public class EntitySqlGenerator implements Closeable {
 	}
 
 	/**
-	 * Writes a SQL comment to the associated writer.
+	 * Writes a SQL comment to the target.
 	 *
 	 * @param comment
 	 *            the comment to write
 	 * @throws IOException
-	 *             if thew writer throws one
+	 *             if the target throws one
 	 */
-	public void writeComment(final String comment) throws IOException {
-		this.writer.write("/* " + comment + " */\n");
-	}
+	public abstract void writeComment(String comment) throws IOException;
 
 	private <E> void writeInserts(final E entity, final List<Object> postponedEntities,
 			final EntityClass<E> classDescription, final String discriminator) throws IOException {
@@ -256,17 +237,22 @@ public class EntitySqlGenerator implements Closeable {
 	}
 
 	/**
-	 * Writes the given statement to the {@link #writer}. May be overridden, if the statements should be written
-	 * somewhere else (e.g. directly into a database).
+	 * Writes a new line to the target to separate different sections in the SQL file.
+	 *
+	 * @throws IOException
+	 *             if the target throws such an exception
+	 */
+	public abstract void writeSectionSeparator() throws IOException;
+
+	/**
+	 * Writes the given statement to the target.
 	 *
 	 * @param stmt
 	 *            the SQL statement to write
 	 * @throws IOException
-	 *             if the writer throws one
+	 *             if the target throws one
 	 */
-	protected void writeStatement(final EntityStatement stmt) throws IOException {
-		this.writer.write(this.context.getDialect().createSql(stmt));
-	}
+	public abstract void writeStatement(EntityStatement stmt) throws IOException;
 
 	private void writeStatements(final List<? extends EntityStatement> statements) throws IOException {
 		for (final EntityStatement stmt : statements) {
