@@ -23,6 +23,7 @@ public class ConnectedEntitySqlGenerator extends EntitySqlGenerator {
 	private static final long MILLISECONDS_BETWEEN_LOG_MESSAGES = 60 * 1000;
 
 	private static String trimStatement(final String sql) {
+		// Remove surrounding whitespaces and ';' - except for "end" keyword.
 		int start = 0;
 		int end = sql.length();
 		while (start < end) {
@@ -34,7 +35,12 @@ public class ConnectedEntitySqlGenerator extends EntitySqlGenerator {
 		}
 		while (start < end) {
 			final char c = sql.charAt(end - 1);
-			if (c != ';' && !Character.isWhitespace(c)) {
+			if (c == ';') {
+				final String endKeyword = "end;";
+				if (sql.regionMatches(true, end - endKeyword.length(), endKeyword, 0, endKeyword.length())) {
+					break;
+				}
+			} else if (!Character.isWhitespace(c)) {
 				break;
 			}
 			end--;
