@@ -1,10 +1,14 @@
 package org.fastnate.examples.data;
 
 import java.io.File;
+import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.fastnate.data.csv.AbstractCsvDataProvider;
+import org.fastnate.data.csv.CsvFormatConverter;
+import org.fastnate.data.csv.CsvMapConverter;
 import org.fastnate.examples.model.Organisation;
 
 import lombok.Getter;
@@ -30,6 +34,12 @@ public class OrganisationData extends AbstractCsvDataProvider<Organisation> {
 
 		// Map the "web" column to the "url" property
 		addColumnMapping("web", "url");
+
+		// Add a currency converter for the profit column
+		addConverter("profit", new CsvFormatConverter<Float>(NumberFormat.getCurrencyInstance(Locale.US)));
+
+		// Add a lookup for the parent column
+		addConverter("parent", CsvMapConverter.create(this.byName));
 
 		// Ignore the comment column
 		addIgnoredColumn("comment");

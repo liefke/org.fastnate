@@ -2,6 +2,7 @@ package org.fastnate.examples.model;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,11 +25,18 @@ public class Organisation {
 	@Id
 	private Long id;
 
+	/** The parent organisation. */
+	@ManyToOne
+	private Organisation parent;
+
 	/** The name of the organisation. */
 	private String name;
 
 	/** The URL to the website of the organisation. */
 	private String url;
+
+	/** The profit of this organisation. */
+	private float profit;
 
 	@Override
 	public String toString() {

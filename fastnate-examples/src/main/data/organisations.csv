@@ -1,3 +1,5 @@
-id;name;web;comment
-1;Fastnate;https://fastnate.org/;An URL 
-2;GitHub;https://github.com/;Another URL
+id;name;parent;web;profit;comment
+1;Fastnate.org;;https://fastnate.org/;$0.00;Not really an organisation 
+2;GitHub Inc.;;https://github.com/;$1,000,000.00;This is an organisation
+3;Alphabet Inc.;;https://abc.xyz/;;This as well
+4;Google Inc.;Alphabet Inc.;https://google.com/;$1,000,000,000.00;This is the child of the previous

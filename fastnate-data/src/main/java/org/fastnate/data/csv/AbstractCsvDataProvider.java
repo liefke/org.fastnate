@@ -115,17 +115,17 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	 *
 	 * @param entity
 	 *            the entity to modify
-	 * @param column
-	 *            the name of the current column
 	 * @param value
 	 *            the value of the property (converts the property, if nessecary)
+	 * @param column
+	 *            the name of the current column
 	 * @return {@code true} if an appropriate property was found, {@code false} if a matching property was not found and
 	 *         {@code #isIgnoreUnknownColumns()} is {@code true}
 	 *
 	 * @throws IllegalArgumentException
 	 *             if a matching property was not found or the was not converted
 	 */
-	protected boolean applyColumn(final E entity, final String column, final String value) {
+	protected boolean applyColumn(final E entity, final String value, final String column) {
 		if (this.ignoredColumns.contains(column)) {
 			return false;
 		}
@@ -134,27 +134,45 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 		if (property == null) {
 			property = column;
 		}
-		final String setter = "set" + StringUtils.capitalize(property);
 
 		try {
-			// Try to find method
-			for (final Method method : entity.getClass().getMethods()) {
-				if (method.getName().equals(setter) && method.getParameterTypes().length == 1
-						&& !Modifier.isStatic(method.getModifiers())) {
-
-					// Now convert and apply to property
-					method.invoke(entity, convertColumn(column, method.getParameterTypes()[0], value));
-					return true;
-				}
+			if (applyColumn(entity, column, property, value)) {
+				return true;
 			}
 			if (!this.ignoreUnknownColumns) {
 				throw new IllegalArgumentException(
-						"Could not find a public method '" + setter + "' in " + entity.getClass());
+						"Could not find a setter method for '" + property + "' in " + entity.getClass());
 			}
 			return false;
 		} catch (final IllegalAccessException | InvocationTargetException e) {
 			throw new IllegalArgumentException(e);
 		}
+	}
+
+	private boolean applyColumn(final E entity, final String column, final String property, final String value)
+			throws IllegalAccessException, InvocationTargetException {
+		final String setter = "set" + StringUtils.capitalize(property);
+		for (final Method method : entity.getClass().getMethods()) {
+			final Class<?>[] parameterTypes = method.getParameterTypes();
+			if (parameterTypes.length == 1 && !Modifier.isStatic(method.getModifiers())
+					&& method.getName().equals(setter)) {
+
+				// Convert and apply to property
+				final Class<?> parameterType = parameterTypes[0];
+				final Object convertedValue = convertColumn(column, parameterType, value);
+				if (convertedValue != null) {
+					try {
+						method.invoke(entity, convertedValue);
+					} catch (final IllegalArgumentException e) {
+						throw new IllegalArgumentException("Could not use " + convertedValue + " of type "
+								+ convertedValue.getClass() + " for property " + property + " of type " + parameterType,
+								e);
+					}
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -233,7 +251,7 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	protected E createEntity(final Map<String, String> row) {
 		final E entity = createEntity();
 		for (final Map.Entry<String, String> column : row.entrySet()) {
-			applyColumn(entity, column.getKey(), column.getValue());
+			applyColumn(entity, column.getValue(), column.getKey());
 		}
 		return entity;
 	}
