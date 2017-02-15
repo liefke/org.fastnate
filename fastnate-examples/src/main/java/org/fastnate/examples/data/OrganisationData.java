@@ -30,6 +30,9 @@ public class OrganisationData extends AbstractCsvDataProvider<Organisation> {
 
 		// Map the "web" column to the "url" property
 		addColumnMapping("web", "url");
+
+		// Ignore the comment column
+		addIgnoredColumn("comment");
 	}
 
 	@Override
