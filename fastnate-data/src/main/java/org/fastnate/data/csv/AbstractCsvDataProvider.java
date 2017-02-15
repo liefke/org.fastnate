@@ -10,10 +10,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-
-import lombok.Getter;
-import lombok.Setter;
+import java.util.Set;
 
 import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang.StringUtils;
@@ -25,6 +24,9 @@ import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.ModelException;
 import org.fastnate.generator.context.Property;
 import org.fastnate.generator.context.SingularProperty;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Base class for converters that create SQL files from CSV files.
@@ -52,6 +54,8 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	private final Map<String, CsvPropertyConverter<?>> columnConverter = new HashMap<>();
 
 	private final Map<String, String> columnProperties = new HashMap<>();
+
+	private final Set<String> ignoredColumns = new HashSet<>();
 
 	/** Indicates to ignore any column that can't be mapped to a property. */
 	@Getter
@@ -97,6 +101,16 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	}
 
 	/**
+	 * Ignores a column during import.
+	 *
+	 * @param column
+	 *            the name of the column that is ignored
+	 */
+	public void addIgnoredColumn(final String column) {
+		this.ignoredColumns.add(column);
+	}
+
+	/**
 	 * Converts a column value to a property value and sets that property for an entity.
 	 *
 	 * @param entity
@@ -112,6 +126,10 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	 *             if a matching property was not found or the was not converted
 	 */
 	protected boolean applyColumn(final E entity, final String column, final String value) {
+		if (this.ignoredColumns.contains(column)) {
+			return false;
+		}
+
 		String property = this.columnProperties.get(column);
 		if (property == null) {
 			property = column;
@@ -130,8 +148,8 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 				}
 			}
 			if (!this.ignoreUnknownColumns) {
-				throw new IllegalArgumentException("Could not find a public method '" + setter + "' in "
-						+ entity.getClass());
+				throw new IllegalArgumentException(
+						"Could not find a public method '" + setter + "' in " + entity.getClass());
 			}
 			return false;
 		} catch (final IllegalAccessException | InvocationTargetException e) {
@@ -259,6 +277,17 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	@Override
 	public int getOrder() {
 		return 0;
+	}
+
+	/**
+	 * Indicates that the given column is ignored during import.
+	 *
+	 * @param column
+	 *            the name of the column
+	 * @return {@code true} if the column is not imported
+	 */
+	public boolean isIgnoredColumn(final String column) {
+		return this.ignoredColumns.contains(column);
 	}
 
 	/**
