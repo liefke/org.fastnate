@@ -21,8 +21,10 @@ import lombok.Setter;
 @Entity
 public class TableTestEntity extends IdTestEntity<TableTestEntity> {
 
+	private static final int ALLOCATION_SIZE = 7;
+
 	@Id
-	@TableGenerator(name = "TableTest", table = "TestIdTable", allocationSize = 2)
+	@TableGenerator(name = "TableTest", table = "TestIdTable", allocationSize = ALLOCATION_SIZE)
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "TableTest")
 	private Long id;
 
