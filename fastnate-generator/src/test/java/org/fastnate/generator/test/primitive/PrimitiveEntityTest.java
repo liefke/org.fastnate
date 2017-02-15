@@ -86,7 +86,7 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 
 		final float testFloat = -0.987654321f;
 		testEntity.setTestFloat(testFloat);
-		final double testDouble = -0.98765432109876543210;
+		final double testDouble = -0.98765432109876543210E20;
 		testEntity.setTestDouble(testDouble);
 
 		write(testEntity);
