@@ -128,7 +128,7 @@ public class EntityImporter {
 	 * Creates a new instance of an EntityImporter.
 	 *
 	 * @param settings
-	 *            the settings of this importer and
+	 *            the settings of this importer and the generator
 	 */
 	public EntityImporter(final Properties settings) {
 		this(settings, new File(settings.getProperty(DATA_FOLDER_KEY, ".")), new GeneratorContext(settings));
@@ -366,6 +366,7 @@ public class EntityImporter {
 				} else {
 					final Constructor<?>[] constructors = providerClass.getConstructors();
 					ModelException.test(constructors.length > 0, "No public constructor found for {}", providerClass);
+
 					for (final Constructor<?> constructor : constructors) {
 						if (addProvider(constructor)) {
 							iterator.remove();
@@ -376,8 +377,8 @@ public class EntityImporter {
 			}
 
 			// Prevent endless loops
-			ModelException.test(previousSize > providers.size(), "No matching data provider in dependencies of {}",
-					providers);
+			ModelException.test(previousSize > providers.size(),
+					"Can't create the following provides (possibly because of circular dependencies): {}", providers);
 		}
 	}
 

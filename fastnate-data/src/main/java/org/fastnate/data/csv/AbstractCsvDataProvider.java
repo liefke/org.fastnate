@@ -115,17 +115,17 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	 *
 	 * @param entity
 	 *            the entity to modify
-	 * @param value
-	 *            the value of the property (converts the property, if nessecary)
 	 * @param column
 	 *            the name of the current column
+	 * @param value
+	 *            the value of the property (converts the property, if nessecary)
 	 * @return {@code true} if an appropriate property was found, {@code false} if a matching property was not found and
 	 *         {@code #isIgnoreUnknownColumns()} is {@code true}
 	 *
 	 * @throws IllegalArgumentException
 	 *             if a matching property was not found or the was not converted
 	 */
-	protected boolean applyColumn(final E entity, final String value, final String column) {
+	protected boolean applyColumn(final E entity, final String column, final String value) {
 		if (this.ignoredColumns.contains(column)) {
 			return false;
 		}
@@ -251,7 +251,7 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	protected E createEntity(final Map<String, String> row) {
 		final E entity = createEntity();
 		for (final Map.Entry<String, String> column : row.entrySet()) {
-			applyColumn(entity, column.getValue(), column.getKey());
+			applyColumn(entity, column.getKey(), column.getValue());
 		}
 		return entity;
 	}
