@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<name>FastNate Generator</name>
@@ -87,58 +88,63 @@
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
 		</dependency>
-		
-		<!-- Database drivers for testing -->
 
-		<!-- H2 -->		
+		<!-- H2 is the default database for testing -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 		</dependency>
-
-		<!-- Oracle -->
-		<dependency>
-			<!-- 
-				Due to license reasons, the following driver is not part of Maven-Central.
-			    See here how to add it to you local repository:
-					https://stackoverflow.com/questions/1074869/find-oracle-jdbc-driver-in-maven-repository
-			-->
-		    <groupId>com.oracle</groupId>
-		    <artifactId>ojdbc14</artifactId>
-		    <version>10.2.0.4.0</version>
-		    <scope>test</scope>
-		</dependency>
-
-		<!-- Postgres -->
-		<dependency>
-		    <groupId>postgresql</groupId>
-		    <artifactId>postgresql</artifactId>
-		    <version>9.1-901.jdbc4</version>
-		    <scope>test</scope>
-		</dependency>		
-		
-		<!-- MySQL -->
-		<dependency>
-		    <groupId>mysql</groupId>
-		    <artifactId>mysql-connector-java</artifactId>
-		    <version>5.1.27</version>
-		    <scope>test</scope>
-		</dependency>
-		
-		<!-- MsSQL -->
-		<dependency>
-			<!-- 
-				Due to license reasons, the following driver is not part of Maven-Central.
-				Use the one from http://clojars.org/repo/ or download it from Microsoft and call:
-				  mvn install:install-file -DgroupId=com.microsoft -DartifactId=sqljdbc4 
-				  	-Dversion=3.0 -Dpackaging=jar -Dfile=sqljdbc4.jar -DgeneratePom=true
-   			-->
-		    <groupId>com.microsoft</groupId>
-		    <artifactId>sqljdbc4</artifactId>
-		    <version>3.0</version>
-		    <scope>test</scope>
-		</dependency>
-
 	</dependencies>
+
+	<profiles>
+
+		<!-- Additional database drivers for testing 
+			 Integrated into its own profile to keep them optional for contributors.
+		-->
+		<profile>
+			<id>test-all-databases</id>
+
+			<dependencies>
+				<!-- Oracle -->
+				<dependency>
+					<!-- Due to license reasons, the following driver is not part of Maven-Central. 
+						See here how to add it to you local repository: https://stackoverflow.com/questions/1074869/find-oracle-jdbc-driver-in-maven-repository -->
+					<groupId>com.oracle</groupId>
+					<artifactId>ojdbc14</artifactId>
+					<version>10.2.0.4.0</version>
+					<scope>test</scope>
+				</dependency>
+
+				<!-- Postgres -->
+				<dependency>
+					<groupId>postgresql</groupId>
+					<artifactId>postgresql</artifactId>
+					<version>9.1-901.jdbc4</version>
+					<scope>test</scope>
+				</dependency>
+
+				<!-- MySQL -->
+				<dependency>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
+					<version>5.1.27</version>
+					<scope>test</scope>
+				</dependency>
+
+				<!-- MsSQL -->
+				<dependency>
+					<!-- Due to license reasons, the following driver is not part of Maven-Central. 
+						Use the one from http://clojars.org/repo/ or download it from Microsoft and 
+						call: mvn install:install-file -DgroupId=com.microsoft -DartifactId=sqljdbc4 
+						-Dversion=3.0 -Dpackaging=jar -Dfile=sqljdbc4.jar -DgeneratePom=true -->
+					<groupId>com.microsoft</groupId>
+					<artifactId>sqljdbc4</artifactId>
+					<version>3.0</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+
+	</profiles>
 
 </project>
