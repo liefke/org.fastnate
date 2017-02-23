@@ -378,6 +378,7 @@
 				<configuration>
 					<defaultVersion>${project.version}</defaultVersion>
 					<sourcepath>target/generated-sources/delombok</sourcepath>
+					<show>private</show>
 				</configuration>
 			</plugin>
 			<plugin>
