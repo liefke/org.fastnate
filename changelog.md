@@ -26,3 +26,15 @@ Fastnate Changelog
 	* Write absolute IDs by default
 	* Full support for relative IDs in all GenerationTypes
 * Simplified unit testing against H2, MySQL, PostgreSQL and Oracle
+
+### 1.3.0 (2017-02-24)
+* #14 Better support for Microsoft SQL Server
+* #15 Configure relevant files without a ChangeDetector enhancement
+* #16 Relative dates in SQL files
+* #18 Generated relative IDs are wrong for TableGenerator
+* #20 Option to write statements directly to the database
+* Workaround for Eclipse Bug 508238
+* Support "skip" parameter in Maven-Configuration
+* Support for null values in entity collections
+* Support "byte", "short" resp. "int" IDs as well
+* Improved documentation / examples
