@@ -10,6 +10,7 @@ import org.fastnate.generator.context.ContextModelListener;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.IdGenerator;
+import org.fastnate.generator.context.SequenceIdGenerator;
 import org.fastnate.generator.statements.EntityStatement;
 
 import lombok.Getter;
@@ -120,7 +121,11 @@ public class ConnectedEntitySqlGenerator extends EntitySqlGenerator {
 							}
 						}
 					} catch (final SQLException e) {
-						throw new IllegalStateException("Can't initialize generator with " + sql, e);
+						if (generator instanceof SequenceIdGenerator) {
+							// Ignore if sequence.currval is not available
+						} else {
+							throw new IllegalStateException("Can't initialize generator with " + sql, e);
+						}
 					}
 				}
 			}
