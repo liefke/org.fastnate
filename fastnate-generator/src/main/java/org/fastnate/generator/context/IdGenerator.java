@@ -118,4 +118,12 @@ public abstract class IdGenerator {
 	 */
 	public abstract boolean isPostIncrement();
 
+	/**
+	 * Sets a new start value.
+	 *
+	 * @param currentValue
+	 *            the current value - most likely as extracted from the target database
+	 */
+	public abstract void setCurrentValue(long currentValue);
+
 }

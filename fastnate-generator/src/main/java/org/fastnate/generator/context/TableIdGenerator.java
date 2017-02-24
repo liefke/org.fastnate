@@ -35,10 +35,6 @@ public class TableIdGenerator extends IdGenerator {
 
 	private final boolean relativeIds;
 
-	private final int initialValue;
-
-	private final int allocationSize;
-
 	private final String generatorTable;
 
 	private final String pkColumnName;
@@ -46,6 +42,10 @@ public class TableIdGenerator extends IdGenerator {
 	private final String pkColumnValue;
 
 	private final String valueColumnName;
+
+	private final int allocationSize;
+
+	private long initialValue;
 
 	private long nextValue;
 
@@ -167,9 +167,9 @@ public class TableIdGenerator extends IdGenerator {
 	@Override
 	public IdGenerator derive(final String currentTable) {
 		if (StringUtils.isEmpty(this.pkColumnValue)) {
-			return new TableIdGenerator(this.dialect, this.relativeIds, this.initialValue, this.allocationSize,
-					this.generatorTable, this.pkColumnName, this.dialect.quoteString(currentTable),
-					this.valueColumnName, this.nextValue, this.maxAllocatedValue);
+			return new TableIdGenerator(this.dialect, this.relativeIds, this.generatorTable, this.pkColumnName,
+					this.dialect.quoteString(currentTable), this.valueColumnName, this.allocationSize,
+					this.initialValue, this.nextValue, this.maxAllocatedValue);
 		}
 		return this;
 	}
@@ -194,6 +194,12 @@ public class TableIdGenerator extends IdGenerator {
 	@Override
 	public boolean isPostIncrement() {
 		return false;
+	}
+
+	@Override
+	public void setCurrentValue(final long currentValue) {
+		this.nextValue = currentValue + 1;
+		this.maxAllocatedValue = currentValue;
 	}
 
 }

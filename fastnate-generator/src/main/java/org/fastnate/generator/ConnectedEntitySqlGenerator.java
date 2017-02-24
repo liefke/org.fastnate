@@ -2,10 +2,14 @@ package org.fastnate.generator;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.fastnate.generator.context.ContextModelListener;
+import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.context.IdGenerator;
 import org.fastnate.generator.statements.EntityStatement;
 
 import lombok.Getter;
@@ -88,7 +92,39 @@ public class ConnectedEntitySqlGenerator extends EntitySqlGenerator {
 			throws SQLException {
 		super(context);
 		this.connection = connection;
-		this.statement = connection.createStatement();
+		final Statement sharedStatement = connection.createStatement();
+		this.statement = sharedStatement;
+
+		context.addContextModelListener(new ContextModelListener() {
+
+			@Override
+			public void foundEntityClass(final EntityClass<?> entityClass) {
+				// Nothing to do
+			}
+
+			@Override
+			public void foundGenerator(final IdGenerator generator) {
+				// Initialize generator, if necessary
+				if (!context.isWriteRelativeIds()) {
+					String sql = generator.getExpression(null, null, generator.getCurrentValue(), false);
+					if (sql.matches("(SELECT\\W.*)")) {
+						sql = sql.substring(1, sql.length() - 1);
+					} else {
+						sql = "SELECT (" + sql + ") currentValue " + context.getDialect().getOptionalTable();
+					}
+					try (ResultSet resultSet = sharedStatement.executeQuery(sql)) {
+						if (resultSet.next()) {
+							final long currentValue = resultSet.getLong(1);
+							if (!resultSet.wasNull()) {
+								generator.setCurrentValue(currentValue);
+							}
+						}
+					} catch (final SQLException e) {
+						throw new IllegalStateException("Can't initialize generator with " + sql, e);
+					}
+				}
+			}
+		});
 	}
 
 	@Override

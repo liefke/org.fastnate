@@ -183,9 +183,6 @@ public class GeneratorContext {
 		}
 	}
 
-	/** Contains the extracted metadata per entity class. */
-	private final Map<Class<?>, EntityClass<?>> descriptions = new HashMap<>();
-
 	/** Identifies the SQL dialect for generating SQL statements. Encapsulates the database specifica. */
 	private GeneratorDialect dialect;
 
@@ -219,11 +216,14 @@ public class GeneratorContext {
 	 */
 	private boolean writeNullValues;
 
+	/** Contains the settings that were given during creation, resp. as read from the persistence configuration. */
+	private final Properties settings;
+
+	/** Contains the extracted metadata per entity class. */
+	private final Map<Class<?>, EntityClass<?>> descriptions = new HashMap<>();
+
 	/** Contains the state of single entities, maps from an entity name to the mapping of an id to its state. */
 	private final Map<String, Map<Object, GenerationState>> states = new HashMap<>();
-
-	/** Contains the settings that where given during creation. Empty if none were provided. */
-	private final Properties settings;
 
 	/** Mapping from the name of a generator to the generator itself. */
 	@Getter(AccessLevel.NONE)
@@ -234,6 +234,9 @@ public class GeneratorContext {
 
 	/** The default table generator, if none is explicitly specified in a {@link GeneratedValue}. */
 	private TableIdGenerator defaultTableGenerator;
+
+	/** All listeners of this context. */
+	private List<ContextModelListener> contextModelListeners = new ArrayList<>();
 
 	/**
 	 * Creates a default generator context.
@@ -304,6 +307,28 @@ public class GeneratorContext {
 	}
 
 	/**
+	 * Adds a new listener to this context.
+	 *
+	 * @param listener
+	 *            the listener that is interested in new discovered model elements
+	 */
+	public void addContextModelListener(final ContextModelListener listener) {
+		this.contextModelListeners.add(listener);
+	}
+
+	/**
+	 * Notifies all Listeners, that a new generator was registered.
+	 *
+	 * @param generator
+	 *            the new generator
+	 */
+	private void announceGeneratorCreation(final IdGenerator generator) {
+		for (final ContextModelListener listener : this.contextModelListeners) {
+			listener.foundGenerator(generator);
+		}
+	}
+
+	/**
 	 * Builds all statements that are necessary to align ID generators in the database with the current IDs.
 	 *
 	 * @return the list of statements
@@ -330,6 +355,7 @@ public class GeneratorContext {
 									ImmutableMap.of("sequenceName", this.provider.getDefaultSequence(),
 											"allocationSize", Integer.valueOf(1))),
 					this.dialect, this.writeRelativeIds);
+			announceGeneratorCreation(this.defaultSequenceGenerator);
 		}
 		return this.defaultSequenceGenerator;
 	}
@@ -340,6 +366,7 @@ public class GeneratorContext {
 					AnnotationDefaults.create(TableGenerator.class,
 							ImmutableMap.of("pkColumnValue", "default", "allocationSize", Integer.valueOf(1))),
 					this.dialect, this.provider, this.writeRelativeIds);
+			announceGeneratorCreation(this.defaultTableGenerator);
 		}
 		return this.defaultTableGenerator;
 	}
@@ -367,6 +394,11 @@ public class GeneratorContext {
 
 				// And now build the properties
 				description.build();
+
+				// And notify listeners
+				for (final ContextModelListener listener : this.contextModelListeners) {
+					listener.foundEntityClass(description);
+				}
 			} else {
 				// Step up to find the parent description
 				final Class<?> superClass = entityClass.getSuperclass();
@@ -432,6 +464,7 @@ public class GeneratorContext {
 				final IdGenerator derived = generator.derive(table);
 				if (derived != generator) {
 					this.generators.put(new GeneratorId(name, table), derived);
+					announceGeneratorCreation(derived);
 					return derived;
 				}
 			}
@@ -444,6 +477,7 @@ public class GeneratorContext {
 			case IDENTITY:
 				final IdentityValue identityValue = new IdentityValue(this, table, column);
 				this.generators.put(new GeneratorId(column, table), identityValue);
+				announceGeneratorCreation(identityValue);
 				return identityValue;
 			case TABLE:
 				return getDefaultTableGenerator();
@@ -485,22 +519,35 @@ public class GeneratorContext {
 		final SequenceGenerator sequenceGenerator = element.getAnnotation(SequenceGenerator.class);
 		if (sequenceGenerator != null) {
 			final GeneratorId key = new GeneratorId(sequenceGenerator.name(), null);
+			final SequenceIdGenerator generator = new SequenceIdGenerator(sequenceGenerator, this.dialect,
+					this.writeRelativeIds);
 			if (!this.generators.containsKey(key)) {
-				this.generators.put(key,
-						new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
+				this.generators.put(key, generator);
 			} else {
-				this.generators.put(new GeneratorId(sequenceGenerator.name(), table),
-						new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
+				this.generators.put(new GeneratorId(sequenceGenerator.name(), table), generator);
 			}
+			announceGeneratorCreation(generator);
 		}
 
 		final TableGenerator tableGenerator = element.getAnnotation(TableGenerator.class);
 		if (tableGenerator != null) {
 			final GeneratorId key = new GeneratorId(tableGenerator.name(), null);
 			if (!this.generators.containsKey(key)) {
-				this.generators.put(key,
-						new TableIdGenerator(tableGenerator, this.dialect, this.provider, this.writeRelativeIds));
+				final TableIdGenerator generator = new TableIdGenerator(tableGenerator, this.dialect, this.provider,
+						this.writeRelativeIds);
+				this.generators.put(key, generator);
+				announceGeneratorCreation(generator);
 			}
 		}
+	}
+
+	/**
+	 * Removes a listener from this context.
+	 *
+	 * @param listener
+	 *            the listener that is not interested anymore
+	 */
+	public void removeContextModelListener(final ContextModelListener listener) {
+		this.contextModelListeners.remove(listener);
 	}
 }

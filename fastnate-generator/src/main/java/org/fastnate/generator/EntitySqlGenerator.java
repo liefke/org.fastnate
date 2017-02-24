@@ -57,7 +57,6 @@ public abstract class EntitySqlGenerator implements Closeable {
 	@Override
 	public void close() throws IOException {
 		writeAlignmentStatements();
-
 	}
 
 	/**

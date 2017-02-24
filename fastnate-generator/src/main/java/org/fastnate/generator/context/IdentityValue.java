@@ -37,12 +37,13 @@ public class IdentityValue extends IdGenerator {
 
 	@Override
 	public List<? extends EntityStatement> alignNextValue() {
-		if (this.needsAlignment && !this.context.isWriteRelativeIds()
-				&& this.context.getDialect().isSettingIdentityAllowed()) {
-			return this.context.getDialect().adjustNextIdentityValue(this.tableName, this.columnName,
-					this.currentValue + 1);
+		if (this.needsAlignment) {
+			this.needsAlignment = false;
+			if (!this.context.isWriteRelativeIds() && this.context.getDialect().isSettingIdentityAllowed()) {
+				return this.context.getDialect().adjustNextIdentityValue(this.tableName, this.columnName,
+						this.currentValue + 1);
+			}
 		}
-		this.needsAlignment = false;
 		return Collections.emptyList();
 	}
 
@@ -61,12 +62,19 @@ public class IdentityValue extends IdGenerator {
 	public String getExpression(final String table, final String column, final Number targetId,
 			final boolean whereExpression) {
 		final long diff = this.currentValue - targetId.longValue();
-		return "(SELECT max(" + column + ")" + (diff == 0 ? "" : " - " + diff) + " FROM " + table + ")";
+		return "(SELECT max(" + this.columnName + ")" + (diff == 0 ? "" : " - " + diff) + " FROM " + this.tableName
+				+ ")";
 	}
 
 	@Override
 	public boolean isPostIncrement() {
 		return true;
+	}
+
+	@Override
+	public void setCurrentValue(final long currentValue) {
+		this.needsAlignment = false;
+		this.currentValue = currentValue;
 	}
 
 }

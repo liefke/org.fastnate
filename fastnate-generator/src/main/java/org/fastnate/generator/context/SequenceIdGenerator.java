@@ -17,15 +17,15 @@ import org.fastnate.generator.statements.PlainStatement;
  */
 public class SequenceIdGenerator extends IdGenerator {
 
-	private final int initialValue;
-
-	private final int allocationSize;
-
 	private final GeneratorDialect dialect;
 
 	private final String sequenceName;
 
 	private final boolean relativeIds;
+
+	private final int allocationSize;
+
+	private long initialValue;
 
 	private long nextValue;
 
@@ -129,6 +129,12 @@ public class SequenceIdGenerator extends IdGenerator {
 	@Override
 	public boolean isPostIncrement() {
 		return false;
+	}
+
+	@Override
+	public void setCurrentValue(final long currentValue) {
+		this.nextValue = this.initialValue = currentValue + 1;
+		this.currentSequenceValue = currentValue;
 	}
 
 }
