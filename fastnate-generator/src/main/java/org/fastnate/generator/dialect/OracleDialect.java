@@ -60,7 +60,9 @@ public class OracleDialect extends GeneratorDialect {
 
 	@Override
 	protected String createAddDateExpression(final String referenceDate, final long value, final String unit) {
-		return referenceDate + ' ' + (value < 0 ? '-' : '+') + " INTERVAL '" + Math.abs(value) + "' " + unit;
+		final long abs = Math.abs(value);
+		final int digits = (int) Math.ceil(Math.log10(abs));
+		return referenceDate + ' ' + (value < 0 ? '-' : '+') + " INTERVAL '" + abs + "' " + unit + '(' + digits + ')';
 	}
 
 	@Override

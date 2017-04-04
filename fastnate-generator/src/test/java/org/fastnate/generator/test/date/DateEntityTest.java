@@ -98,7 +98,7 @@ public class DateEntityTest extends AbstractEntitySqlGeneratorTest {
 	public void testRelativeDates() throws IOException {
 		final DateTestEntity testEntity = new DateTestEntity();
 
-		final int days = 31;
+		final int days = 123;
 		testEntity.setDate(new RelativeDate(RelativeDate.TODAY, -days, RelativeDate.DAYS));
 
 		final int hours = 2;
