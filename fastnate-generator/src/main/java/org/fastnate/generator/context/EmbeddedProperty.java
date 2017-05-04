@@ -90,7 +90,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 				property.addInsertExpression(value, statement);
 			}
 		} else {
-			failIfRequired();
+			failIfRequired(entity);
 		}
 	}
 

@@ -72,10 +72,19 @@ public abstract class Property<E, T> {
 
 	/**
 	 * Throws an IllegalArgumentException if the field was not filled.
+	 *
+	 * @param entity
+	 *            the entity that does not contain a value for this property
 	 */
-	protected void failIfRequired() {
+	protected void failIfRequired(final E entity) {
 		if (isRequired()) {
-			throw new IllegalArgumentException("Required property " + this + " was not set.");
+			try {
+				throw new IllegalArgumentException(
+						"Required property " + this + " was not set for " + entity.toString());
+			} catch (final NullPointerException e) {
+				// It may happen, that the required property is necessary for generation of the toString as well
+				throw new IllegalArgumentException("Required property " + this + " was not set");
+			}
 		}
 	}
 

@@ -171,7 +171,7 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 		} else if (this.defaultValue != null) {
 			statement.addValue(getColumn(), this.converter.getExpression(this.defaultValue, this.context));
 		} else {
-			failIfRequired();
+			failIfRequired(entity);
 			if (this.context.isWriteNullValues()) {
 				statement.addValue(this.column, "null");
 			}

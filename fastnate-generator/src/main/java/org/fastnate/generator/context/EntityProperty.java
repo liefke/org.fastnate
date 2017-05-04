@@ -183,7 +183,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 				// target entity is created and we will update the property for the entity later
 				entityClass.markPendingUpdates(value, entity, this);
 			}
-			failIfRequired();
+			failIfRequired(entity);
 			if (this.context.isWriteNullValues()) {
 				statement.addValue(this.column, "null");
 				if (this.anyColumn != null) {
