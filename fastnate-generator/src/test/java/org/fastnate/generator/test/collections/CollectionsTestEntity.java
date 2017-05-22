@@ -14,6 +14,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.OrderColumn;
@@ -49,14 +50,14 @@ public class CollectionsTestEntity extends BaseTestEntity {
 	@OrderColumn
 	private List<String> orderedStringList = new ArrayList<>();
 
-	@ElementCollection
-	@Enumerated
 	@OrderBy
+	@Enumerated
+	@ElementCollection
 	private List<TestEnum> enumList = new ArrayList<>();
 
-	@ElementCollection
 	@Embedded
 	@OrderColumn
+	@ElementCollection
 	private List<CollectionsTestEntityProperty> embeddedList = new ArrayList<>();
 
 	@ManyToMany
@@ -74,5 +75,11 @@ public class CollectionsTestEntity extends BaseTestEntity {
 	@OneToMany(mappedBy = "parent")
 	@OrderColumn
 	private List<ChildTestEntity> children = new ArrayList<>();
+
+	@ElementCollection
+	private Set<CollectionsTestElement> elements = new HashSet<>();
+
+	@ManyToOne
+	private CollectionsTestEntity other;
 
 }

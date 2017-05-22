@@ -27,6 +27,32 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 	}
 
 	/**
+	 * Tests to write embedded collections and prevent circular dependencies.
+	 *
+	 * @throws IOException
+	 *             if the generator throws one
+	 */
+	@Test
+	public void testEmbedded() throws IOException {
+		final CollectionsTestEntity testEntity = new CollectionsTestEntity();
+		testEntity.getEnumList().add(TestEnum.one);
+		final CollectionsTestEntity testEntity2 = new CollectionsTestEntity();
+		testEntity2.getElements().add(new CollectionsTestElement(testEntity));
+		testEntity.getElements().add(new CollectionsTestElement(testEntity2));
+		testEntity.setOther(testEntity2);
+
+		write(testEntity);
+
+		final CollectionsTestEntity result = findSingleResult("SELECT e FROM CTE e JOIN e.enumList en WHERE en = 1",
+				CollectionsTestEntity.class);
+		assertThat(result.getElements()).hasSize(1);
+		final CollectionsTestEntity target = result.getElements().iterator().next().getEntity();
+		assertThat(target).isNotEqualTo(result);
+		assertThat(target.getElements()).hasSize(1);
+		assertThat(target.getElements().iterator().next().getEntity()).isEqualTo(result);
+	}
+
+	/**
 	 * Tests to write plural properties.
 	 *
 	 * @throws IOException
