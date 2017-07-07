@@ -19,7 +19,7 @@ import lombok.Setter;
 @Setter
 @Inheritance(strategy = InheritanceType.JOINED)
 @NoArgsConstructor
-public class JoinedSuperclassTestEntity extends MappedSuperclassTestEntity implements SuperclassEntity {
+public class JoinedSuperclassTestEntity extends MappedSuperclassTestEntity<String> implements SuperclassEntity {
 
 	private String name;
 

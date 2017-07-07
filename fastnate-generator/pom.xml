@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<name>FastNate Generator</name>
@@ -88,6 +89,13 @@
 			<artifactId>assertj-core</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-jpa</artifactId>
+			<version>1.11.4.RELEASE</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- H2 is the default database for testing -->
 		<dependency>
 			<groupId>com.h2database</groupId>
@@ -97,9 +105,8 @@
 
 	<profiles>
 
-		<!-- Additional database drivers for testing 
-			 Integrated into its own profile to keep them optional for contributors.
-		-->
+		<!-- Additional database drivers for testing Integrated into its own profile 
+			to keep them optional for contributors. -->
 		<profile>
 			<id>test-all-databases</id>
 

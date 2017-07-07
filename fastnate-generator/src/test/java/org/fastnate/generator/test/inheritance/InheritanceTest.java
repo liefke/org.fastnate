@@ -74,12 +74,14 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 	@Test
 	public void testMappedSuperclasses() throws Exception {
 		final MappedSubclassTestEntity testEntity = new MappedSubclassTestEntity("entity1", "mapped");
+		testEntity.setGenericProperty(1);
 		write(testEntity);
 
 		final MappedSubclassTestEntity foundEntity = findSingleResult(MappedSubclassTestEntity.class);
 
 		assertThat(foundEntity.getName()).isEqualTo(testEntity.getName());
 		assertThat(foundEntity.getSuperProperty()).isEqualTo(testEntity.getSuperProperty());
+		assertThat(foundEntity.getGenericProperty()).isEqualByComparingTo(testEntity.getGenericProperty());
 	}
 
 	/**

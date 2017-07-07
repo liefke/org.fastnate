@@ -26,6 +26,7 @@ import org.fastnate.generator.statements.EntityStatement;
 import org.fastnate.generator.statements.InsertStatement;
 import org.fastnate.generator.statements.TableStatement;
 import org.fastnate.generator.statements.UpdateStatement;
+import org.fastnate.util.ClassUtil;
 
 import com.google.common.base.Preconditions;
 
@@ -217,13 +218,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		final ParameterizedType type = (ParameterizedType) attribute.getGenericType();
 		final Type[] parameterArgTypes = type.getActualTypeArguments();
 		if (parameterArgTypes.length > argumentIndex) {
-			Type genericType = parameterArgTypes[argumentIndex];
-			if (genericType instanceof ParameterizedType) {
-				genericType = ((ParameterizedType) genericType).getRawType();
-			}
-			if (genericType instanceof Class<?>) {
-				return (Class<T>) genericType;
-			}
+			return ClassUtil.getActualTypeBinding(attribute.getImplementationClass(),
+					(Class<Object>) attribute.getDeclaringClass(), parameterArgTypes[argumentIndex]);
 		}
 		throw new ModelException(attribute + " has illegal generic type signature");
 
@@ -403,7 +399,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					.getAttributeOverrides(getAttribute().getElement());
 			final Map<String, AssociationOverride> accociationOverrides = EntityClass
 					.getAccociationOverrides(getAttribute().getElement());
-			for (final AttributeAccessor attribute : accessStyle.getDeclaredAttributes(targetType)) {
+			for (final AttributeAccessor attribute : accessStyle.getDeclaredAttributes((Class<Object>) targetType,
+					getAttribute().getImplementationClass())) {
 				final AttributeOverride attributeOveride = attributeOverrides.get(attribute.getName());
 				final Column columnMetadata = attributeOveride != null ? attributeOveride.column()
 						: attribute.getAnnotation(Column.class);

@@ -15,6 +15,7 @@ import javax.persistence.AccessType;
 import javax.persistence.Transient;
 
 import org.apache.commons.lang.StringUtils;
+import org.fastnate.util.ClassUtil;
 import org.hibernate.annotations.Formula;
 
 import lombok.Getter;
@@ -30,6 +31,10 @@ public enum AccessStyle {
 
 		final class Accessor implements AttributeAccessor {
 
+			/** The sub class that may contain any generic type parameter. */
+			@Getter
+			private final Class<?> implementationClass;
+
 			/** The field of the attribute. */
 			@Getter
 			private final Field field;
@@ -39,14 +44,26 @@ public enum AccessStyle {
 			private final String name;
 
 			/**
+			 * The return type of the method. If the return type is generic, the type is resolved with the generic type
+			 * parameters of the {@link #implementationClass}.
+			 */
+			@Getter
+			private final Class<?> type;
+
+			/**
 			 * Creates a new instance of a attribute with field access.
 			 *
+			 * @param implementationClass
+			 *            The sub class that may contain any generic type parameter.
 			 * @param field
 			 *            the field of the attribute
 			 */
-			Accessor(final Field field) {
+			Accessor(final Class<?> implementationClass, final Field field) {
+				this.implementationClass = implementationClass;
 				this.field = field;
 				this.name = field.getName();
+				this.type = ClassUtil.getActualTypeBinding(implementationClass,
+						(Class<Object>) field.getDeclaringClass(), field.getGenericType());
 			}
 
 			@Override
@@ -70,6 +87,11 @@ public enum AccessStyle {
 			}
 
 			@Override
+			public Class<?> getDeclaringClass() {
+				return this.field.getDeclaringClass();
+			}
+
+			@Override
 			public AnnotatedElement getElement() {
 				return this.field;
 			}
@@ -77,11 +99,6 @@ public enum AccessStyle {
 			@Override
 			public Type getGenericType() {
 				return this.field.getGenericType();
-			}
-
-			@Override
-			public Class<?> getType() {
-				return this.field.getType();
 			}
 
 			@Override
@@ -126,11 +143,12 @@ public enum AccessStyle {
 		}
 
 		@Override
-		public <E> Iterable<AttributeAccessor> getDeclaredAttributes(final Class<E> inspectedClass) {
+		public <E> Iterable<AttributeAccessor> getDeclaredAttributes(final Class<E> inspectedClass,
+				final Class<? extends E> implementationClass) {
 			final List<AttributeAccessor> result = new ArrayList<>();
 			for (final Field field : inspectedClass.getDeclaredFields()) {
 				if (!Modifier.isStatic(field.getModifiers())) {
-					result.add(new Accessor(field));
+					result.add(new Accessor(implementationClass, field));
 				}
 			}
 			return result;
@@ -141,6 +159,10 @@ public enum AccessStyle {
 	METHOD {
 
 		final class Accessor implements AttributeAccessor {
+
+			/** The sub class that may contain any generic type parameter. */
+			@Getter
+			private final Class<?> implementationClass;
 
 			/** The getter of the property. */
 			private final Method method;
@@ -153,14 +175,26 @@ public enum AccessStyle {
 			private final String name;
 
 			/**
+			 * The return type of the method. If the return type is generic, the type is resolved with the generic type
+			 * parameters of the {@link #implementationClass}.
+			 */
+			@Getter
+			private final Class<?> type;
+
+			/**
 			 * Creates a new instance with property style access.
 			 *
+			 * @param implementationClass
+			 *            The sub class that may contain any generic type parameter.
 			 * @param getter
 			 *            the method to read the property
 			 */
-			Accessor(final Method getter) {
+			Accessor(final Class<?> implementationClass, final Method getter) {
+				this.implementationClass = implementationClass;
 				this.method = getter;
 				this.name = Introspector.decapitalize(getter.getName().replaceAll("^get|is", ""));
+				this.type = ClassUtil.getActualTypeBinding(implementationClass,
+						(Class<Object>) getter.getDeclaringClass(), getter.getGenericReturnType());
 			}
 
 			@Override
@@ -184,6 +218,11 @@ public enum AccessStyle {
 			}
 
 			@Override
+			public Class<?> getDeclaringClass() {
+				return this.method.getDeclaringClass();
+			}
+
+			@Override
 			public AnnotatedElement getElement() {
 				return this.method;
 			}
@@ -191,11 +230,6 @@ public enum AccessStyle {
 			@Override
 			public Type getGenericType() {
 				return this.method.getGenericReturnType();
-			}
-
-			@Override
-			public Class<?> getType() {
-				return this.method.getReturnType();
 			}
 
 			@Override
@@ -256,13 +290,14 @@ public enum AccessStyle {
 		}
 
 		@Override
-		public <E> Iterable<AttributeAccessor> getDeclaredAttributes(final Class<E> inspectedClass) {
+		public <E> Iterable<AttributeAccessor> getDeclaredAttributes(final Class<E> inspectedClass,
+				final Class<? extends E> implementationClass) {
 			final List<AttributeAccessor> result = new ArrayList<>();
 			for (final Method method : inspectedClass.getDeclaredMethods()) {
 				if (!Modifier.isStatic(method.getModifiers())) {
 					final String name = method.getName();
 					if (name.startsWith("get") || name.startsWith("is")) {
-						result.add(new Accessor(method));
+						result.add(new Accessor(implementationClass, method));
 					}
 				}
 			}
@@ -287,8 +322,12 @@ public enum AccessStyle {
 	 *
 	 * @param inspectedClass
 	 *            the class to inspect
+	 * @param implementationClass
+	 *            the class that is actually the type of the object, either {@code inspectedClass} or a sub class -
+	 *            necessary for resolving generics
 	 * @return all non static attributes found in the given class
 	 */
-	public abstract <E> Iterable<AttributeAccessor> getDeclaredAttributes(Class<E> inspectedClass);
+	public abstract <E> Iterable<AttributeAccessor> getDeclaredAttributes(Class<E> inspectedClass,
+			Class<? extends E> implementationClass);
 
 }

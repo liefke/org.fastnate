@@ -71,7 +71,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 				.getAttributeOverrides(attribute.getElement());
 		final Map<String, AssociationOverride> accociationOverrides = EntityClass
 				.getAccociationOverrides(attribute.getElement());
-		for (final AttributeAccessor field : accessStyle.getDeclaredAttributes(type)) {
+		for (final AttributeAccessor field : accessStyle.getDeclaredAttributes((Class<Object>) type, type)) {
 			final AttributeOverride attrOveride = attributeOverrides.get(field.getName());
 			final Property<T, ?> property = entityClass.buildProperty(field,
 					attrOveride != null ? attrOveride.column() : field.getAnnotation(Column.class),

@@ -381,13 +381,13 @@ public class EntityClass<E> {
 
 			// And now find the id property of this class
 			if (this.accessStyle == null) {
-				if (findIdProperty(AccessStyle.FIELD.getDeclaredAttributes(c))) {
+				if (findIdProperty(AccessStyle.FIELD.getDeclaredAttributes(c, this.entityClass))) {
 					this.accessStyle = AccessStyle.FIELD;
-				} else if (findIdProperty(AccessStyle.METHOD.getDeclaredAttributes(c))) {
+				} else if (findIdProperty(AccessStyle.METHOD.getDeclaredAttributes(c, this.entityClass))) {
 					this.accessStyle = AccessStyle.METHOD;
 				}
 			} else {
-				findIdProperty(this.accessStyle.getDeclaredAttributes(c));
+				findIdProperty(this.accessStyle.getDeclaredAttributes(c, this.entityClass));
 			}
 		}
 	}
@@ -452,7 +452,7 @@ public class EntityClass<E> {
 	 * @param stopClass
 	 *            the class in the hierarchy to stop inspecting
 	 */
-	private void buildProperties(final Class<?> c, final Class<?> stopClass) {
+	private void buildProperties(final Class<? super E> c, final Class<? super E> stopClass) {
 		// Fill properties of super classes (at least until we find the joined parent class)
 		if (c.getSuperclass() != null && c.getSuperclass() != stopClass) {
 			buildProperties(c.getSuperclass(), stopClass);
@@ -460,7 +460,7 @@ public class EntityClass<E> {
 
 		// And now fill the properties of this class
 		if (c.isAnnotationPresent(MappedSuperclass.class) || c.isAnnotationPresent(Entity.class)) {
-			for (final AttributeAccessor field : this.accessStyle.getDeclaredAttributes(c)) {
+			for (final AttributeAccessor field : this.accessStyle.getDeclaredAttributes(c, this.entityClass)) {
 				if (!field.isAnnotationPresent(EmbeddedId.class) && !field.isAnnotationPresent(Id.class)) {
 					final Property<E, ?> property = buildProperty(field, getColumnAnnotation(field),
 							this.associationOverrides.get(field.getName()));

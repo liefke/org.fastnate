@@ -1,8 +1,9 @@
-package org.fastnate.data.util;
+package org.fastnate.util;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,8 +22,8 @@ public final class ClassUtil {
 		parents.add(instanceClass.getGenericSuperclass());
 		parents.addAll(Arrays.asList(instanceClass.getGenericInterfaces()));
 		for (final Type parentType : parents) {
-			final Class<?> parentClass = parentType instanceof ParameterizedType ? (Class<?>) ((ParameterizedType) parentType)
-					.getRawType() : (Class<?>) parentType;
+			final Class<?> parentClass = parentType instanceof ParameterizedType
+					? (Class<?>) ((ParameterizedType) parentType).getRawType() : (Class<?>) parentType;
 
 			// First check if we found the super class or interface
 			if (superClass.equals(parentClass)) {
@@ -34,8 +35,8 @@ public final class ClassUtil {
 				if (type instanceof Class) {
 					return type;
 				} else if (type instanceof TypeVariable) {
-					return ((ParameterizedType) parentType).getActualTypeArguments()[Arrays.asList(
-							parentClass.getTypeParameters()).indexOf(type)];
+					return ((ParameterizedType) parentType).getActualTypeArguments()[Arrays
+							.asList(parentClass.getTypeParameters()).indexOf(type)];
 				}
 			}
 		}
@@ -57,17 +58,64 @@ public final class ClassUtil {
 	public static <T, I> Class<T> getActualTypeBinding(final Class<? extends I> instanceClass,
 			final Class<I> superClass, final int argumentIndex) {
 		Type type = getActualTypeArgument(instanceClass, superClass, argumentIndex);
-		if (type instanceof TypeVariable<?>) {
-			type = ((TypeVariable<?>) type).getBounds()[0];
+		while (!(type instanceof Class<?>)) {
+			if (type instanceof WildcardType) {
+				type = ((WildcardType) type).getUpperBounds()[0];
+			} else if (type instanceof TypeVariable<?>) {
+				type = ((TypeVariable<?>) type).getBounds()[0];
+			} else if (type instanceof ParameterizedType) {
+				type = ((ParameterizedType) type).getRawType();
+			} else {
+				throw new NoSuchElementException("Can't find binding for the " + argumentIndex + ". argument of "
+						+ superClass + " in " + instanceClass);
+			}
 		}
-		if (type instanceof ParameterizedType) {
-			type = ((ParameterizedType) type).getRawType();
+		return (Class<T>) type;
+	}
+
+	/**
+	 * Resolves the actual binding of a generic type to a specific class by inspecting type variables in the declaring
+	 * class and the (sub)class of the object.
+	 *
+	 * @param instanceClass
+	 *            the class that implements the object and may contain the binding of the type parameters
+	 * @param declaringClass
+	 *            the class that declared the attribute
+	 * @param attributeType
+	 *            the return type, parameter type or field type of the attribute that may contain references to type
+	 *            parameters
+	 * @return the qualified type of the attribute according to the instance class
+	 */
+	public static <T, I> Class<T> getActualTypeBinding(final Class<? extends I> instanceClass,
+			final Class<I> declaringClass, final Type attributeType) {
+		if (attributeType instanceof Class<?>) {
+			return (Class<T>) attributeType;
 		}
-		if (type instanceof Class<?>) {
-			return (Class<T>) type;
+		if (attributeType instanceof TypeVariable<?>) {
+			final String name = ((TypeVariable<?>) attributeType).getName();
+			final TypeVariable<?>[] typeParameters = declaringClass.getTypeParameters();
+			for (int i = 0; i < typeParameters.length; i++) {
+				final TypeVariable<?> variable = typeParameters[i];
+				if (variable.getName().equals(name)) {
+					return getActualTypeBinding(instanceClass, declaringClass, i);
+				}
+			}
 		}
-		throw new NoSuchElementException("Can't find binding for the " + argumentIndex + ". argument of " + superClass
-				+ " in " + instanceClass);
+		if (attributeType instanceof WildcardType) {
+			final Type bound = ((WildcardType) attributeType).getUpperBounds()[0];
+			if (bound != attributeType) {
+				return getActualTypeBinding(instanceClass, declaringClass, bound);
+			}
+		}
+		if (attributeType instanceof ParameterizedType) {
+			final Type rawType = ((ParameterizedType) attributeType).getRawType();
+			if (!rawType.equals(attributeType)) {
+				return getActualTypeBinding(instanceClass, declaringClass, rawType);
+			}
+		}
+
+		throw new NoSuchElementException("Can't find binding for " + attributeType + " declared in " + declaringClass
+				+ " and implented in " + instanceClass);
 	}
 
 	private ClassUtil() {

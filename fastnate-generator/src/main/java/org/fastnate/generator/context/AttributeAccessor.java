@@ -21,6 +21,13 @@ public interface AttributeAccessor extends AnnotatedElement {
 	AccessStyle getAccessStyle();
 
 	/**
+	 * The class that declared this attribute.
+	 *
+	 * @return the class that contains the attribute
+	 */
+	Class<?> getDeclaringClass();
+
+	/**
 	 * The actual field or method.
 	 *
 	 * @return the wrapped element of the attribute
@@ -35,6 +42,16 @@ public interface AttributeAccessor extends AnnotatedElement {
 	Type getGenericType();
 
 	/**
+	 * The class that is the type of every object that contains this attribute.
+	 *
+	 * Either {@link #getDeclaringClass() the class that declared this attribute} or a sub class. Used to resolve any
+	 * generic type parameter in {@link #getType()}.
+	 *
+	 * @return the class where the scan of attributes started
+	 */
+	Class<?> getImplementationClass();
+
+	/**
 	 * The name of the accessed attribute.
 	 *
 	 * @return the name ({@link Introspector#decapitalize(String) decapitalized} if necessary)
@@ -42,7 +59,8 @@ public interface AttributeAccessor extends AnnotatedElement {
 	String getName();
 
 	/**
-	 * The type of the accessed attribute.
+	 * The type of the accessed attribute. If the type is a generic type, any type variable is resolved with
+	 * {@link #getImplementationClass()}.
 	 *
 	 * @return the type of the field or the return type of the method
 	 */

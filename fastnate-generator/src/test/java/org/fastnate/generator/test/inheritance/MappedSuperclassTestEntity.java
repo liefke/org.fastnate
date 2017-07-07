@@ -12,11 +12,13 @@ import lombok.Setter;
  * Mapped superclasses to test inheritance in entities.
  *
  * @author Tobias Liefke
+ * @param <E>
+ *            a generic type variable to test generic binding
  */
-@MappedSuperclass
 @Getter
 @NoArgsConstructor
-public class MappedSuperclassTestEntity {
+@MappedSuperclass
+public class MappedSuperclassTestEntity<E> {
 
 	@Id
 	@GeneratedValue
@@ -24,6 +26,9 @@ public class MappedSuperclassTestEntity {
 
 	@Setter
 	private String superProperty;
+
+	@Setter
+	private E genericProperty;
 
 	/**
 	 * Creates a new instance of {@link MappedSuperclassTestEntity}.
@@ -43,7 +48,7 @@ public class MappedSuperclassTestEntity {
 		if (!getClass().isAssignableFrom(obj.getClass()) && !obj.getClass().isAssignableFrom(getClass())) {
 			return false;
 		}
-		final MappedSuperclassTestEntity other = (MappedSuperclassTestEntity) obj;
+		final MappedSuperclassTestEntity<E> other = (MappedSuperclassTestEntity<E>) obj;
 		return this.id.equals(other.id);
 	}
 
