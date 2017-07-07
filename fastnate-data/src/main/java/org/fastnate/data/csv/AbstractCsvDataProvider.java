@@ -17,13 +17,13 @@ import java.util.Set;
 import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang.StringUtils;
 import org.fastnate.data.DataProvider;
-import org.fastnate.data.util.ClassUtil;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.ModelException;
 import org.fastnate.generator.context.Property;
 import org.fastnate.generator.context.SingularProperty;
+import org.fastnate.util.ClassUtil;
 
 import lombok.Getter;
 import lombok.Setter;
