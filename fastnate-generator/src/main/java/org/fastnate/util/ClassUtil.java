@@ -18,6 +18,10 @@ public final class ClassUtil {
 
 	private static <I> Type getActualTypeArgument(final Class<? extends I> instanceClass, final Class<I> superClass,
 			final int argumentIndex) {
+		if (instanceClass == superClass) {
+			return instanceClass.getTypeParameters()[argumentIndex];
+		}
+
 		final List<Type> parents = new ArrayList<>();
 		parents.add(instanceClass.getGenericSuperclass());
 		parents.addAll(Arrays.asList(instanceClass.getGenericInterfaces()));
