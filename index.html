@@ -138,7 +138,7 @@
 			<dd class="row">
 				<div class="col-md-10 separate">
 					<p>
-						So Nate thought, and he thought, and finally he god <em>the idea</em>.
+						So Nate thought, and he thought, and finally he got <em>the idea</em>.
 					</p>
 					<p>If he uses the JPA entities to generate the SQL statements ... that would be fast, that would be
 						database independent, he could refactor as he like, he wouldn't have to think about SQL, ...</p>
@@ -190,10 +190,12 @@
 									<td><span class="glyphicon text-danger glyphicon-remove"></span><span class="sr-only">no</span></td>
 									<td><span class="glyphicon text-success glyphicon-ok"></span><span class="sr-only">yes</span></td>
 									<td><span class="glyphicon text-success glyphicon-ok"></span><span
-										class="glyphicon text-success glyphicon-ok"></span><span class="sr-only">yes</span></td>
+										class="glyphicon text-success glyphicon-ok"></span><span class="sr-only">yes</span>*</td>
 								</tr>
 							</tbody>
 						</table>
+						<div class="panel-footer">* Fasnate tries to generate the best SQL for the target database, which is
+							usually faster than "handcrafted" SQL.</div>
 					</div>
 				</div>
 			</dd>
@@ -214,7 +216,7 @@
 					<li><a href="https://github.com/liefke/org.fastnate/wiki/HOWTO#how-to-import-data-from-csv-files">How to import data from CSV files</a></li>
 				</ul></li>
 			<li class="list-group-item"><a href="https://github.com/liefke/org.fastnate/wiki/FAQ">FAQ</a>:<ul>
-					<li><a href="https://github.com/liefke/org.fastnate/wiki/FAQ#what-type-of-databases-are-supported">What type of databases are supported?</a></li>
+					<li><a href="https://github.com/liefke/org.fastnate/wiki/FAQ#what-types-of-databases-are-supported">What types of databases are supported?</a></li>
 					<li><a href="https://github.com/liefke/org.fastnate/wiki/FAQ#which-jpa-implementations-are-supported">Which JPA implementations are supported?</a></li>
 					<li><a href="https://github.com/liefke/org.fastnate/wiki/FAQ#which-jpa-features-are-supported">Which JPA features are supported?</a></li>
 					<li><a href="https://github.com/liefke/org.fastnate/wiki/FAQ#which-validators-are-applied-during-creation-of-sql">Which validators are applied during creation of SQL?</a></li>
@@ -332,9 +334,13 @@
 					</li>
 				</ul>
 			</dd>
-			<dt>Snapshot builds<dt>
+			<dt>Snapshot builds</dt>
 			<dd>
-				To use the latest development snapshots as dependency you need to add our binary repository to your <code>settings.xml</code> or <code>pom.xml</code>:
+				To use the latest development snapshots as dependency you need to add our binary repository to your
+				<code>settings.xml</code>
+				or
+				<code>pom.xml</code>
+				:
 				<div class="highlight">
 					<pre>&lt;repositories>
 	&lt;repository>
@@ -347,7 +353,7 @@
 &lt;/repositories></pre>
 				</div>
 				After that you can switch to version <em>1.4.0-SNAPSHOT</em> in your dependency declaration.
-			</dd>		
+			</dd>
 			<dt>Latest sources</dt>
 			<dd>
 				The sources are available in GitHub:
