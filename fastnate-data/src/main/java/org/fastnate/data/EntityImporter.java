@@ -10,16 +10,10 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -29,8 +23,6 @@ import org.fastnate.generator.ConnectedEntitySqlGenerator;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.WriterEntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
-import org.fastnate.generator.context.ModelException;
-import org.reflections.Reflections;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +62,13 @@ public class EntityImporter {
 	/** Settings key for a part to write into the output file after the generated content. */
 	public static final String POSTFIX_KEY = "fastnate.data.sql.postfix";
 
-	/** Settings key for the packages to scan. */
+	/**
+	 * Settings key for the fully qualified name of a class that scans and instantiates the {@link DataProvider}.
+	 * Defaults to {@link DefaultDataProviderFactory}.
+	 */
+	public static final String FACTORY_KEY = "fastnate.data.provider.factory";
+
+	/** Settings key for the packages to scan (separated by ';', ',', ':' or whitespaces). */
 	public static final String PACKAGES_KEY = "fastnate.data.provider.packages";
 
 	/**
@@ -148,72 +146,64 @@ public class EntityImporter {
 		this.settings = settings;
 		this.dataFolder = dataFolder;
 		this.context = context;
-		setup();
-	}
 
-	/**
-	 * Tries to create a provider using the given constructor and add it to the {@link #dataProviders list of providers}
-	 * .
-	 *
-	 * @param constructor
-	 *            the constructor of the provider
-	 * @return {@code true} if a valid provider was addedd
-	 */
-	private boolean addProvider(final Constructor<?> constructor) {
-		// Remember the maximum order criteria of the parameters
-		int maxOrder = Integer.MIN_VALUE;
-		final Class<?>[] parameterTypes = constructor.getParameterTypes();
-		final Object[] params = new Object[parameterTypes.length];
-		for (int i = 0; i < parameterTypes.length; i++) {
-			final Class<?> parameterType = parameterTypes[i];
-			if (parameterType == File.class) {
-				params[i] = this.dataFolder;
-			} else if (parameterType == Properties.class) {
-				params[i] = this.settings;
-			} else {
-				final DataProvider parameter = findProvider(parameterType);
-				if (parameter == null) {
-					// No matching data provider found -> this is not our constructor (at least up to now)
-					return false;
-				}
-				params[i] = parameter;
-				final int order = parameter.getOrder();
-				if (order > maxOrder) {
-					maxOrder = order;
-				}
-			}
-		}
+		log.info("Building all instances of " + DataProvider.class.getSimpleName());
+		final String providerFactoryName = settings.getProperty(FACTORY_KEY,
+				DefaultDataProviderFactory.class.getName());
 		try {
-			// Create the provider
-			final DataProvider provider = (DataProvider) constructor.newInstance(params);
-
-			// And add it after the first provider with the same or a smaller order criteria
-			final int order = Math.max(maxOrder, provider.getOrder());
-			int index = this.dataProviders.size();
-			while (index > 0 && this.dataProviders.get(index - 1).getOrder() > order) {
-				index--;
-			}
-			this.dataProviders.add(index, provider);
-			return true;
-		} catch (final InstantiationException | IllegalAccessException | InvocationTargetException e) {
-			throw new IllegalArgumentException(e);
+			final Class<? extends DataProviderFactory> providerFactoryClass = (Class<? extends DataProviderFactory>) Class
+					.forName(providerFactoryName);
+			final DataProviderFactory providerFactory = providerFactoryClass.newInstance();
+			providerFactory.createDataProviders(this);
+		} catch (final ClassNotFoundException e) {
+			throw new IllegalArgumentException("Could not find DataProviderFactory: " + providerFactoryName, e);
+		} catch (final InstantiationException | IllegalAccessException e) {
+			throw new IllegalArgumentException("Could not create DataProviderFactory: " + providerFactoryName, e);
 		}
 	}
 
 	/**
-	 * Searches for a data provider of the given type.
+	 * Adds a provider to the list of available providers.
 	 *
-	 * @param dataType
-	 *            the type of the provider
-	 * @return the matching data provider or {@code null} if no such provider was added up to now
+	 * The provider will be added after the last provider with the same or a smaller order criteria.
+	 *
+	 * @param provider
+	 *            the provider
+	 *
 	 */
-	private DataProvider findProvider(final Class<?> dataType) {
-		for (final DataProvider provider : this.dataProviders) {
-			if (dataType.isInstance(provider)) {
-				return provider;
-			}
+	public void addDataProvider(final DataProvider provider) {
+		addDataProvider(provider, provider.getOrder());
+	}
+
+	/**
+	 * Adds a provider to the list of available providers.
+	 *
+	 * The provider will be added after the last provider with the same or a smaller order criteria.
+	 *
+	 * @param provider
+	 *            the provider
+	 * @param maximumOrderOfDepenendencies
+	 *            the maximum {@link DataProvider#getOrder() ordering} of dependencies of the provider
+	 *
+	 */
+	public void addDataProvider(final DataProvider provider, final int maximumOrderOfDepenendencies) {
+		final int order = Math.max(maximumOrderOfDepenendencies, provider.getOrder());
+		int index = this.dataProviders.size();
+		while (index > 0 && this.dataProviders.get(index - 1).getOrder() > order) {
+			index--;
 		}
-		return null;
+		this.dataProviders.add(index, provider);
+	}
+
+	/**
+	 * Resolves the first provider that is an instance of the given class.
+	 *
+	 * @param providerClass
+	 *            the provider class
+	 * @return the provider with that class or {@code null} if no such provider exists
+	 */
+	public DataProvider findDataProvider(final Class<? extends DataProvider> providerClass) {
+		return this.dataProviders.stream().filter(providerClass::isInstance).findFirst().orElse(null);
 	}
 
 	private Charset getEncoding() {
@@ -330,55 +320,6 @@ public class EntityImporter {
 	public void importData(final Writer writer) throws IOException {
 		try (WriterEntitySqlGenerator generator = new WriterEntitySqlGenerator(writer, this.context)) {
 			importData(generator);
-		}
-	}
-
-	/**
-	 * Fills the {@link #dataProviders} with matching providers found in the class path.
-	 */
-	private void setup() {
-		log.info("Searching for implementations of " + DataProvider.class.getSimpleName());
-
-		// Find providers
-		final String packages = EntityImporter.class.getPackage().getName() + ";"
-				+ this.settings.getProperty(PACKAGES_KEY, "").trim();
-		final Reflections reflections = new Reflections((Object[]) packages.split("[\\s;,:]+"));
-		final List<Class<? extends DataProvider>> providers = new ArrayList<>(
-				reflections.getSubTypesOf(DataProvider.class));
-
-		// Use a fixed order
-		Collections.sort(providers, new Comparator<Class<?>>() {
-
-			@Override
-			public int compare(final Class<?> c1, final Class<?> c2) {
-				return c1.getName().compareTo(c2.getName());
-			}
-		});
-
-		// Create instances, depending on other needed providers
-		while (!providers.isEmpty()) {
-			final int previousSize = providers.size();
-
-			for (final Iterator<Class<? extends DataProvider>> iterator = providers.iterator(); iterator.hasNext();) {
-				final Class<? extends DataProvider> providerClass = iterator.next();
-				if (Modifier.isAbstract(providerClass.getModifiers())) {
-					iterator.remove();
-				} else {
-					final Constructor<?>[] constructors = providerClass.getConstructors();
-					ModelException.test(constructors.length > 0, "No public constructor found for {}", providerClass);
-
-					for (final Constructor<?> constructor : constructors) {
-						if (addProvider(constructor)) {
-							iterator.remove();
-							break;
-						}
-					}
-				}
-			}
-
-			// Prevent endless loops
-			ModelException.test(previousSize > providers.size(),
-					"Can't create the following provides (possibly because of circular dependencies): {}", providers);
 		}
 	}
 
