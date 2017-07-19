@@ -61,8 +61,8 @@ public class EntityImporterTest {
 				final List<TestEntity> entities = em.createQuery("SELECT e FROM TestEntity e", TestEntity.class)
 						.getResultList();
 
-				// TestData + SuccessorData + CsvTestData
-				final int expectedEntities = 3 + 1 + 2;
+				// TestData + SuccessorData + CsvTestData + InjectTestData
+				final int expectedEntities = 3 + 1 + 2 + 2;
 				assertThat(entities).hasSize(expectedEntities);
 			} finally {
 				em.close();

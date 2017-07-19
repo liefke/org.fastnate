@@ -152,6 +152,14 @@
 				</exclusions>
 			</dependency>
 
+			<!-- Injections for DataProvider -->
+			<dependency>
+			    <groupId>javax.inject</groupId>
+			    <artifactId>javax.inject</artifactId>
+			    <version>1</version>
+			    <scope>provided</scope>
+			</dependency>
+
 			<!-- This is just the JPA standalone API (without Hibernate) -->
 			<dependency>
 				<groupId>org.hibernate.javax.persistence</groupId>

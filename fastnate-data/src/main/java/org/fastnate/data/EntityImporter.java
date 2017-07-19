@@ -148,8 +148,15 @@ public class EntityImporter {
 		this.context = context;
 
 		log.info("Building all instances of " + DataProvider.class.getSimpleName());
-		final String providerFactoryName = settings.getProperty(FACTORY_KEY,
-				DefaultDataProviderFactory.class.getName());
+		String providerFactoryName = settings.getProperty(FACTORY_KEY);
+		if (providerFactoryName == null) {
+			try {
+				Class.forName("javax.inject.Inject");
+				providerFactoryName = "org.fastnate.data.InjectDataProviderFactory";
+			} catch (final ClassNotFoundException e) {
+				providerFactoryName = DefaultDataProviderFactory.class.getName();
+			}
+		}
 		try {
 			final Class<? extends DataProviderFactory> providerFactoryClass = (Class<? extends DataProviderFactory>) Class
 					.forName(providerFactoryName);
