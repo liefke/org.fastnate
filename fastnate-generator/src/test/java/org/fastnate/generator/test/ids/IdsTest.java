@@ -5,8 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Properties;
 
 import org.fastnate.generator.ConnectedEntitySqlGenerator;
@@ -14,7 +12,6 @@ import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.test.embedded.EmbeddedTest;
 import org.hibernate.Session;
-import org.hibernate.jdbc.Work;
 import org.junit.Test;
 
 /**
@@ -127,28 +124,24 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 
 		// Now try to write an entity with the ConnectedEntitySqlGenerator (check if IDs are initialized correctly)
 		final Properties settings = getGenerator().getContext().getSettings();
-		((Session) getEm().getDelegate()).doWork(new Work() {
-
-			@Override
-			public void execute(final Connection connection) throws SQLException {
-				try {
-					try (ConnectedEntitySqlGenerator generator = new ConnectedEntitySqlGenerator(connection,
-							new GeneratorContext(settings))) {
-						final E entity5 = entityConstructor.newInstance(entityPrefix + "5");
-						final E entity6 = entityConstructor.newInstance(entityPrefix + "6");
-						entity6.setOther(entity5);
-						generator.write(entity6);
-						if (checkIncreasingIds && !generator.getContext().isWriteRelativeIds()) {
-							assertThat(((Number) entity5.getId()).longValue())
-									.isGreaterThan(((Number) entity4.getId()).longValue());
-							assertThat(((Number) entity6.getId()).longValue())
-									.isGreaterThan(((Number) entity4.getId()).longValue() + 1);
-						}
+		((Session) getEm().getDelegate()).doWork(connection -> {
+			try {
+				try (ConnectedEntitySqlGenerator generator = new ConnectedEntitySqlGenerator(connection,
+						new GeneratorContext(settings))) {
+					final E entity5 = entityConstructor.newInstance(entityPrefix + "5");
+					final E entity6 = entityConstructor.newInstance(entityPrefix + "6");
+					entity6.setOther(entity5);
+					generator.write(entity6);
+					if (checkIncreasingIds && !generator.getContext().isWriteRelativeIds()) {
+						assertThat(((Number) entity5.getId()).longValue())
+								.isGreaterThan(((Number) entity4.getId()).longValue());
+						assertThat(((Number) entity6.getId()).longValue())
+								.isGreaterThan(((Number) entity4.getId()).longValue() + 1);
 					}
-				} catch (final IOException | InstantiationException | IllegalAccessException
-						| InvocationTargetException e) {
-					throw new IllegalStateException(e);
 				}
+			} catch (final IOException | InstantiationException | IllegalAccessException
+					| InvocationTargetException e) {
+				throw new IllegalStateException(e);
 			}
 		});
 

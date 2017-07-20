@@ -92,7 +92,11 @@ public class AbstractEntitySqlGeneratorTest {
 	 * @return the test specific properties for the generator
 	 */
 	protected Properties getGeneratorProperties() {
-		return new Properties(System.getProperties());
+		final Properties properties = new Properties(System.getProperties());
+		properties.putIfAbsent("hibernate.show_sql", "true");
+		properties.putIfAbsent("hibernate.format_sql", "false");
+		properties.putIfAbsent("hibernate.use_sql_comments", "true");
+		return properties;
 	}
 
 	/**

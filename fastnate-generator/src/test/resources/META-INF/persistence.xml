@@ -5,9 +5,6 @@
 	xmlns="http://java.sun.com/xml/ns/persistence">
 	<persistence-unit name="test-h2" transaction-type="RESOURCE_LOCAL">
 		<properties>
-            <property name="hibernate.show_sql" value="true"/>
-            <property name="hibernate.format_sql" value="false"/>
-			<property name="hibernate.use_sql_comments" value="true" />
             <property name="hibernate.connection.driver_class" value="org.h2.Driver"/>
             <property name="hibernate.connection.url" value="jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MVCC=1;MODE=Oracle;DB_CLOSE_ON_EXIT=FALSE"/>
             <property name="hibernate.connection.username" value="sa"/>
@@ -17,9 +14,6 @@
 	</persistence-unit>
 	<persistence-unit name="test-oracle" transaction-type="RESOURCE_LOCAL">
 		<properties>
-            <property name="hibernate.show_sql" value="true"/>
-            <property name="hibernate.format_sql" value="false"/>
-			<property name="hibernate.use_sql_comments" value="true" />
             <property name="hibernate.connection.driver_class" value="oracle.jdbc.OracleDriver"/>
             <property name="hibernate.connection.url" value="jdbc:oracle:thin:@localhost:1521:XE"/>
             <property name="hibernate.connection.username" value="fastnate"/>
@@ -28,9 +22,6 @@
 	</persistence-unit>
 	<persistence-unit name="test-postgres" transaction-type="RESOURCE_LOCAL">
 		<properties>
-            <property name="hibernate.show_sql" value="true"/>
-            <property name="hibernate.format_sql" value="false"/>
-			<property name="hibernate.use_sql_comments" value="true" />
             <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>
             <property name="hibernate.connection.url" value="jdbc:postgresql://localhost:5432/fastnate"/>
             <property name="hibernate.connection.username" value="fastnate"/>
@@ -39,9 +30,6 @@
 	</persistence-unit>
 	<persistence-unit name="test-mysql" transaction-type="RESOURCE_LOCAL">
 		<properties>
-            <property name="hibernate.show_sql" value="true"/>
-            <property name="hibernate.format_sql" value="false"/>
-			<property name="hibernate.use_sql_comments" value="true" />
             <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
             <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/fastnate"/>
             <property name="hibernate.connection.username" value="fastnate"/>
@@ -50,9 +38,6 @@
 	</persistence-unit>
 	<persistence-unit name="test-mssql" transaction-type="RESOURCE_LOCAL">
 		<properties>
-            <property name="hibernate.show_sql" value="true"/>
-            <property name="hibernate.format_sql" value="false"/>
-			<property name="hibernate.use_sql_comments" value="true" />
             <property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
             <property name="hibernate.connection.url" value="jdbc:sqlserver://localhost\fastnate:1433;integratedSecurity=true;"/>
 		</properties>
