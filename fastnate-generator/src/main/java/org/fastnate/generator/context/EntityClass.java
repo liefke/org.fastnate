@@ -362,7 +362,7 @@ public class EntityClass<E> {
 	 *            the currently inspected class
 	 */
 	private void buildIdProperty(final Class<? super E> c) {
-		// TODO (functional) Support @IdClass
+		// TODO (Issue #2) Support @IdClass
 
 		// Find ID properties of super classes
 		if (c.getSuperclass() != null) {
