@@ -1,16 +1,5 @@
 package org.fastnate.generator.dialect;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.InsertStatement;
-
-import com.google.common.base.Joiner;
-
 /**
  * Handles MySQL specific conversions.
  *
@@ -23,8 +12,6 @@ public class MySqlDialect extends GeneratorDialect {
 	private static final char MAX_ESCAPE = '\\';
 
 	private static final String[] ESCAPES = new String[MAX_ESCAPE + 1];
-
-	private static final Joiner JOINER = Joiner.on(", ");
 
 	static {
 		ESCAPES['\0'] = "\\0";
@@ -50,40 +37,9 @@ public class MySqlDialect extends GeneratorDialect {
 		return createHexBlobExpression("x'", blob, "'");
 	}
 
-	/**
-	 * Replace any subselect in an insert statement, if the same table is selected.
-	 */
 	@Override
-	public String createSql(final EntityStatement stmt) {
-		if (!(stmt instanceof InsertStatement)) {
-			return stmt.toString();
-		}
-		final InsertStatement statement = (InsertStatement) stmt;
-		final Map<String, String> values = statement.getValues();
-		if (values.isEmpty()) {
-			return "INSERT INTO " + statement.getTable() + " VALUES ();\n";
-		}
-		final Pattern subselectPattern = Pattern
-				.compile("\\(SELECT\\s+(.*)\\s+FROM\\s+" + statement.getTable() + "\\s*\\)", Pattern.CASE_INSENSITIVE);
-		if (!subselectPattern.matcher(values.values().toString()).find()) {
-			return stmt.toString();
-		}
-
-		final StringBuilder result = new StringBuilder("INSERT INTO ").append(statement.getTable());
-		result.append(" (");
-		// Create MySQL compatible INSERTs
-		JOINER.appendTo(result, values.keySet()).append(") SELECT ");
-		final List<String> rewrite = new ArrayList<>();
-		for (final String value : values.values()) {
-			final Matcher matcher = subselectPattern.matcher(value);
-			if (matcher.matches()) {
-				rewrite.add(matcher.group(1));
-			} else {
-				rewrite.add(value);
-			}
-		}
-		JOINER.appendTo(result, rewrite).append(" FROM ").append(statement.getTable()).append(";\n");
-		return result.toString();
+	public Object getEmptyValuesExpression() {
+		return "VALUES ()";
 	}
 
 	@Override
@@ -94,6 +50,16 @@ public class MySqlDialect extends GeneratorDialect {
 	@Override
 	protected boolean isEmulatingSequences() {
 		return true;
+	}
+
+	@Override
+	public boolean isFastInTransaction() {
+		return true;
+	}
+
+	@Override
+	public boolean isSelectFromSameTableInInsertSupported() {
+		return false;
 	}
 
 	/**

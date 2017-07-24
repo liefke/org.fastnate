@@ -1,9 +1,9 @@
 package org.fastnate.generator.context;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -16,9 +16,11 @@ import javax.persistence.OneToOne;
 import javax.validation.constraints.NotNull;
 
 import org.fastnate.generator.converter.EntityConverter;
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.InsertStatement;
-import org.fastnate.generator.statements.UpdateStatement;
+import org.fastnate.generator.dialect.GeneratorDialect;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
+import org.fastnate.generator.statements.StatementsWriter;
+import org.fastnate.generator.statements.TableStatement;
 import org.hibernate.annotations.Any;
 import org.hibernate.annotations.AnyMetaDef;
 import org.hibernate.annotations.ManyToAny;
@@ -104,29 +106,31 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	private final String mappedBy;
 
 	/** The name of the join column. */
-	private final String column;
+	private final GeneratorColumn column;
 
 	/** The name of the id for referencing an embedded id. */
 	private final String idField;
 
 	/** The name of the column that contains the id of the entity class, if {@link Any} or {@link ManyToAny} is used. */
-	private final String anyColumn;
+	private final GeneratorColumn anyColumn;
 
 	/** Contains the mapping from a class to its id in the database. */
-	private final Map<Class<?>, String> anyClasses = new HashMap<>();
+	private final Map<Class<?>, ColumnExpression> anyClasses = new HashMap<>();
 
 	/**
 	 * Creates a new instance of {@link EntityProperty}.
 	 *
 	 * @param context
 	 *            the generator context.
+	 * @param containerTable
+	 *            the table that contains our column
 	 * @param attribute
 	 *            the accessor of the attribute
 	 * @param override
 	 *            optional {@link AttributeOverride} configuration.
 	 */
-	public EntityProperty(final GeneratorContext context, final AttributeAccessor attribute,
-			@Nullable final AssociationOverride override) {
+	public EntityProperty(final GeneratorContext context, final GeneratorTable containerTable,
+			final AttributeAccessor attribute, @Nullable final AssociationOverride override) {
 		super(attribute);
 		this.context = context;
 
@@ -146,36 +150,39 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			final JoinColumn joinColumn = override != null && override.joinColumns().length > 0
 					? override.joinColumns()[0] : attribute.getAnnotation(JoinColumn.class);
 			if (joinColumn != null && joinColumn.name().length() > 0) {
-				this.column = joinColumn.name();
+				this.column = containerTable.resolveColumn(joinColumn.name());
 			} else {
-				this.column = attribute.getName() + "_"
-						+ (targetClass == null ? "id" : targetClass.getIdColumn(attribute));
+				this.column = containerTable.resolveColumn(
+						attribute.getName() + "_" + (targetClass == null ? "id" : targetClass.getIdColumn(attribute)));
 			}
 		} else {
 			this.column = null;
 		}
 
 		// Initialize ANY meta information
-		this.anyColumn = mapping.getAnyMetaColumn();
-		if (this.anyColumn != null) {
-			fillMetaDefs(attribute);
+		final String anyColumnName = mapping.getAnyMetaColumn();
+		if (anyColumnName != null) {
+			this.anyColumn = containerTable.resolveColumn(anyColumnName);
+			fillMetaDefs(attribute, context.getDialect());
+		} else {
+			this.anyColumn = null;
 		}
 	}
 
 	@Override
-	public void addInsertExpression(final E entity, final InsertStatement statement) {
+	public void addInsertExpression(final TableStatement statement, final E entity) {
 		// Check that we are not just a "mappedBy"
 		if (this.column != null) {
 			// Resolve the entity
 			final T value = getValue(entity);
 			if (value != null) {
 				final EntityClass<T> entityClass = this.context.getDescription(value);
-				final String expression = entityClass.getEntityReference(value, this.idField, false);
+				final ColumnExpression expression = entityClass.getEntityReference(value, this.idField, false);
 				if (expression != null) {
 					// We have an ID - use the expression
-					statement.addValue(this.column, expression);
+					statement.setColumnValue(this.column, expression);
 					if (this.anyColumn != null) {
-						statement.addValue(this.anyColumn, findAnyDesc(value));
+						statement.setColumnValue(this.anyColumn, findAnyDesc(value));
 					}
 					return;
 				}
@@ -185,26 +192,26 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			}
 			failIfRequired(entity);
 			if (this.context.isWriteNullValues()) {
-				statement.addValue(this.column, "null");
+				statement.setColumnValue(this.column, PrimitiveColumnExpression.NULL);
 				if (this.anyColumn != null) {
-					statement.addValue(this.anyColumn, "null");
+					statement.setColumnValue(this.anyColumn, PrimitiveColumnExpression.NULL);
 				}
 			}
 		}
 	}
 
-	private void fillMetaDefs(final AttributeAccessor attribute) {
+	private void fillMetaDefs(final AttributeAccessor attribute, final GeneratorDialect dialect) {
 		final AnyMetaDef metaDef = attribute.getAnnotation(AnyMetaDef.class);
 		if (metaDef == null) {
 			throw new IllegalArgumentException("Missing AnyMetaDef for " + attribute);
 		}
 		for (final MetaValue metaValue : metaDef.metaValues()) {
-			this.anyClasses.put(metaValue.targetEntity(), "'" + metaValue.value() + "'");
+			this.anyClasses.put(metaValue.targetEntity(), PrimitiveColumnExpression.create(metaValue.value(), dialect));
 		}
 	}
 
-	private String findAnyDesc(final T entity) {
-		final String desc = this.anyClasses.get(entity.getClass());
+	private ColumnExpression findAnyDesc(final T entity) {
+		final ColumnExpression desc = this.anyClasses.get(entity.getClass());
 		if (desc == null) {
 			throw new IllegalArgumentException(
 					"Can'f find meta description for " + entity.getClass() + " on " + getAttribute());
@@ -219,25 +226,25 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	}
 
 	@Override
-	public List<EntityStatement> generatePendingStatements(final E entity, final Object writtenEntity,
-			final Object... arguments) {
-		final String expression = this.context.getDescription(writtenEntity).getEntityReference(writtenEntity,
+	public void generatePendingStatements(final StatementsWriter writer, final E entity, final Object writtenEntity,
+			final Object... arguments) throws IOException {
+		final ColumnExpression expression = this.context.getDescription(writtenEntity).getEntityReference(writtenEntity,
 				this.idField, false);
 		if (expression == null) {
 			throw new ModelException("Entity can't be referenced: " + writtenEntity);
 		}
 		final EntityClass<E> entityClass = this.context.getDescription(entity);
-		final UpdateStatement stmt = new UpdateStatement(entityClass.getTable(),
+		final TableStatement stmt = writer.createUpdateStatement(this.context.getDialect(), entityClass.getTable(),
 				entityClass.getIdColumn(getAttribute()), entityClass.getEntityReference(entity, this.idField, true));
-		stmt.addValue(this.column, expression);
-		return Collections.<EntityStatement> singletonList(stmt);
+		stmt.setColumnValue(this.column, expression);
+		writer.writeStatement(stmt);
 	}
 
 	@Override
-	public String getExpression(final E entity, final boolean whereExpression) {
+	public ColumnExpression getExpression(final E entity, final boolean whereExpression) {
 		final T value = getValue(entity);
 		if (value == null) {
-			return "null";
+			return PrimitiveColumnExpression.NULL;
 		}
 		return EntityConverter.getEntityReference(value, this.idField, this.context, whereExpression);
 	}
@@ -246,16 +253,17 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	public String getPredicate(final E entity) {
 		final T value = getValue(entity);
 		if (value == null) {
-			return this.column + " IS NULL";
+			return this.column.getName() + " IS NULL";
 		}
-		final String reference = EntityConverter.getEntityReference(value, this.idField, this.context, true);
+		final ColumnExpression reference = EntityConverter.getEntityReference(value, this.idField, this.context, true);
 		if (reference == null) {
 			return null;
 		}
 		if (this.anyColumn != null) {
-			return '(' + this.column + " = " + reference + " AND " + this.anyColumn + " = " + findAnyDesc(value) + ')';
+			return '(' + this.column.getName() + " = " + reference.toSql() + " AND " + this.anyColumn.getName() + " = "
+					+ findAnyDesc(value) + ')';
 		}
-		return this.column + " = " + reference;
+		return this.column + " = " + reference.toSql();
 	}
 
 	@Override

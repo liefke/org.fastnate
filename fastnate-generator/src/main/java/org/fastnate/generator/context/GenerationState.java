@@ -1,9 +1,10 @@
 package org.fastnate.generator.context;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.fastnate.generator.statements.EntityStatement;
+import org.fastnate.generator.statements.StatementsWriter;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -53,18 +54,19 @@ public class GenerationState {
 		/**
 		 * Generates the update statements for all entities that are required after the given entity was generated.
 		 *
+		 * @param writer
+		 *            the target of the generated statements
 		 * @param entity
 		 *            the entity that exists now in the database
-		 * @return the list of pending statements
+		 * @throws IOException
+		 *             if the writer throws one
 		 */
-		public <E> List<EntityStatement> generatePendingStatements(final Object entity) {
-			final List<EntityStatement> result = new ArrayList<>();
+		public <E> void writePendingStatements(final StatementsWriter writer, final Object entity) throws IOException {
 			for (final Update<?> update : this.updates) {
 				final Update<E> singleUpdate = (Update<E>) update;
-				result.addAll(singleUpdate.getProperty().generatePendingStatements(singleUpdate.getEntity(), entity,
-						singleUpdate.getArguments()));
+				singleUpdate.getProperty().generatePendingStatements(writer, singleUpdate.getEntity(), entity,
+						singleUpdate.getArguments());
 			}
-			return result;
 		}
 
 	}

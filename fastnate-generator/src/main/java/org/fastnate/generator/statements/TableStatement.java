@@ -1,39 +1,30 @@
 package org.fastnate.generator.statements;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import org.fastnate.generator.context.GeneratorColumn;
+import org.fastnate.generator.context.GeneratorTable;
 
 /**
  * A SQL statement that affects a table and a set of columns.
  *
  * @author Tobias Liefke
  */
-@Getter
-@RequiredArgsConstructor
-public abstract class TableStatement extends EntityStatement {
-
-	/** The main table of this update / insert statement. */
-	private final String table;
-
-	/** The columns and their values. */
-	private final Map<String, String> values = new LinkedHashMap<>();
+public interface TableStatement extends EntityStatement {
 
 	/**
-	 * Adds a value to the list of value expressions.
+	 * The affected table of this update / insert statement.
+	 *
+	 * @return the metadata of the table
+	 */
+	GeneratorTable getTable();
+
+	/**
+	 * Sets a plain expression for a specific column.
 	 *
 	 * @param column
-	 *            the column name
+	 *            the metadata of the column
 	 * @param value
-	 *            the expression value (as expression, that is including surrounding ' for string literals)
+	 *            the value expression
 	 */
-	public void addValue(final String column, final String value) {
-		if (value == null) {
-			throw new NullPointerException("value should be not null");
-		}
-		this.values.put(column, value);
-	}
+	void setColumnValue(GeneratorColumn column, ColumnExpression value);
 
 }

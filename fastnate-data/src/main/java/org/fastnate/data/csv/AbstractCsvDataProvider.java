@@ -319,7 +319,8 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 			if (property instanceof SingularProperty) {
 				final SingularProperty<?, ?> singularProperty = (SingularProperty<?, ?>) property;
 				if (singularProperty.isTableColumn() && singularProperty.getColumn() != null) {
-					this.columnProperties.put(singularProperty.getColumn(), singularProperty.getAttribute().getName());
+					this.columnProperties.put(singularProperty.getColumn().getName(),
+							singularProperty.getAttribute().getName());
 				}
 			}
 		}

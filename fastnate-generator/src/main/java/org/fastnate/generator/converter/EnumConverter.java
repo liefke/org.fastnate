@@ -7,6 +7,8 @@ import javax.persistence.MapKeyEnumerated;
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
 
 /**
  * Describes a enum property of an {@link EntityClass}.
@@ -49,18 +51,18 @@ public class EnumConverter<E extends Enum<E>> extends AbstractValueConverter<E> 
 	}
 
 	@Override
-	public String getExpression(final E value, final GeneratorContext context) {
+	public ColumnExpression getExpression(final E value, final GeneratorContext context) {
 		switch (this.exportType) {
-		case STRING:
-			return context.getDialect().quoteString(value.name());
-		case ORDINAL:
-		default:
-			return String.valueOf(value.ordinal());
+			case STRING:
+				return PrimitiveColumnExpression.create(value.name(), context.getDialect());
+			case ORDINAL:
+			default:
+				return PrimitiveColumnExpression.create(value.ordinal(), context.getDialect());
 		}
 	}
 
 	@Override
-	public String getExpression(final String defaultValue, final GeneratorContext context) {
+	public ColumnExpression getExpression(final String defaultValue, final GeneratorContext context) {
 		return getExpression(Enum.valueOf(this.targetType, defaultValue), context);
 	}
 

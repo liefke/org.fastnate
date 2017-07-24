@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.BiConsumer;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -25,7 +26,7 @@ import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.dialect.H2Dialect;
 import org.fastnate.generator.provider.HibernateProvider;
 import org.fastnate.generator.provider.JpaProvider;
-import org.fastnate.generator.statements.EntityStatement;
+import org.fastnate.generator.statements.StatementsWriter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -54,7 +55,7 @@ public class GeneratorContext {
 
 		private final String id;
 
-		private final String table;
+		private final GeneratorTable table;
 
 		@Override
 		public boolean equals(final Object obj) {
@@ -70,7 +71,7 @@ public class GeneratorContext {
 			if (this.table == null) {
 				return this.id.hashCode();
 			}
-			return this.id.hashCode() << 2 | this.table.hashCode();
+			return this.id.hashCode() << 2 | this.table.getName().hashCode();
 		}
 
 		@Override
@@ -78,7 +79,7 @@ public class GeneratorContext {
 			if (this.table == null) {
 				return this.id;
 			}
-			return this.id + '.' + this.table;
+			return this.id + '.' + this.table.getName();
 		}
 
 	}
@@ -219,8 +220,11 @@ public class GeneratorContext {
 	/** Contains the settings that were given during creation, resp. as read from the persistence configuration. */
 	private final Properties settings;
 
-	/** Contains the extracted metadata per entity class. */
+	/** Contains the extracted metadata to every known class of an {@link Entity}. */
 	private final Map<Class<?>, EntityClass<?>> descriptions = new HashMap<>();
+
+	/** Contains the extracted metadata to every known class of an {@link Entity}. */
+	private final Map<String, GeneratorTable> tables = new HashMap<>();
 
 	/** Contains the state of single entities, maps from an entity name to the mapping of an id to its state. */
 	private final Map<String, Map<Object, GenerationState>> states = new HashMap<>();
@@ -316,35 +320,26 @@ public class GeneratorContext {
 		this.contextModelListeners.add(listener);
 	}
 
-	/**
-	 * Notifies all Listeners, that a new generator was registered.
-	 *
-	 * @param generator
-	 *            the new generator
-	 */
-	private void announceGeneratorCreation(final IdGenerator generator) {
-		for (final ContextModelListener listener : this.contextModelListeners) {
-			listener.foundGenerator(generator);
-		}
+	private <K, T> T addContextObject(final Map<K, ? super T> objects,
+			final BiConsumer<ContextModelListener, ? super T> listenerFunction, final K key, final T object) {
+		objects.put(key, object);
+		fireContextObjectAdded(listenerFunction, object);
+		return object;
 	}
 
 	/**
-	 * Builds all statements that are necessary to align ID generators in the database with the current IDs.
+	 * Fires an event to all {@link #getContextModelListeners() listeners}.
 	 *
-	 * @return the list of statements
+	 * @param listenerFunction
+	 *            the function that is called on the listeners
+	 * @param contextObject
+	 *            the object to offer to the listener function
 	 */
-	public List<EntityStatement> getAlignmentStatements() {
-		final List<EntityStatement> result = new ArrayList<>();
-		for (final IdGenerator generator : this.generators.values()) {
-			result.addAll(generator.alignNextValue());
+	protected <T> void fireContextObjectAdded(final BiConsumer<ContextModelListener, T> listenerFunction,
+			final T contextObject) {
+		for (final ContextModelListener listener : this.contextModelListeners) {
+			listenerFunction.accept(listener, contextObject);
 		}
-		if (this.defaultSequenceGenerator != null) {
-			result.addAll(this.defaultSequenceGenerator.alignNextValue());
-		}
-		if (this.defaultTableGenerator != null) {
-			result.addAll(this.defaultTableGenerator.alignNextValue());
-		}
-		return result;
 	}
 
 	private IdGenerator getDefaultSequenceGenerator() {
@@ -355,18 +350,16 @@ public class GeneratorContext {
 									ImmutableMap.of("sequenceName", this.provider.getDefaultSequence(),
 											"allocationSize", Integer.valueOf(1))),
 					this.dialect, this.writeRelativeIds);
-			announceGeneratorCreation(this.defaultSequenceGenerator);
+			fireContextObjectAdded(ContextModelListener::foundGenerator, this.defaultSequenceGenerator);
 		}
 		return this.defaultSequenceGenerator;
 	}
 
 	private IdGenerator getDefaultTableGenerator() {
 		if (this.defaultTableGenerator == null) {
-			this.defaultTableGenerator = new TableIdGenerator(
-					AnnotationDefaults.create(TableGenerator.class,
-							ImmutableMap.of("pkColumnValue", "default", "allocationSize", Integer.valueOf(1))),
-					this.dialect, this.provider, this.writeRelativeIds);
-			announceGeneratorCreation(this.defaultTableGenerator);
+			this.defaultTableGenerator = new TableIdGenerator(AnnotationDefaults.create(TableGenerator.class,
+					ImmutableMap.of("pkColumnValue", "default", "allocationSize", Integer.valueOf(1))), this);
+			fireContextObjectAdded(ContextModelListener::foundGenerator, this.defaultTableGenerator);
 		}
 		return this.defaultTableGenerator;
 	}
@@ -396,9 +389,7 @@ public class GeneratorContext {
 				description.build();
 
 				// And notify listeners
-				for (final ContextModelListener listener : this.contextModelListeners) {
-					listener.foundEntityClass(description);
-				}
+				fireContextObjectAdded(ContextModelListener::foundEntityClass, description);
 			} else {
 				// Step up to find the parent description
 				final Class<?> superClass = entityClass.getSuperclass();
@@ -450,7 +441,8 @@ public class GeneratorContext {
 	 * @return the generator that is responsible for managing the values
 	 */
 	@SuppressWarnings("null")
-	public IdGenerator getGenerator(final GeneratedValue generatedValue, final String table, final String column) {
+	public IdGenerator getGenerator(final GeneratedValue generatedValue, final GeneratorTable table,
+			final GeneratorColumn column) {
 		GenerationType strategy = generatedValue.strategy();
 		final String name = generatedValue.generator();
 		if (StringUtils.isNotEmpty(name)) {
@@ -463,9 +455,8 @@ public class GeneratorContext {
 
 				final IdGenerator derived = generator.derive(table);
 				if (derived != generator) {
-					this.generators.put(new GeneratorId(name, table), derived);
-					announceGeneratorCreation(derived);
-					return derived;
+					return addContextObject(this.generators, ContextModelListener::foundGenerator,
+							new GeneratorId(name, table), derived);
 				}
 			}
 			return generator;
@@ -475,10 +466,8 @@ public class GeneratorContext {
 		}
 		switch (strategy) {
 			case IDENTITY:
-				final IdentityValue identityValue = new IdentityValue(this, table, column);
-				this.generators.put(new GeneratorId(column, table), identityValue);
-				announceGeneratorCreation(identityValue);
-				return identityValue;
+				return addContextObject(this.generators, ContextModelListener::foundGenerator,
+						new GeneratorId(column.getName(), table), new IdentityValue(this, table, column));
 			case TABLE:
 				return getDefaultTableGenerator();
 			case SEQUENCE:
@@ -515,28 +504,23 @@ public class GeneratorContext {
 	 * @param table
 	 *            the table of the current entity
 	 */
-	public void registerGenerators(final AnnotatedElement element, final String table) {
+	public void registerGenerators(final AnnotatedElement element, final GeneratorTable table) {
 		final SequenceGenerator sequenceGenerator = element.getAnnotation(SequenceGenerator.class);
 		if (sequenceGenerator != null) {
-			final GeneratorId key = new GeneratorId(sequenceGenerator.name(), null);
-			final SequenceIdGenerator generator = new SequenceIdGenerator(sequenceGenerator, this.dialect,
-					this.writeRelativeIds);
-			if (!this.generators.containsKey(key)) {
-				this.generators.put(key, generator);
-			} else {
-				this.generators.put(new GeneratorId(sequenceGenerator.name(), table), generator);
+			GeneratorId key = new GeneratorId(sequenceGenerator.name(), null);
+			if (this.generators.containsKey(key)) {
+				key = new GeneratorId(sequenceGenerator.name(), table);
 			}
-			announceGeneratorCreation(generator);
+			addContextObject(this.generators, ContextModelListener::foundGenerator, key,
+					new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
 		}
 
 		final TableGenerator tableGenerator = element.getAnnotation(TableGenerator.class);
 		if (tableGenerator != null) {
 			final GeneratorId key = new GeneratorId(tableGenerator.name(), null);
 			if (!this.generators.containsKey(key)) {
-				final TableIdGenerator generator = new TableIdGenerator(tableGenerator, this.dialect, this.provider,
-						this.writeRelativeIds);
-				this.generators.put(key, generator);
-				announceGeneratorCreation(generator);
+				addContextObject(this.generators, ContextModelListener::foundGenerator, key,
+						new TableIdGenerator(tableGenerator, this));
 			}
 		}
 	}
@@ -549,5 +533,41 @@ public class GeneratorContext {
 	 */
 	public void removeContextModelListener(final ContextModelListener listener) {
 		this.contextModelListeners.remove(listener);
+	}
+
+	/**
+	 * Finds resp. builds the metadata to the given table.
+	 *
+	 * @param tableName
+	 *            the name of the table from the database
+	 * @return the metadata for the given table
+	 */
+	public GeneratorTable resolveTable(final String tableName) {
+		final GeneratorTable table = this.tables.get(tableName);
+		if (table != null) {
+			return table;
+		}
+		return addContextObject(this.tables, ContextModelListener::foundTable, tableName,
+				new GeneratorTable(this.tables.size(), tableName, this));
+	}
+
+	/**
+	 * Builds all statements that are necessary to align ID generators in the database with the current IDs.
+	 *
+	 * @param writer
+	 *            the target of any write operation
+	 * @throws IOException
+	 *             if the writer throws one
+	 */
+	public void writeAlignmentStatements(final StatementsWriter writer) throws IOException {
+		for (final IdGenerator generator : this.generators.values()) {
+			generator.alignNextValue(writer);
+		}
+		if (this.defaultSequenceGenerator != null) {
+			this.defaultSequenceGenerator.alignNextValue(writer);
+		}
+		if (this.defaultTableGenerator != null) {
+			this.defaultTableGenerator.alignNextValue(writer);
+		}
 	}
 }

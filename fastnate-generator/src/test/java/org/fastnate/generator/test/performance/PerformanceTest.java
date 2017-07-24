@@ -4,24 +4,21 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.fastnate.generator.ConnectedEntitySqlGenerator;
 import org.fastnate.generator.EntitySqlGenerator;
-import org.fastnate.generator.context.GeneratorContext;
-import org.fastnate.generator.statements.EntityStatement;
+import org.fastnate.generator.statements.ConnectedStatementsWriter;
+import org.fastnate.generator.statements.ListStatementsWriter;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.hibernate.Session;
 import org.junit.Test;
 
 import com.google.common.base.Stopwatch;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -31,31 +28,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
-
-	private final class StatementsGenerator extends EntitySqlGenerator {
-
-		@Getter
-		private final List<String> statements = new ArrayList<>();
-
-		StatementsGenerator(final GeneratorContext context) {
-			super(context);
-		}
-
-		@Override
-		public void writeComment(final String comment) throws IOException {
-			// Ignore
-		}
-
-		@Override
-		public void writeSectionSeparator() throws IOException {
-			// Ignore
-		}
-
-		@Override
-		public void writeStatement(final EntityStatement stmt) throws IOException {
-			this.statements.add(getContext().getDialect().createSql(stmt).replaceAll("\\s*;\\s*$", ""));
-		}
-	}
 
 	private PerformanceTestEntity createRootEntity(final long seed, final int maxElementsPerEntity) {
 		final Random random = new Random(seed);
@@ -83,20 +55,17 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 	}
 
 	/**
-	 * Tests the performance of fastnate with the {@link ConnectedEntitySqlGenerator}.
+	 * Tests the performance of fastnate with the {@link ConnectedStatementsWriter}.
 	 */
 	@Test
 	public void testFastnateConnected() {
 		((Session) getEm().getDelegate()).doWork(connection -> {
-			connection.setAutoCommit(false);
 			try {
-				try (ConnectedEntitySqlGenerator generator = new ConnectedEntitySqlGenerator(connection,
-						getGenerator().getContext())) {
+				try (EntitySqlGenerator generator = new EntitySqlGenerator(getGenerator().getContext(), connection)) {
 					testHugeAmount(Function.<PerformanceTestEntity> identity(), entity -> {
 						try {
-							getEm().getTransaction().begin();
 							generator.write(entity);
-							getEm().getTransaction().commit();
+							generator.flush();
 						} catch (final IOException e) {
 							throw new IllegalStateException(e);
 						}
@@ -114,30 +83,39 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 	@Test
 	public void testFastnatePrebuild() {
 		((Session) getEm().getDelegate()).doWork(connection -> {
-			connection.setAutoCommit(false);
-			try (StatementsGenerator generator = new StatementsGenerator(getGenerator().getContext())) {
-				try (Statement statement = connection.createStatement()) {
-					testHugeAmount(entity -> {
-						try {
-							generator.write(entity);
-							final ArrayList<String> result = new ArrayList<>(generator.getStatements());
-							generator.getStatements().clear();
-							return result;
-						} catch (final IOException e) {
-							throw new RuntimeException(e);
-						}
-					}, statements -> {
-						try {
-							getEm().getTransaction().begin();
+			final boolean fastInTransaction = getGenerator().getContext().getDialect().isFastInTransaction();
+			connection.setAutoCommit(!fastInTransaction);
+			try (ListStatementsWriter writer = new ListStatementsWriter();
+					EntitySqlGenerator generator = new EntitySqlGenerator(getGenerator().getContext(), writer);
+					Statement statement = connection.createStatement()) {
+				testHugeAmount(entity -> {
+					try {
+						generator.write(entity);
+						final ArrayList<String> result = new ArrayList<>(writer.getStatements());
+						writer.getStatements().clear();
+						return result;
+					} catch (final IOException e) {
+						throw new RuntimeException(e);
+					}
+				}, statements -> {
+					try {
+						if (connection.getMetaData().supportsBatchUpdates()) {
+							for (final String stmt : statements) {
+								statement.addBatch(stmt);
+							}
+							statement.executeBatch();
+						} else {
 							for (final String stmt : statements) {
 								statement.executeUpdate(stmt);
 							}
-							getEm().getTransaction().commit();
-						} catch (final SQLException e) {
-							throw new IllegalStateException(e);
 						}
-					});
-				}
+						if (fastInTransaction) {
+							connection.commit();
+						}
+					} catch (final SQLException e) {
+						throw new IllegalStateException(e);
+					}
+				});
 			} catch (final IOException e) {
 				throw new IllegalStateException(e);
 			}

@@ -2,6 +2,9 @@ package org.fastnate.generator;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.Writer;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -12,8 +15,11 @@ import org.fastnate.generator.context.GeneratedIdProperty;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.Property;
 import org.fastnate.generator.dialect.GeneratorDialect;
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.InsertStatement;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.ConnectedStatementsWriter;
+import org.fastnate.generator.statements.FileStatementsWriter;
+import org.fastnate.generator.statements.StatementsWriter;
+import org.fastnate.generator.statements.TableStatement;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +36,7 @@ import lombok.RequiredArgsConstructor;
  * @author Tobias Liefke
  */
 @RequiredArgsConstructor
-public abstract class EntitySqlGenerator implements Closeable {
+public class EntitySqlGenerator implements Closeable {
 
 	private static <E> boolean isPostponedInsert(final List<Object> postInsertEntities, final E entity) {
 		final int index = postInsertEntities.indexOf(entity);
@@ -48,6 +54,38 @@ public abstract class EntitySqlGenerator implements Closeable {
 	@Getter
 	private final GeneratorContext context;
 
+	/** The target of any generated SQL statement, e.g. a file or database. */
+	@Getter
+	private final StatementsWriter writer;
+
+	/**
+	 * Creates a new instance for a database connection.
+	 *
+	 * @param context
+	 *            the current context that stores any indices and configuration
+	 * @param connection
+	 *            the database connection
+	 * @throws SQLException
+	 *             if the database is not accessible
+	 */
+	@SuppressWarnings("resource")
+	public EntitySqlGenerator(final GeneratorContext context, final Connection connection) throws SQLException {
+		this(context, new ConnectedStatementsWriter(connection, context));
+	}
+
+	/**
+	 * Creates a new instance for a output writer.
+	 *
+	 * @param context
+	 *            the current context that stores any indices and configuration
+	 * @param writer
+	 *            the stream for the generated file
+	 */
+	@SuppressWarnings("resource")
+	public EntitySqlGenerator(final GeneratorContext context, final Writer writer) {
+		this(context, new FileStatementsWriter(writer));
+	}
+
 	/**
 	 * Writes any missing SQL and closes any open resources.
 	 *
@@ -57,6 +95,7 @@ public abstract class EntitySqlGenerator implements Closeable {
 	@Override
 	public void close() throws IOException {
 		writeAlignmentStatements();
+		this.writer.close();
 	}
 
 	/**
@@ -70,6 +109,17 @@ public abstract class EntitySqlGenerator implements Closeable {
 	 */
 	protected <E> boolean findEntity(final E entity) throws IOException {
 		return false;
+	}
+
+	/**
+	 * Writes any open and alignment statements.
+	 *
+	 * @throws IOException
+	 *             if the writer throws one
+	 */
+	public void flush() throws IOException {
+		writeAlignmentStatements();
+		this.writer.flush();
 	}
 
 	/**
@@ -168,58 +218,61 @@ public abstract class EntitySqlGenerator implements Closeable {
 	 *             if the target writer throws one
 	 */
 	public void writeAlignmentStatements() throws IOException {
-		for (final EntityStatement statement : this.context.getAlignmentStatements()) {
-			writeStatement(statement);
-		}
+		this.context.writeAlignmentStatements(this.writer);
 	}
 
 	/**
-	 * Writes a SQL comment to the target.
+	 * Writes a SQL comment to the target writer.
+	 *
+	 * Shortcut for {@code getWriter().writeComment(comment)}.
 	 *
 	 * @param comment
 	 *            the comment to write
 	 * @throws IOException
-	 *             if the target throws one
+	 *             if the writer throws one
 	 */
-	public abstract void writeComment(String comment) throws IOException;
+	public void writeComment(final String comment) throws IOException {
+		this.writer.writeComment(comment);
+	}
 
 	private <E> void writeInserts(final E entity, final List<Object> postponedEntities,
-			final EntityClass<E> classDescription, final String discriminator) throws IOException {
+			final EntityClass<E> classDescription, final ColumnExpression discriminator) throws IOException {
 		// Create the insert statement
-		final InsertStatement stmt = new InsertStatement(classDescription.getTable());
+		final TableStatement stmt = this.writer.createInsertStatement(this.context.getDialect(),
+				classDescription.getTable());
 
 		if (classDescription.getJoinedParentClass() != null) {
 			// Write the parent tables
 			writeInserts(entity, postponedEntities, classDescription.getJoinedParentClass(), discriminator);
 
 			// And add the id as foreign key column
-			stmt.addValue(classDescription.getPrimaryKeyJoinColumn(),
+			stmt.setColumnValue(classDescription.getPrimaryKeyJoinColumn(),
 					classDescription.getEntityReference(entity, null, false));
 		} else {
 			// Write Pre-Inserts for the ID
-			writeStatements(classDescription.getIdProperty().createPreInsertStatements(entity));
+			classDescription.getIdProperty().createPreInsertStatements(this.writer, entity);
 
 			// Add the id
-			classDescription.getIdProperty().addInsertExpression(entity, stmt);
+			classDescription.getIdProperty().addInsertExpression(stmt, entity);
 
 			// And the discriminator
 			if (discriminator != null) {
-				stmt.addValue(classDescription.getDiscriminatorColumn(), discriminator);
+				stmt.setColumnValue(classDescription.getDiscriminatorColumn(), discriminator);
 			}
 		}
 
 		// Now add all other properties
 		for (final Property<E, ?> property : classDescription.getProperties().values()) {
-			writeStatements(property.createPreInsertStatements(entity));
+			property.createPreInsertStatements(this.writer, entity);
 
-			property.addInsertExpression(entity, stmt);
+			property.addInsertExpression(stmt, entity);
 		}
 
 		// Write the statement
-		writeStatement(stmt);
+		this.writer.writeStatement(stmt);
 
 		// And all postponed statements
-		writeStatements(classDescription.createPostInsertStatements(entity));
+		classDescription.createPostInsertStatements(entity, this.writer);
 
 		for (final Property<E, ?> property : classDescription.getProperties().values()) {
 			// Write all missing entities, even those that have no column (because they are referencing us and
@@ -231,32 +284,20 @@ public abstract class EntitySqlGenerator implements Closeable {
 			}
 
 			// Generate additional statements
-			writeStatements(property.createPostInsertStatements(entity));
+			property.createPostInsertStatements(this.writer, entity);
 		}
 	}
 
 	/**
 	 * Writes a new line to the target to separate different sections in the SQL file.
 	 *
-	 * @throws IOException
-	 *             if the target throws such an exception
-	 */
-	public abstract void writeSectionSeparator() throws IOException;
-
-	/**
-	 * Writes the given statement to the target.
+	 * Shortcut for {@code getWriter().writeSectionSeparator()}.
 	 *
-	 * @param stmt
-	 *            the SQL statement to write
 	 * @throws IOException
-	 *             if the target throws one
+	 *             if the writer throws such an exception
 	 */
-	public abstract void writeStatement(EntityStatement stmt) throws IOException;
-
-	private void writeStatements(final List<? extends EntityStatement> statements) throws IOException {
-		for (final EntityStatement stmt : statements) {
-			writeStatement(stmt);
-		}
+	public void writeSectionSeparator() throws IOException {
+		this.writer.writeSectionSeparator();
 	}
 
 	private <E, T> void writeTableEntities(final E entity, final List<Object> postponedEntities,

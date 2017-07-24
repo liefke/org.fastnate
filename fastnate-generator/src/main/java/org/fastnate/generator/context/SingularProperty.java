@@ -23,11 +23,11 @@ public abstract class SingularProperty<E, T> extends Property<E, T> {
 	}
 
 	/**
-	 * The name of the associated column.
+	 * The associated column.
 	 *
 	 * @return the column name
 	 */
-	public abstract String getColumn();
+	public abstract GeneratorColumn getColumn();
 
 	@Override
 	public boolean isTableColumn() {

@@ -1,6 +1,8 @@
 package org.fastnate.generator.converter;
 
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
 
 /**
  * Converts a boolean to a SQL expression.
@@ -10,12 +12,12 @@ import org.fastnate.generator.context.GeneratorContext;
 public class BooleanConverter extends AbstractValueConverter<Boolean> {
 
 	@Override
-	public String getExpression(final Boolean value, final GeneratorContext context) {
-		return context.getDialect().convertBooleanValue(Boolean.TRUE.equals(value));
+	public ColumnExpression getExpression(final Boolean value, final GeneratorContext context) {
+		return new PrimitiveColumnExpression<>(value, context.getDialect()::convertBooleanValue);
 	}
 
 	@Override
-	public String getExpression(final String defaultValue, final GeneratorContext context) {
+	public ColumnExpression getExpression(final String defaultValue, final GeneratorContext context) {
 		return getExpression(defaultValue.equals("true") || defaultValue.equals("1"), context);
 	}
 

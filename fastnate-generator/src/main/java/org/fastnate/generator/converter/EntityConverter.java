@@ -1,9 +1,10 @@
 package org.fastnate.generator.converter;
 
-import lombok.Getter;
-
 import org.fastnate.generator.context.EmbeddedProperty;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
+
+import lombok.Getter;
 
 /**
  * Converts the reference to an entity to an expression that uses the sequence value of that entity.
@@ -26,13 +27,13 @@ public class EntityConverter extends AbstractValueConverter<Object> {
 	 *            indicates that the reference is used in a "where" statement
 	 * @return the expression using the sequence of that entity or {@code null} if the entity was not written up to now
 	 */
-	public static String getEntityReference(final Object entity, final String mappedId, final GeneratorContext context,
-			final boolean whereExpression) {
+	public static ColumnExpression getEntityReference(final Object entity, final String mappedId,
+			final GeneratorContext context, final boolean whereExpression) {
 		return context.getDescription(entity).getEntityReference(entity, mappedId, whereExpression);
 	}
 
 	@Override
-	public String getExpression(final Object value, final GeneratorContext context) {
+	public ColumnExpression getExpression(final Object value, final GeneratorContext context) {
 		return getEntityReference(value, null, context, true);
 	}
 }

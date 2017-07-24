@@ -1,9 +1,9 @@
 package org.fastnate.generator.context;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.persistence.AssociationOverride;
@@ -13,7 +13,10 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 
 import org.fastnate.generator.converter.EntityConverter;
-import org.fastnate.generator.statements.EntityStatement;
+import org.fastnate.generator.dialect.GeneratorDialect;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
+import org.fastnate.generator.statements.StatementsWriter;
 
 import lombok.Getter;
 
@@ -43,7 +46,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	}
 
 	/** The name of the column that saves the order of the entries in the collection. */
-	private final String orderColumn;
+	private final GeneratorColumn orderColumn;
 
 	/**
 	 * Creates a new collection property.
@@ -62,33 +65,23 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 		// Read a potentially defined order column
 		final OrderColumn orderColumnDef = attribute.getAnnotation(OrderColumn.class);
 		this.orderColumn = orderColumnDef == null ? null
-				: orderColumnDef.name().length() == 0 ? attribute.getName() + "_ORDER" : orderColumnDef.name();
+				: getTable().resolveColumn(
+						orderColumnDef.name().length() == 0 ? attribute.getName() + "_ORDER" : orderColumnDef.name());
 	}
 
 	@Override
-	public List<EntityStatement> createPostInsertStatements(final E entity) {
-		if (getMappedBy() != null && this.orderColumn == null) {
-			return Collections.emptyList();
-		}
-
-		final List<EntityStatement> result = new ArrayList<>();
-		final String sourceId = EntityConverter.getEntityReference(entity, getMappedId(), getContext(), false);
-		int index = 0;
-		final Collection<T> collection = getValue(entity);
-		// Check for uniqueness, if no order column is given
-		if (this.orderColumn == null && collection instanceof List
-				&& new HashSet<>(collection).size() < collection.size()) {
-			throw new IllegalArgumentException(
-					"At least one duplicate value in " + this + " of " + entity + ": " + collection);
-		}
-		for (final T value : collection) {
-			final EntityStatement statement = createValueStatement(entity, sourceId, String.valueOf(index++), value);
-			if (statement != null) {
-				result.add(statement);
+	public void createPostInsertStatements(final StatementsWriter writer, final E entity) throws IOException {
+		if (getMappedBy() == null || this.orderColumn != null) {
+			final ColumnExpression sourceId = EntityConverter.getEntityReference(entity, getMappedId(), getContext(),
+					false);
+			int index = 0;
+			final GeneratorDialect dialect = getDialect();
+			final Collection<T> collection = getValue(entity);
+			for (final T value : collection) {
+				createValueStatement(writer, entity, sourceId, PrimitiveColumnExpression.create(index++, dialect),
+						value);
 			}
 		}
-
-		return result;
 	}
 
 	@Override
@@ -108,7 +101,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	}
 
 	@Override
-	protected String getKeyColumn() {
+	protected GeneratorColumn getKeyColumn() {
 		return this.orderColumn;
 	}
 

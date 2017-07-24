@@ -7,8 +7,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 
-import org.fastnate.generator.ConnectedEntitySqlGenerator;
+import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.dialect.H2Dialect;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.test.embedded.EmbeddedTest;
 import org.hibernate.Session;
@@ -126,12 +127,13 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 		final Properties settings = getGenerator().getContext().getSettings();
 		((Session) getEm().getDelegate()).doWork(connection -> {
 			try {
-				try (ConnectedEntitySqlGenerator generator = new ConnectedEntitySqlGenerator(connection,
-						new GeneratorContext(settings))) {
+				try (EntitySqlGenerator generator = new EntitySqlGenerator(new GeneratorContext(settings),
+						connection)) {
 					final E entity5 = entityConstructor.newInstance(entityPrefix + "5");
 					final E entity6 = entityConstructor.newInstance(entityPrefix + "6");
 					entity6.setOther(entity5);
 					generator.write(entity6);
+					generator.getWriter().flush();
 					if (checkIncreasingIds && !generator.getContext().isWriteRelativeIds()) {
 						assertThat(((Number) entity5.getId()).longValue())
 								.isGreaterThan(((Number) entity4.getId()).longValue());
@@ -144,6 +146,26 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 				throw new IllegalStateException(e);
 			}
 		});
+
+		// Now lets test if truncate works
+		if (!(getGenerator().getContext().getDialect() instanceof H2Dialect)) {
+			((Session) getEm().getDelegate()).doWork(connection -> {
+				try {
+					try (EntitySqlGenerator generator = new EntitySqlGenerator(new GeneratorContext(settings),
+							connection)) {
+						generator.getWriter().truncateTables(generator.getContext());
+						final E entityNew1 = entityConstructor.newInstance(entityPrefix + "1");
+						final E entityNew2 = entityConstructor.newInstance(entityPrefix + "2");
+						entityNew1.setOther(entityNew2);
+						generator.write(entity1);
+						generator.flush();
+					}
+				} catch (final IOException | InstantiationException | IllegalAccessException
+						| InvocationTargetException e) {
+					throw new IllegalStateException(e);
+				}
+			});
+		}
 
 		return foundEntity;
 	}

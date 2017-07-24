@@ -1,9 +1,9 @@
 package org.fastnate.generator.context;
 
+import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -22,10 +22,11 @@ import javax.persistence.OneToMany;
 
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.converter.ValueConverter;
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.InsertStatement;
+import org.fastnate.generator.dialect.GeneratorDialect;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
+import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
-import org.fastnate.generator.statements.UpdateStatement;
 import org.fastnate.util.ClassUtil;
 
 import com.google.common.base.Preconditions;
@@ -165,25 +166,28 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	}
 
 	/**
-	 * Builds the name of the column that contains the value for the collection / map.
+	 * Builds the column that contains the value for the collection / map.
 	 *
+	 * @param table
+	 *            the collection table
 	 * @param attribute
 	 *            the inspected attribute
-	 * @param defaultValueColumn
-	 *            the default name
-	 * @return the column name
+	 * @param defaultColumnName
+	 *            the default column name
+	 * @return the column definition
 	 */
-	protected static String buildValueColumn(final AttributeAccessor attribute, final String defaultValueColumn) {
+	protected static GeneratorColumn buildValueColumn(final GeneratorTable table, final AttributeAccessor attribute,
+			final String defaultColumnName) {
 		final JoinTable tableMetadata = attribute.getAnnotation(JoinTable.class);
 		if (tableMetadata != null && tableMetadata.inverseJoinColumns().length > 0
 				&& tableMetadata.inverseJoinColumns()[0].name().length() > 0) {
-			return tableMetadata.inverseJoinColumns()[0].name();
+			return table.resolveColumn(tableMetadata.inverseJoinColumns()[0].name());
 		}
 		final Column columnMetadata = attribute.getAnnotation(Column.class);
 		if (columnMetadata != null && columnMetadata.name().length() > 0) {
-			return columnMetadata.name();
+			return table.resolveColumn(columnMetadata.name());
 		}
-		return defaultValueColumn;
+		return table.resolveColumn(defaultColumnName);
 	}
 
 	private static String findMappedId(final AttributeAccessor attribute) {
@@ -237,6 +241,9 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/** The current context. */
 	private final GeneratorContext context;
 
+	/** The current database dialect, as defined in the context. */
+	private final GeneratorDialect dialect;
+
 	/** Contains all properties of an embedded element collection. */
 	private List<SingularProperty<T, ?>> embeddedProperties;
 
@@ -246,11 +253,11 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/** The property to use, if an id is embedded. */
 	private final String mappedId;
 
-	/** The name of the modified table. */
-	private final String table;
+	/** The modified table. */
+	private final GeneratorTable table;
 
-	/** The name of the column that contains the id of the entity. */
-	private String idColumn;
+	/** The column that contains the id of the entity. */
+	private GeneratorColumn idColumn;
 
 	/** Indicates that this property is defined by another property on the target type. */
 	private final String mappedBy;
@@ -258,8 +265,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/** Indicates to use a column of the target table. */
 	private final boolean useTargetTable;
 
-	/** The name of the column that contains the value (or the id of the value). */
-	private final String valueColumn;
+	/** The column that contains the value (or the id of the value). */
+	private final GeneratorColumn valueColumn;
 
 	/** The class of the value of the collection. */
 	private final Class<T> valueClass;
@@ -287,6 +294,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			final AssociationOverride override, final int valueArgumentIndex) {
 		super(attribute);
 		this.context = sourceClass.getContext();
+		this.dialect = this.context.getDialect();
 
 		this.mappedId = findMappedId(attribute);
 
@@ -299,9 +307,10 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			this.useTargetTable = false;
 
 			// Initialize the table and id column name
-			this.table = buildTableName(collectionTable, sourceClass.getEntityName() + '_' + attribute.getName());
-			this.idColumn = buildIdColumn(attribute, override, collectionTable,
-					sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute));
+			this.table = this.context.resolveTable(
+					buildTableName(collectionTable, sourceClass.getEntityName() + '_' + attribute.getName()));
+			this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, override, collectionTable,
+					sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute)));
 
 			// Initialize the target description and columns
 			this.valueClass = getPropertyArgument(attribute, values.targetClass(), valueArgumentIndex);
@@ -315,7 +324,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				// Check for primitive value
 				this.valueConverter = this.valueEntityClass == null
 						? PrimitiveProperty.createConverter(attribute, this.valueClass, false) : null;
-				this.valueColumn = buildValueColumn(attribute, attribute.getName());
+				this.valueColumn = buildValueColumn(this.table, attribute, attribute.getName());
 			}
 		} else {
 			// Entity mapping, either OneToMany or ManyToMany
@@ -350,21 +359,23 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				final Property<? super T, ?> idProperty = this.valueEntityClass.getIdProperty();
 				Preconditions.checkArgument(idProperty instanceof SingularProperty,
 						"Can only handle singular properties for ID in mapped by " + attribute);
-				this.valueColumn = buildValueColumn(attribute, this.valueEntityClass.getIdColumn(attribute));
+				this.valueColumn = buildValueColumn(this.table, attribute,
+						this.valueEntityClass.getIdColumn(attribute).getName());
 			} else if (this.useTargetTable) {
 				// Unidirectional and join column is in the table of the target class
 				this.table = this.valueEntityClass.getTable();
-				this.idColumn = buildIdColumn(attribute, override, null, null,
-						attribute.getName() + '_' + sourceClass.getIdColumn(attribute));
-				this.valueColumn = buildValueColumn(attribute, this.valueEntityClass.getIdColumn(attribute));
+				this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, override, null, null,
+						attribute.getName() + '_' + sourceClass.getIdColumn(attribute)));
+				this.valueColumn = buildValueColumn(this.table, attribute,
+						this.valueEntityClass.getIdColumn(attribute).getName());
 			} else {
 				// Unidirectional and we need a mapping table
 				final JoinTable joinTable = attribute.getAnnotation(JoinTable.class);
-				this.table = buildTableName(attribute, override, joinTable, collectionTable,
-						sourceClass.getTable() + '_' + this.valueEntityClass.getTable());
-				this.idColumn = buildIdColumn(attribute, override, joinTable, collectionTable,
-						sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute));
-				this.valueColumn = buildValueColumn(attribute,
+				this.table = this.context.resolveTable(buildTableName(attribute, override, joinTable, collectionTable,
+						sourceClass.getTable().getName() + '_' + this.valueEntityClass.getTable()));
+				this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, override, joinTable, collectionTable,
+						sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute)));
+				this.valueColumn = buildValueColumn(this.table, attribute,
 						attribute.getName() + '_' + this.valueEntityClass.getIdColumn(attribute));
 			}
 		}
@@ -372,7 +383,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	}
 
 	@Override
-	public void addInsertExpression(final E entity, final InsertStatement statement) {
+	public void addInsertExpression(final TableStatement statement, final E entity) {
 		// Ignore
 	}
 
@@ -424,7 +435,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				throw new ModelException("Plural attributes not allowed for embedded element collection: " + attribute);
 			}
 			if (EntityProperty.isEntityProperty(attribute)) {
-				return new EntityProperty<>(this.context, attribute, override);
+				return new EntityProperty<>(this.context, this.table, attribute, override);
 			}
 			return new PrimitiveProperty<>(this.context, this.table, attribute, columnMetadata);
 		}
@@ -434,6 +445,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/**
 	 * Creates the statements for a (not embeddable) value from the collection.
 	 *
+	 * @param writer
+	 *            the target of created statements
 	 * @param entity
 	 *            the entity that contains the collection resp. map.
 	 * @param sourceId
@@ -442,49 +455,51 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            the value of the {@link #getKeyColumn()} - either the index or the map key
 	 * @param value
 	 *            the current value in the collection
-	 * @return the list of statements to apply for the given value
+	 * @throws IOException
+	 *             if the writer throws one
 	 */
-	protected EntityStatement createDirectValueStatement(final E entity, final String sourceId, final String key,
-			final T value) {
-		final String target = createValueExpression(entity, sourceId, value, key);
-		if (target == null) {
-			return null;
-		}
-
-		if (this.idColumn == null && this.mappedBy != null) {
-			final Property<T, ?> mappedByProperty = this.valueEntityClass.getProperties().get(this.mappedBy);
-			Preconditions.checkArgument(mappedByProperty != null,
-					"Could not find property: " + this.mappedBy + " in " + this.valueClass);
-			Preconditions.checkArgument(mappedByProperty instanceof SingularProperty,
-					"Can only handle singular properties for mapped by in " + getAttribute().getElement());
-			this.idColumn = ((SingularProperty<?, ?>) mappedByProperty).getColumn();
-		}
-
-		final TableStatement stmt;
-		if (this.useTargetTable) {
-			// Unidirectional, but from target table
-			if (value == null) {
-				return null;
+	protected void createDirectValueStatement(final StatementsWriter writer, final E entity,
+			final ColumnExpression sourceId, final ColumnExpression key, final T value) throws IOException {
+		final ColumnExpression target = createValueExpression(entity, sourceId, value, key);
+		if (target != null) {
+			if (this.idColumn == null && this.mappedBy != null) {
+				final Property<T, ?> mappedByProperty = this.valueEntityClass.getProperties().get(this.mappedBy);
+				Preconditions.checkArgument(mappedByProperty != null,
+						"Could not find property: " + this.mappedBy + " in " + this.valueClass);
+				Preconditions.checkArgument(mappedByProperty instanceof SingularProperty,
+						"Can only handle singular properties for mapped by in " + getAttribute().getElement());
+				this.idColumn = ((SingularProperty<?, ?>) mappedByProperty).getColumn();
 			}
-			stmt = new UpdateStatement(this.table, this.valueColumn, target);
-			if (this.mappedBy == null) {
-				stmt.addValue(this.idColumn, sourceId);
-			}
-		} else {
-			stmt = new InsertStatement(this.table);
-			stmt.addValue(this.idColumn, sourceId);
-			stmt.addValue(this.valueColumn, target);
-		}
 
-		final String keyColumn = getKeyColumn();
-		if (keyColumn != null) {
-			stmt.addValue(keyColumn, key);
+			final TableStatement stmt;
+			if (this.useTargetTable) {
+				// Unidirectional, but from target table
+				if (value == null) {
+					return;
+				}
+				stmt = writer.createUpdateStatement(this.dialect, this.table, this.valueColumn, target);
+				if (this.mappedBy == null) {
+					stmt.setColumnValue(this.idColumn, sourceId);
+				}
+			} else {
+				stmt = writer.createInsertStatement(this.dialect, this.table);
+				stmt.setColumnValue(this.idColumn, sourceId);
+				stmt.setColumnValue(this.valueColumn, target);
+			}
+
+			final GeneratorColumn keyColumn = getKeyColumn();
+			if (keyColumn != null) {
+				stmt.setColumnValue(keyColumn, key);
+			}
+			writer.writeStatement(stmt);
 		}
-		return stmt;
 	}
 
 	/**
 	 * Writes all embedded properties of a value of a collection table.
+	 *
+	 * @param writer
+	 *            the target of the created statement
 	 *
 	 * @param entity
 	 *            the entity that contains the collection resp. map.
@@ -494,10 +509,11 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            the value of the {@link #getKeyColumn()} - either the index or the map key
 	 * @param value
 	 *            the current value in the collection
-	 * @return the list of statements to apply for the given value
+	 * @throws IOException
+	 *             if the writer throws one
 	 */
-	private InsertStatement createEmbeddedValueStatement(final E entity, final String sourceId, final String key,
-			final T value) {
+	private void createEmbeddedValueStatement(final StatementsWriter writer, final E entity,
+			final ColumnExpression sourceId, final ColumnExpression key, final T value) throws IOException {
 		for (final EntityProperty<T, ?> requiredProperty : this.requiredEmbeddedProperties) {
 			final Object referencedEntity = requiredProperty.getValue(value);
 			if (referencedEntity != null) {
@@ -507,21 +523,21 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				if (idProperty.getValue(referencedEntity) == null) {
 					// At least one of the required entities is not written up to now
 					targetDescription.markPendingUpdates(referencedEntity, entity, this, key, value);
-					return null;
+					return;
 				}
 			}
 		}
 
-		final InsertStatement stmt = new InsertStatement(getTable());
-		stmt.addValue(getIdColumn(), sourceId);
+		final TableStatement stmt = writer.createInsertStatement(this.dialect, getTable());
+		stmt.setColumnValue(getIdColumn(), sourceId);
 		if (getKeyColumn() != null) {
-			stmt.addValue(getKeyColumn(), key);
+			stmt.setColumnValue(getKeyColumn(), key);
 		}
 
 		for (final SingularProperty<T, ?> property : this.embeddedProperties) {
-			property.addInsertExpression(value, stmt);
+			property.addInsertExpression(stmt, value);
 		}
-		return stmt;
+		writer.writeStatement(stmt);
 	}
 
 	/**
@@ -535,16 +551,18 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            the key/index of the entity in the collection as SQL expression
 	 * @param value
 	 *            the value that is written
-	 * @return the statement or {@code null} if the insert is still pending
+	 * @return the expression or {@code null} if the insert is still pending
 	 */
-	protected String createValueExpression(final E entity, final String sourceId, final T value, final String key) {
+	protected ColumnExpression createValueExpression(final E entity, final ColumnExpression sourceId, final T value,
+			final ColumnExpression key) {
 		if (value == null) {
-			return "null";
+			return PrimitiveColumnExpression.NULL;
 		}
 		if (this.valueConverter != null) {
 			return this.valueConverter.getExpression(value, getContext());
 		}
-		final String target = this.valueEntityClass.getEntityReference(value, this.mappedId, this.useTargetTable);
+		final ColumnExpression target = this.valueEntityClass.getEntityReference(value, this.mappedId,
+				this.useTargetTable);
 		if (target == null) {
 			// Not created up to now
 			this.valueEntityClass.markPendingUpdates(value, entity, this, key, value);
@@ -555,6 +573,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/**
 	 * Adds a value statement to the list of collection statements.
 	 *
+	 * @param writer
+	 *            the target of the created statements
 	 * @param entity
 	 *            the entity that contains the collection
 	 * @param sourceId
@@ -563,23 +583,24 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            the key/index of the entity in the collection as SQL expression
 	 * @param value
 	 *            the value that is written
-	 * @return the statement or {@code null} if the insert is still pending
+	 * @throws IOException
+	 *             if the writer throws one
 	 */
-	protected EntityStatement createValueStatement(final E entity, final String sourceId, final String key,
-			final T value) {
+	protected void createValueStatement(final StatementsWriter writer, final E entity, final ColumnExpression sourceId,
+			final ColumnExpression key, final T value) throws IOException {
 		if (isEmbedded()) {
-			return createEmbeddedValueStatement(entity, sourceId, key, value);
+			createEmbeddedValueStatement(writer, entity, sourceId, key, value);
+		} else {
+			createDirectValueStatement(writer, entity, sourceId, key, value);
 		}
-		return createDirectValueStatement(entity, sourceId, key, value);
 	}
 
 	@Override
-	public List<EntityStatement> generatePendingStatements(final E entity, final Object writtenEntity,
-			final Object... arguments) {
-		final String sourceId = EntityConverter.getEntityReference(entity, this.mappedId, getContext(), false);
-		final EntityStatement statement = createValueStatement(entity, sourceId, (String) arguments[0],
-				(T) arguments[1]);
-		return statement == null ? Collections.<EntityStatement> emptyList() : Collections.singletonList(statement);
+	public void generatePendingStatements(final StatementsWriter writer, final E entity, final Object writtenEntity,
+			final Object... arguments) throws IOException {
+		final ColumnExpression sourceId = EntityConverter.getEntityReference(entity, this.mappedId, getContext(),
+				false);
+		createValueStatement(writer, entity, sourceId, (ColumnExpression) arguments[0], (T) arguments[1]);
 	}
 
 	/**
@@ -587,7 +608,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *
 	 * @return the key column for map properties resp. the index column for list properties
 	 */
-	protected abstract String getKeyColumn();
+	protected abstract GeneratorColumn getKeyColumn();
 
 	/**
 	 * Indicates that this propery is a {@link ElementCollection} that references {@link Embeddable}s.

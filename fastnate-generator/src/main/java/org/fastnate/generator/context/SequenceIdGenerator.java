@@ -1,14 +1,13 @@
 package org.fastnate.generator.context;
 
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
 
 import javax.persistence.SequenceGenerator;
 
 import org.fastnate.generator.dialect.GeneratorDialect;
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.InsertStatement;
-import org.fastnate.generator.statements.PlainStatement;
+import org.fastnate.generator.statements.PlainColumnExpression;
+import org.fastnate.generator.statements.StatementsWriter;
+import org.fastnate.generator.statements.TableStatement;
 
 /**
  * Stores the current value for a {@link SequenceGenerator}.
@@ -52,7 +51,7 @@ public class SequenceIdGenerator extends IdGenerator {
 	}
 
 	@Override
-	public void addNextValue(final InsertStatement statement, final String column, final Number value) {
+	public void addNextValue(final TableStatement statement, final GeneratorColumn column, final Number value) {
 		String expression;
 		if (this.dialect.isNextSequenceValueInInsertSupported() && this.currentSequenceValue <= value.longValue()) {
 			if (this.currentSequenceValue < this.initialValue) {
@@ -69,21 +68,19 @@ public class SequenceIdGenerator extends IdGenerator {
 		if (diff != 0) {
 			expression = '(' + expression + " - " + diff + ')';
 		}
-		statement.addValue(column, expression);
+		statement.setColumnValue(column, new PlainColumnExpression(expression));
 	}
 
 	@Override
-	public List<? extends EntityStatement> alignNextValue() {
+	public void alignNextValue(final StatementsWriter writer) throws IOException {
 		if (!this.relativeIds && this.nextValue > this.initialValue) {
 			if (this.currentSequenceValue >= this.nextValue || this.currentSequenceValue < this.initialValue) {
 				final long currentValue = this.currentSequenceValue;
 				this.currentSequenceValue = this.nextValue - 1;
-				return this.dialect.adjustNextSequenceValue(this.sequenceName, currentValue,
+				this.dialect.adjustNextSequenceValue(writer, this.sequenceName, currentValue,
 						this.currentSequenceValue + this.allocationSize, this.allocationSize);
 			}
 		}
-
-		return Collections.emptyList();
 	}
 
 	@Override
@@ -92,17 +89,16 @@ public class SequenceIdGenerator extends IdGenerator {
 	}
 
 	@Override
-	public List<? extends EntityStatement> createPreInsertStatements() {
+	public void createPreInsertStatements(final StatementsWriter writer) throws IOException {
 		if (!this.dialect.isNextSequenceValueInInsertSupported() && this.currentSequenceValue <= this.nextValue) {
 			if (this.currentSequenceValue < this.initialValue) {
 				this.currentSequenceValue = this.initialValue;
 			} else {
 				this.currentSequenceValue += this.allocationSize;
 			}
-			return Collections.singletonList(
-					new PlainStatement(this.dialect.buildNextSequenceValue(this.sequenceName, this.allocationSize)));
+			writer.writePlainStatement(this.dialect,
+					this.dialect.buildNextSequenceValue(this.sequenceName, this.allocationSize));
 		}
-		return Collections.emptyList();
 	}
 
 	@Override
@@ -111,7 +107,7 @@ public class SequenceIdGenerator extends IdGenerator {
 	}
 
 	@Override
-	public String getExpression(final String table, final String column, final Number targetId,
+	public String getExpression(final GeneratorTable entityTable, final GeneratorColumn column, final Number targetId,
 			final boolean whereExpression) {
 		if (!whereExpression || this.dialect.isSequenceInWhereSupported()) {
 			final String reference = this.dialect.buildCurrentSequenceValue(this.sequenceName, this.allocationSize);
@@ -123,7 +119,8 @@ public class SequenceIdGenerator extends IdGenerator {
 		}
 
 		final long diff = this.nextValue - 1 - targetId.longValue();
-		return "(SELECT max(" + column + ')' + (diff == 0 ? "" : " - " + diff) + " FROM " + table + ')';
+		return "(SELECT max(" + column.getName() + ')' + (diff == 0 ? "" : " - " + diff) + " FROM "
+				+ entityTable.getName() + ')';
 	}
 
 	@Override

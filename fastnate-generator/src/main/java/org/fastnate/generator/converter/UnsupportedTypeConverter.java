@@ -1,9 +1,10 @@
 package org.fastnate.generator.converter;
 
-import lombok.RequiredArgsConstructor;
-
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Converter used for all types that we can't convert.
@@ -19,7 +20,7 @@ public class UnsupportedTypeConverter extends AbstractValueConverter<Object> {
 	private final AttributeAccessor attribute;
 
 	@Override
-	public String getExpression(final Object value, final GeneratorContext context) {
+	public ColumnExpression getExpression(final Object value, final GeneratorContext context) {
 		throw new IllegalArgumentException("Unsupported type for property: " + this.attribute);
 	}
 

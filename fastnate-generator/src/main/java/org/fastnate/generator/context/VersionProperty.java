@@ -33,8 +33,8 @@ public class VersionProperty<E, T> extends PrimitiveProperty<E, T> {
 	 * @param column
 	 *            the column annotation
 	 */
-	public VersionProperty(final GeneratorContext context, final String table, final AttributeAccessor attribute,
-			final Column column) {
+	public VersionProperty(final GeneratorContext context, final GeneratorTable table,
+			final AttributeAccessor attribute, final Column column) {
 		super(context, table, attribute, column);
 	}
 

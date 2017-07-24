@@ -6,6 +6,8 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
 
 /**
  * Converts a {@link Serializable} to a SQL expression.
@@ -18,14 +20,14 @@ public class SerializableConverter extends AbstractValueConverter<Serializable> 
 	private static final int DEFAULT_BUFFER_SIZE = 512;
 
 	@Override
-	public String getExpression(final Serializable value, final GeneratorContext context) {
+	public ColumnExpression getExpression(final Serializable value, final GeneratorContext context) {
 		try {
 			// Serialize object
 			final ByteArrayOutputStream buffer = new ByteArrayOutputStream(DEFAULT_BUFFER_SIZE);
 			try (ObjectOutputStream stream = new ObjectOutputStream(buffer)) {
 				stream.writeObject(value);
 			}
-			return context.getDialect().createBlobExpression(buffer.toByteArray());
+			return new PrimitiveColumnExpression<>(buffer.toByteArray(), context.getDialect()::createBlobExpression);
 		} catch (final IOException e) {
 			// Should only happen, if the object was not correctly serialized
 			throw new IllegalStateException(e);

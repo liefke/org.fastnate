@@ -1,10 +1,10 @@
 package org.fastnate.generator.dialect;
 
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
 
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.PlainStatement;
+import org.fastnate.generator.context.GeneratorColumn;
+import org.fastnate.generator.context.GeneratorTable;
+import org.fastnate.generator.statements.StatementsWriter;
 
 /**
  * Handles PostgreSQL specific conversions.
@@ -22,10 +22,9 @@ public class PostgresDialect extends GeneratorDialect {
 	}
 
 	@Override
-	public List<? extends EntityStatement> adjustNextIdentityValue(final String tableName, final String columnName,
-			final long nextValue) {
-		return Collections
-				.singletonList(new PlainStatement("ALTER SEQUENCE " + tableName + "_id_seq RESTART WITH " + nextValue));
+	public void adjustNextIdentityValue(final StatementsWriter writer, final GeneratorTable table,
+			final GeneratorColumn columnName, final long nextValue) throws IOException {
+		writer.writePlainStatement(this, "ALTER SEQUENCE " + table.getName() + "_id_seq RESTART WITH " + nextValue);
 	}
 
 	@Override
@@ -41,6 +40,11 @@ public class PostgresDialect extends GeneratorDialect {
 	@Override
 	public String createBlobExpression(final byte[] blob) {
 		return createHexBlobExpression("decode('", blob, "', 'hex')");
+	}
+
+	@Override
+	public void truncateTable(final StatementsWriter writer, final GeneratorTable table) throws IOException {
+		writer.writePlainStatement(this, "TRUNCATE TABLE " + table.getName() + " CASCADE");
 	}
 
 }

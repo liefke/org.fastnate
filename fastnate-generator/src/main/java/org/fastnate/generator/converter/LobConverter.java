@@ -3,30 +3,32 @@ package org.fastnate.generator.converter;
 import javax.persistence.Lob;
 
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
 
 /**
  * Generates the expression for a {@link Lob property}.
- * 
+ *
  * @author Tobias Liefke
  */
 public class LobConverter implements ValueConverter<Object> {
 
 	@Override
-	public String getExpression(final Object value, final GeneratorContext context) {
+	public ColumnExpression getExpression(final Object value, final GeneratorContext context) {
 		if (value instanceof String) {
-			return context.getDialect().quoteString((String) value);
+			return PrimitiveColumnExpression.create((String) value, context.getDialect());
 		}
 		if (value instanceof char[]) {
-			return context.getDialect().quoteString(new String((char[]) value));
+			return PrimitiveColumnExpression.create(new String((char[]) value), context.getDialect());
 		}
 		if (value instanceof byte[]) {
-			return context.getDialect().createBlobExpression((byte[]) value);
+			return new PrimitiveColumnExpression<>((byte[]) value, context.getDialect()::createBlobExpression);
 		}
 		throw new IllegalArgumentException("Can't handle LOB of type " + value.getClass());
 	}
 
 	@Override
-	public String getExpression(final String defaultValue, final GeneratorContext context) {
+	public ColumnExpression getExpression(final String defaultValue, final GeneratorContext context) {
 		return getExpression((Object) defaultValue, context);
 	}
 

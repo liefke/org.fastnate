@@ -9,7 +9,15 @@ package org.fastnate.generator.context;
 public interface ContextModelListener {
 
 	/**
-	 * Called whenn a new entity class was created.
+	 * Called when a new table column was discovered.
+	 *
+	 * @param column
+	 *            the new column
+	 */
+	void foundColumn(GeneratorColumn column);
+
+	/**
+	 * Called when a new entity class was discovered.
 	 *
 	 * @param entityClass
 	 *            the found class
@@ -17,11 +25,21 @@ public interface ContextModelListener {
 	void foundEntityClass(EntityClass<?> entityClass);
 
 	/**
-	 * Called whenn a new generator was created.
+	 * Called when a new generator was discovered.
 	 *
 	 * @param generator
 	 *            the new generator
 	 */
 	void foundGenerator(IdGenerator generator);
+
+	/**
+	 * Called when a new table was discovered.
+	 *
+	 * Attention: The columns are not discovered at this point.
+	 *
+	 * @param table
+	 *            the new table
+	 */
+	void foundTable(GeneratorTable table);
 
 }

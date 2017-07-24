@@ -3,18 +3,23 @@ package org.fastnate.generator.statements;
 import lombok.RequiredArgsConstructor;
 
 /**
- * A single (unparsed) SQL statement.
+ * An SQL expression, which is printed to SQL "as is".
  *
  * @author Tobias Liefke
  */
 @RequiredArgsConstructor
-public class PlainStatement extends EntityStatement {
+public class PlainColumnExpression implements ColumnExpression {
 
 	private final String sql;
 
 	@Override
 	public String toSql() {
-		return this.sql + ";\n";
+		return this.sql;
+	}
+
+	@Override
+	public String toString() {
+		return this.sql;
 	}
 
 }

@@ -1,9 +1,8 @@
 package org.fastnate.generator.context;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -15,8 +14,8 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.InsertStatement;
+import org.fastnate.generator.statements.StatementsWriter;
+import org.fastnate.generator.statements.TableStatement;
 
 import lombok.Getter;
 
@@ -83,11 +82,11 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	}
 
 	@Override
-	public void addInsertExpression(final E entity, final InsertStatement statement) {
+	public void addInsertExpression(final TableStatement statement, final E entity) {
 		final T value = getValue(entity);
 		if (value != null) {
 			for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
-				property.addInsertExpression(value, statement);
+				property.addInsertExpression(statement, value);
 			}
 		} else {
 			failIfRequired(entity);
@@ -95,25 +94,19 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	}
 
 	@Override
-	public List<EntityStatement> createPostInsertStatements(final E entity) {
+	public void createPostInsertStatements(final StatementsWriter writer, final E entity) throws IOException {
 		final T value = getValue(entity);
-		final List<EntityStatement> result = new ArrayList<>();
 		for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
-			result.addAll(property.createPostInsertStatements(value));
+			property.createPostInsertStatements(writer, value);
 		}
-
-		return result;
 	}
 
 	@Override
-	public List<EntityStatement> createPreInsertStatements(final E entity) {
+	public void createPreInsertStatements(final StatementsWriter writer, final E entity) throws IOException {
 		final T value = getValue(entity);
-		final List<EntityStatement> result = new ArrayList<>();
 		for (final Property<? super T, ?> property : this.embeddedProperties.values()) {
-			result.addAll(property.createPreInsertStatements(value));
+			property.createPreInsertStatements(writer, value);
 		}
-
-		return result;
 	}
 
 	@Override

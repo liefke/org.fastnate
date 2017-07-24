@@ -19,10 +19,9 @@ import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.fastnate.generator.ConnectedEntitySqlGenerator;
 import org.fastnate.generator.EntitySqlGenerator;
-import org.fastnate.generator.WriterEntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.FileStatementsWriter;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -239,7 +238,7 @@ public class EntityImporter {
 	 *             if the generator throws an exception
 	 */
 	public void importData(final Connection connection) throws IOException, SQLException {
-		try (ConnectedEntitySqlGenerator generator = new ConnectedEntitySqlGenerator(connection, this.context)) {
+		try (EntitySqlGenerator generator = new EntitySqlGenerator(this.context, connection)) {
 			importData(generator);
 		} catch (final IOException e) {
 			if (e.getCause() instanceof SQLException) {
@@ -325,7 +324,7 @@ public class EntityImporter {
 	 *             if the generator or writer throws an exception
 	 */
 	public void importData(final Writer writer) throws IOException {
-		try (WriterEntitySqlGenerator generator = new WriterEntitySqlGenerator(writer, this.context)) {
+		try (EntitySqlGenerator generator = new EntitySqlGenerator(this.context, writer)) {
 			importData(generator);
 		}
 	}
@@ -342,11 +341,11 @@ public class EntityImporter {
 	 *             if the writer or reader throws one
 	 */
 	private void writePropertyPart(final EntitySqlGenerator generator, final String property) throws IOException {
-		if (!(generator instanceof WriterEntitySqlGenerator)) {
+		if (!(generator.getWriter() instanceof FileStatementsWriter)) {
 			return;
 		}
 		@SuppressWarnings("resource")
-		final Writer writer = ((WriterEntitySqlGenerator) generator).getWriter();
+		final Writer writer = ((FileStatementsWriter) generator.getWriter()).getWriter();
 		final String propertyValue = StringUtils.trimToNull(this.settings.getProperty(property));
 		if (propertyValue != null) {
 			generator.writeSectionSeparator();

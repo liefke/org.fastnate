@@ -1,11 +1,12 @@
 package org.fastnate.generator.context;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.InsertStatement;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.StatementsWriter;
+import org.fastnate.generator.statements.TableStatement;
 
 import lombok.Getter;
 
@@ -38,24 +39,27 @@ public abstract class Property<E, T> {
 	 * Adds an expression according to the current value of the property for the given entity to an SQL insert
 	 * statement.
 	 *
-	 * @param entity
-	 *            the inspected entity
 	 * @param statement
 	 *            the created statement
+	 * @param entity
+	 *            the inspected entity
 	 */
-	public void addInsertExpression(final E entity, final InsertStatement statement) {
+	public void addInsertExpression(final TableStatement statement, final E entity) {
 		// The default does nothing
 	}
 
 	/**
-	 * Creates additional SQL statements that are necessary after this property is written (e.g. for mapping tables) .
+	 * Creates additional SQL statements that are necessary after this property is written (e.g. for mapping tables).
 	 *
+	 * @param writer
+	 *            the target of the created statements
 	 * @param entity
 	 *            the inspected entity
-	 * @return the list of addition insert statements
+	 * @throws IOException
+	 *             if the writer throws one
 	 */
-	public List<EntityStatement> createPostInsertStatements(final E entity) {
-		return Collections.emptyList();
+	public void createPostInsertStatements(final StatementsWriter writer, final E entity) throws IOException {
+		// The default property has no post insert statements
 	}
 
 	/**
@@ -64,10 +68,14 @@ public abstract class Property<E, T> {
 	 *
 	 * @param entity
 	 *            the inspected entity
-	 * @return the list of addition statements
+	 * @param writer
+	 *            the target of the created statements
+	 * @throws IOException
+	 *             if the writer throws an exception
+	 *
 	 */
-	public List<? extends EntityStatement> createPreInsertStatements(final E entity) {
-		return Collections.emptyList();
+	public void createPreInsertStatements(final StatementsWriter writer, final E entity) throws IOException {
+		// The default property has no pre insert statements
 	}
 
 	/**
@@ -104,17 +112,20 @@ public abstract class Property<E, T> {
 	 *
 	 * Only called, if {@link EntityClass#markPendingUpdates} was called before for {@code writtenEntity}
 	 *
+	 * @param writer
+	 *            the target of the generated statements
 	 * @param entity
 	 *            the entity that needs to be updated
 	 * @param writtenEntity
 	 *            the entity that exists now in the database
 	 * @param arguments
 	 *            additional arguments that where given to markPendingUpdates
-	 * @return the list of pending statements
+	 * @throws IOException
+	 *             if the writer throws one
 	 */
-	public List<EntityStatement> generatePendingStatements(final E entity, final Object writtenEntity,
-			final Object... arguments) {
-		return Collections.emptyList();
+	public void generatePendingStatements(final StatementsWriter writer, final E entity, final Object writtenEntity,
+			final Object... arguments) throws IOException {
+		// The default property has no pending statements
 	}
 
 	/**
@@ -126,7 +137,7 @@ public abstract class Property<E, T> {
 	 *            indicates that the expression is used in a "where" statement
 	 * @return the expression for the value of this property or {@code null} if no exists
 	 */
-	public String getExpression(final E entity, final boolean whereExpression) {
+	public ColumnExpression getExpression(final E entity, final boolean whereExpression) {
 		return null;
 	}
 
@@ -177,8 +188,7 @@ public abstract class Property<E, T> {
 	/**
 	 * Indicates that this property maps to a column from the parent table.
 	 *
-	 * @return {@code true} if {@link #addInsertExpression(Object, InsertStatement)} will add the corresponding value to
-	 *         the given statement
+	 * @return {@code true} if {@link #addInsertExpression} will add the corresponding value to the given statement
 	 */
 	public abstract boolean isTableColumn();
 

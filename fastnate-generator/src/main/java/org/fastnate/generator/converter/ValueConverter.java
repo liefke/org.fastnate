@@ -2,6 +2,7 @@ package org.fastnate.generator.converter;
 
 import org.fastnate.generator.DefaultValue;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
 
 /**
  * Converts a primitive value to an expression.
@@ -21,7 +22,7 @@ public interface ValueConverter<T> {
 	 *            the current context (contains the database dialect).
 	 * @return the expression (that is including surrounding ' for string literals)
 	 */
-	String getExpression(String defaultValue, GeneratorContext context);
+	ColumnExpression getExpression(String defaultValue, GeneratorContext context);
 
 	/**
 	 * Builds the expression for writing the given value into an SQL clause.
@@ -32,6 +33,6 @@ public interface ValueConverter<T> {
 	 *            the current context (contains the database dialect).
 	 * @return the expression (that is including surrounding ' for string literals)
 	 */
-	String getExpression(T value, GeneratorContext context);
+	ColumnExpression getExpression(T value, GeneratorContext context);
 
 }

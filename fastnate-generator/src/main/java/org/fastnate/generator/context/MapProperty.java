@@ -1,9 +1,9 @@
 package org.fastnate.generator.context;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import javax.persistence.AssociationOverride;
@@ -16,7 +16,9 @@ import javax.persistence.OneToMany;
 
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.converter.ValueConverter;
-import org.fastnate.generator.statements.EntityStatement;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
+import org.fastnate.generator.statements.StatementsWriter;
 
 import lombok.Getter;
 
@@ -34,18 +36,20 @@ import lombok.Getter;
 @Getter
 public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 
-	private static String buildKeyColumn(final MapKeyColumn keyColumn, final String defaultKeyColumn) {
+	private static GeneratorColumn buildKeyColumn(final GeneratorTable table, final MapKeyColumn keyColumn,
+			final String defaultKeyColumn) {
 		if (keyColumn != null && keyColumn.name().length() > 0) {
-			return keyColumn.name();
+			return table.resolveColumn(keyColumn.name());
 		}
-		return defaultKeyColumn;
+		return table.resolveColumn(defaultKeyColumn);
 	}
 
-	private static String buildKeyColumn(final MapKeyJoinColumn keyColumn, final String defaultKeyColumn) {
+	private static GeneratorColumn buildKeyColumn(final GeneratorTable table, final MapKeyJoinColumn keyColumn,
+			final String defaultKeyColumn) {
 		if (keyColumn != null && keyColumn.name().length() > 0) {
-			return keyColumn.name();
+			return table.resolveColumn(keyColumn.name());
 		}
-		return defaultKeyColumn;
+		return table.resolveColumn(defaultKeyColumn);
 	}
 
 	/**
@@ -71,7 +75,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	private final ValueConverter<K> keyConverter;
 
 	/** The name of the column that contains the key. */
-	private final String keyColumn;
+	private final GeneratorColumn keyColumn;
 
 	/**
 	 * Creates a new map property.
@@ -96,41 +100,35 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 		if (this.keyEntityClass != null) {
 			// Entity key
 			this.keyConverter = null;
-			this.keyColumn = buildKeyColumn(attribute.getAnnotation(MapKeyJoinColumn.class),
+			this.keyColumn = buildKeyColumn(getTable(), attribute.getAnnotation(MapKeyJoinColumn.class),
 					attribute.getName() + "_KEY");
 		} else {
 			// Primitive key
 			this.keyConverter = PrimitiveProperty.createConverter(attribute, this.keyClass, true);
-			this.keyColumn = buildKeyColumn(attribute.getAnnotation(MapKeyColumn.class), attribute.getName() + "_KEY");
+			this.keyColumn = buildKeyColumn(getTable(), attribute.getAnnotation(MapKeyColumn.class),
+					attribute.getName() + "_KEY");
 		}
 
 	}
 
 	@Override
-	public List<EntityStatement> createPostInsertStatements(final E entity) {
-		if (getMappedBy() != null) {
-			return Collections.emptyList();
-		}
+	public void createPostInsertStatements(final StatementsWriter writer, final E entity) throws IOException {
+		if (getMappedBy() == null) {
+			final ColumnExpression sourceId = EntityConverter.getEntityReference(entity, getMappedId(), getContext(),
+					false);
+			for (final Map.Entry<K, T> entry : getValue(entity).entrySet()) {
+				final ColumnExpression key;
+				if (entry.getKey() == null) {
+					key = PrimitiveColumnExpression.NULL;
+				} else if (this.keyEntityClass != null) {
+					key = EntityConverter.getEntityReference(entry.getKey(), getMappedId(), getContext(), false);
+				} else {
+					key = this.keyConverter.getExpression(entry.getKey(), getContext());
+				}
 
-		final List<EntityStatement> result = new ArrayList<>();
-		final String sourceId = EntityConverter.getEntityReference(entity, getMappedId(), getContext(), false);
-		for (final Map.Entry<K, T> entry : getValue(entity).entrySet()) {
-			final String key;
-			if (entry.getKey() == null) {
-				key = "null";
-			} else if (this.keyEntityClass != null) {
-				key = EntityConverter.getEntityReference(entry.getKey(), getMappedId(), getContext(), false);
-			} else {
-				key = this.keyConverter.getExpression(entry.getKey(), getContext());
-			}
-
-			final EntityStatement statement = createValueStatement(entity, sourceId, key, entry.getValue());
-			if (statement != null) {
-				result.add(statement);
+				createValueStatement(writer, entity, sourceId, key, entry.getValue());
 			}
 		}
-
-		return result;
 	}
 
 	@Override

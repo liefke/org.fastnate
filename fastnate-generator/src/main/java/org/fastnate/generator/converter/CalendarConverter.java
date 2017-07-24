@@ -7,6 +7,7 @@ import javax.persistence.TemporalType;
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
 
 /**
  * Converts a calendar property of an {@link EntityClass} to SQL.
@@ -38,7 +39,7 @@ public class CalendarConverter extends TemporalConverter<Calendar> {
 	}
 
 	@Override
-	public String getExpression(final Calendar value, final GeneratorContext context) {
+	public ColumnExpression getExpression(final Calendar value, final GeneratorContext context) {
 		return getExpression(value.getTime(), context);
 	}
 

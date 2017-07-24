@@ -1,10 +1,9 @@
 package org.fastnate.generator.dialect;
 
+import java.io.IOException;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -12,8 +11,9 @@ import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
 import org.fastnate.generator.RelativeDate;
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.PlainStatement;
+import org.fastnate.generator.context.GeneratorColumn;
+import org.fastnate.generator.context.GeneratorTable;
+import org.fastnate.generator.statements.StatementsWriter;
 
 import lombok.Getter;
 
@@ -33,7 +33,7 @@ public abstract class GeneratorDialect {
 	 * @deprecated Use {@link RelativeDate#NOW} instead
 	 */
 	@Deprecated
-	public static final Date NOW = new Date();
+	public static final Date NOW = RelativeDate.NOW;
 
 	private static void finishPart(final StringBuilder result, final String value, final int start, final int end,
 			final boolean isOpen, final boolean close, final String concatOperator) {
@@ -75,23 +75,27 @@ public abstract class GeneratorDialect {
 	/**
 	 * Adjusts the next value of the given identity column to ensure that it is bigger than the last generated value.
 	 *
-	 * @param tableName
-	 *            the name of the table of the column
-	 * @param columnName
-	 *            the name of the (auto increment) identity column
+	 * @param writer
+	 *            the target of any generated statement
+	 * @param table
+	 *            the table of the column
+	 * @param column
+	 *            the (auto increment) identity column
 	 * @param nextValue
 	 *            the next value of the identity column
-	 * @return all statements that are necessary to adjust the next value
+	 * @throws IOException
+	 *             if the writer throws one
 	 */
-	public List<? extends EntityStatement> adjustNextIdentityValue(final String tableName, final String columnName,
-			final long nextValue) {
+	public void adjustNextIdentityValue(final StatementsWriter writer, final GeneratorTable table,
+			final GeneratorColumn column, final long nextValue) throws IOException {
 		// Most of the dialects do nothing
-		return Collections.emptyList();
 	}
 
 	/**
 	 * Adjusts the given sequence to ensure that the next value is exactly the given value.
 	 *
+	 * @param writer
+	 *            the target of the generated statements
 	 * @param sequenceName
 	 *            the name of the sequence
 	 * @param currentSequenceValue
@@ -100,16 +104,16 @@ public abstract class GeneratorDialect {
 	 *            the next value of the sequence
 	 * @param incrementSize
 	 *            the increment size of the sequence
-	 * @return all statements necessary to adjust the sequence
+	 * @throws IOException
+	 *             if the writer throws one
 	 */
-	public List<? extends EntityStatement> adjustNextSequenceValue(final String sequenceName,
-			final long currentSequenceValue, final long nextSequenceValue, final int incrementSize) {
+	public void adjustNextSequenceValue(final StatementsWriter writer, final String sequenceName,
+			final long currentSequenceValue, final long nextSequenceValue, final int incrementSize) throws IOException {
 		if (isEmulatingSequences()) {
-			return Collections.singletonList(
-					new PlainStatement("UPDATE " + sequenceName + " SET next_val = " + nextSequenceValue));
+			writer.writePlainStatement(this, "UPDATE " + sequenceName + " SET next_val = " + nextSequenceValue);
+		} else {
+			writer.writePlainStatement(this, "ALTER SEQUENCE " + sequenceName + " RESTART WITH " + nextSequenceValue);
 		}
-		return Collections.singletonList(
-				new PlainStatement("ALTER SEQUENCE " + sequenceName + " RESTART WITH " + nextSequenceValue));
 	}
 
 	/**
@@ -149,14 +153,25 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
-	 * Converts a boolean value for the current database type.
+	 * Converts a boolean value to an SQL expression for the current database type.
 	 *
 	 * @param value
 	 *            the value to convert
-	 * @return the string representation of the value
+	 * @return the SQL representation of the value
 	 */
 	public String convertBooleanValue(final boolean value) {
 		return value ? "1" : "0";
+	}
+
+	/**
+	 * Converts a numeric value to an SQL expression for the current database type.
+	 *
+	 * @param value
+	 *            the numeric value
+	 * @return the SQL expression of that value
+	 */
+	public String convertNumberValue(final Number value) {
+		return String.valueOf(value);
 	}
 
 	/**
@@ -264,20 +279,6 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
-	 * Creates an SQL statement from the given insert statement.
-	 *
-	 * Usually just {@link EntityStatement#toString()} is returned, but some dialects could change database specific
-	 * things.
-	 *
-	 * @param stmt
-	 *            contains the table and all column values
-	 * @return the SQL
-	 */
-	public String createSql(final EntityStatement stmt) {
-		return stmt.toSql();
-	}
-
-	/**
 	 * Resolves the GenerationType used, if {@link GenerationType#AUTO} is set for a {@link GeneratedValue}.
 	 *
 	 * @return the replacement for {@link GenerationType#AUTO} for the current dialect in Hibernate.
@@ -295,6 +296,15 @@ public abstract class GeneratorDialect {
 	 */
 	public String getConcatOperator() {
 		return " || ";
+	}
+
+	/**
+	 * The SQL expression to use in an empty insert statement.
+	 *
+	 * @return the SQL expression if an insert statement contains no values
+	 */
+	public Object getEmptyValuesExpression() {
+		return "DEFAULT VALUES";
 	}
 
 	/**
@@ -329,6 +339,19 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * Indicates that the database usually faster when all statements are executed within an transaction.
+	 *
+	 * For example Oracle is approx. 25% faster but H2 is 200% slower compared to auto commit.
+	 *
+	 * Only relevant if executed against a running database.
+	 *
+	 * @return {@code true} if an transaction is faster than auto commit
+	 */
+	public boolean isFastInTransaction() {
+		return false;
+	}
+
+	/**
 	 * Indicates that identity columns are supported by the database.
 	 *
 	 * @return {@code true} if the database supports identities
@@ -346,6 +369,15 @@ public abstract class GeneratorDialect {
 	 */
 	public boolean isNextSequenceValueInInsertSupported() {
 		return !isEmulatingSequences();
+	}
+
+	/**
+	 * Indicates that this dialect may select from the same table in a select.
+	 *
+	 * @return {@code true} if "INSERT INTO XXX (a) VALUES (SELECT max(a) FROM XXX)" is supported
+	 */
+	public boolean isSelectFromSameTableInInsertSupported() {
+		return true;
 	}
 
 	/**
@@ -412,5 +444,19 @@ public abstract class GeneratorDialect {
 		}
 		finishPart(result, value, start, value.length(), isOpen, true, concatOperator);
 		return result.toString();
+	}
+
+	/**
+	 * Adds a "truncate table" statement to the given writer.
+	 *
+	 * @param writer
+	 *            the target of the statement
+	 * @param table
+	 *            the table to truncate
+	 * @throws IOException
+	 *             if the writer throws one
+	 */
+	public void truncateTable(final StatementsWriter writer, final GeneratorTable table) throws IOException {
+		writer.writePlainStatement(this, "TRUNCATE TABLE " + table.getName());
 	}
 }

@@ -1,12 +1,11 @@
 package org.fastnate.generator.context;
 
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
 
 import javax.persistence.GenerationType;
 
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.InsertStatement;
+import org.fastnate.generator.statements.StatementsWriter;
+import org.fastnate.generator.statements.TableStatement;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +20,9 @@ public class IdentityValue extends IdGenerator {
 
 	private final GeneratorContext context;
 
-	private final String tableName;
+	private final GeneratorTable table;
 
-	private final String columnName;
+	private final GeneratorColumn column;
 
 	@Getter
 	private long currentValue;
@@ -31,20 +30,19 @@ public class IdentityValue extends IdGenerator {
 	private boolean needsAlignment;
 
 	@Override
-	public void addNextValue(final InsertStatement statement, final String column, final Number value) {
+	public void addNextValue(final TableStatement statement, final GeneratorColumn tableColumn, final Number value) {
 		// Not necessary, as the database sets the value
 	}
 
 	@Override
-	public List<? extends EntityStatement> alignNextValue() {
+	public void alignNextValue(final StatementsWriter writer) throws IOException {
 		if (this.needsAlignment) {
 			this.needsAlignment = false;
 			if (!this.context.isWriteRelativeIds() && this.context.getDialect().isSettingIdentityAllowed()) {
-				return this.context.getDialect().adjustNextIdentityValue(this.tableName, this.columnName,
+				this.context.getDialect().adjustNextIdentityValue(writer, this.table, this.column,
 						this.currentValue + 1);
 			}
 		}
-		return Collections.emptyList();
 	}
 
 	@Override
@@ -54,16 +52,11 @@ public class IdentityValue extends IdGenerator {
 	}
 
 	@Override
-	public List<EntityStatement> createPreInsertStatements() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	public String getExpression(final String table, final String column, final Number targetId,
-			final boolean whereExpression) {
+	public String getExpression(final GeneratorTable entityTable, final GeneratorColumn targetColumn,
+			final Number targetId, final boolean whereExpression) {
 		final long diff = this.currentValue - targetId.longValue();
-		return "(SELECT max(" + this.columnName + ")" + (diff == 0 ? "" : " - " + diff) + " FROM " + this.tableName
-				+ ")";
+		return "(SELECT max(" + this.column.getName() + ")" + (diff == 0 ? "" : " - " + diff) + " FROM "
+				+ this.table.getName() + ")";
 	}
 
 	@Override

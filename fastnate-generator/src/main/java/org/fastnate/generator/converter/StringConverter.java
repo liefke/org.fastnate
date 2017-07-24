@@ -8,6 +8,8 @@ import javax.validation.constraints.Size;
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
 
 /**
  * Converts a string property of an {@link EntityClass}.
@@ -70,7 +72,7 @@ public class StringConverter extends AbstractValueConverter<String> {
 	}
 
 	@Override
-	public String getExpression(final String value, final GeneratorContext context) {
+	public ColumnExpression getExpression(final String value, final GeneratorContext context) {
 		// Check constraints
 		if (value.length() > this.maxSize) {
 			throw new IllegalArgumentException("The length of the given string value (" + value.length()
@@ -88,7 +90,7 @@ public class StringConverter extends AbstractValueConverter<String> {
 		}
 
 		// Replace all special characters
-		return context.getDialect().quoteString(value);
+		return PrimitiveColumnExpression.create(value, context.getDialect());
 	}
 
 }

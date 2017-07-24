@@ -1,5 +1,6 @@
 package org.fastnate.generator.context;
 
+import java.io.IOException;
 import java.lang.reflect.AnnotatedElement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +38,10 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.context.GenerationState.PendingState;
-import org.fastnate.generator.statements.EntityStatement;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PlainColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
+import org.fastnate.generator.statements.StatementsWriter;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -158,9 +162,9 @@ public class EntityClass<E> {
 	@NotNull
 	private final String entityName;
 
-	/** The table name of the entity. */
+	/** The main table of the entity. */
 	@NotNull
-	private String table;
+	private GeneratorTable table;
 
 	/** The type of access that is used for the properties (field access or bean property access). */
 	private AccessStyle accessStyle;
@@ -192,19 +196,19 @@ public class EntityClass<E> {
 	 *
 	 * {@code null} if no discriminator is used
 	 */
-	private String discriminator;
+	private ColumnExpression discriminator;
 
 	/**
 	 * The column for {@link #discriminator}.
 	 *
 	 * {@code null} if this class does not belong to a table that contains a discriminator column
 	 */
-	private String discriminatorColumn;
+	private GeneratorColumn discriminatorColumn;
 
 	/**
 	 * The column that contains the id of this entity if {@link #joinedParentClass} is not {@code null}.
 	 */
-	private String primaryKeyJoinColumn;
+	private GeneratorColumn primaryKeyJoinColumn;
 
 	/**
 	 * The property that contains the id for the entity.
@@ -263,8 +267,8 @@ public class EntityClass<E> {
 	void build() {
 		// Find the (initial) table name
 		final Table tableMetadata = this.entityClass.getAnnotation(Table.class);
-		this.table = tableMetadata == null || tableMetadata.name().length() == 0 ? this.entityName
-				: tableMetadata.name();
+		this.table = this.context.resolveTable(
+				tableMetadata == null || tableMetadata.name().length() == 0 ? this.entityName : tableMetadata.name());
 
 		// Build the attribute and association overrides of this class
 		buildOverrides(this.entityClass);
@@ -306,13 +310,13 @@ public class EntityClass<E> {
 			final DiscriminatorColumn column = this.hierarchyRoot.entityClass.getAnnotation(DiscriminatorColumn.class);
 			if (column != null || this.inheritanceType != InheritanceType.JOINED
 					|| this.context.getProvider().isJoinedDiscriminatorNeeded()) {
-				this.discriminatorColumn = column == null ? "DTYPE" : column.name();
+				this.discriminatorColumn = this.table.resolveColumn(column == null ? "DTYPE" : column.name());
 				this.discriminator = buildDiscriminator(this, column);
 			}
 		}
 	}
 
-	private String buildDiscriminator(final EntityClass<?> c, final DiscriminatorColumn column) {
+	private ColumnExpression buildDiscriminator(final EntityClass<?> c, final DiscriminatorColumn column) {
 		final DiscriminatorType type;
 		final int maxLength;
 		if (column == null) {
@@ -326,16 +330,19 @@ public class EntityClass<E> {
 
 		final DiscriminatorValue value = this.entityClass.getAnnotation(DiscriminatorValue.class);
 		if (type == DiscriminatorType.INTEGER) {
-			return value == null ? String.valueOf(c.getEntityName().hashCode()) : value.value();
+			return PrimitiveColumnExpression.create(
+					value == null ? c.getEntityName().hashCode() : Integer.parseInt(value.value()),
+					getContext().getDialect());
 		}
 		final String v = value == null ? c.getEntityName() : value.value();
 		if (StringUtils.isEmpty(v)) {
 			throw new IllegalArgumentException("Missing discriminator value for: " + c.getEntityClass());
 		}
 		if (type == DiscriminatorType.STRING) {
-			return getContext().getDialect().quoteString(v.length() <= maxLength ? v : v.substring(0, maxLength));
+			return PrimitiveColumnExpression.create(v.length() <= maxLength ? v : v.substring(0, maxLength),
+					getContext().getDialect());
 		} else if (type == DiscriminatorType.CHAR) {
-			return getContext().getDialect().quoteString(v.substring(0, 1));
+			return PrimitiveColumnExpression.create(v.substring(0, 1), getContext().getDialect());
 		}
 		throw new IllegalArgumentException("Unknown discriminator type: " + type);
 	}
@@ -436,7 +443,7 @@ public class EntityClass<E> {
 				this.primaryKeyJoinColumn = ((SingularProperty<? super E, ?>) this.joinedParentClass.getIdProperty())
 						.getColumn();
 			} else {
-				this.primaryKeyJoinColumn = pkColumn.name();
+				this.primaryKeyJoinColumn = this.table.resolveColumn(pkColumn.name());
 			}
 		} else {
 			throw new IllegalArgumentException(
@@ -496,7 +503,7 @@ public class EntityClass<E> {
 			} else if (MapProperty.isMapProperty(attribute)) {
 				return new MapProperty<>(this, attribute, override);
 			} else if (EntityProperty.isEntityProperty(attribute)) {
-				return new EntityProperty<>(this.context, attribute, override);
+				return new EntityProperty<>(this.context, getTable(), attribute, override);
 			} else if (attribute.isAnnotationPresent(Embedded.class)) {
 				return new EmbeddedProperty<>(this, attribute);
 			} else if (attribute.isAnnotationPresent(Version.class)) {
@@ -535,9 +542,12 @@ public class EntityClass<E> {
 	 *
 	 * @param entity
 	 *            the entity that exists now in the database
-	 * @return all statements that have to be written now
+	 * @param writer
+	 *            the target of the new statements
+	 * @throws IOException
+	 *             if the writer throws one
 	 */
-	public List<EntityStatement> createPostInsertStatements(final E entity) {
+	public void createPostInsertStatements(final E entity, final StatementsWriter writer) throws IOException {
 		if (this.joinedParentClass == null) {
 			final GenerationState oldState;
 			if (this.idProperty instanceof GeneratedIdProperty) {
@@ -554,10 +564,9 @@ public class EntityClass<E> {
 				oldState = this.entityStates.put(getStateId(entity), GenerationState.PERSISTED);
 			}
 			if (oldState instanceof PendingState) {
-				return ((PendingState) oldState).generatePendingStatements(entity);
+				((PendingState) oldState).writePendingStatements(writer, entity);
 			}
 		}
-		return Collections.emptyList();
 	}
 
 	private void findHierarchyRoot(final Class<? super E> inspectedClass) {
@@ -628,7 +637,7 @@ public class EntityClass<E> {
 	 * @return the expression - either by using the {@link #getUniqueProperties() unique properties} or the
 	 *         {@link #getIdProperty() id} of the entity
 	 */
-	public String getEntityReference(final E entity, final String idField, final boolean whereExpression) {
+	public ColumnExpression getEntityReference(final E entity, final String idField, final boolean whereExpression) {
 		if (this.joinedParentClass != null) {
 			return this.joinedParentClass.getEntityReference(entity, idField, whereExpression);
 		}
@@ -652,12 +661,12 @@ public class EntityClass<E> {
 			}
 		}
 		@SuppressWarnings("null")
-		final String expression = property.getExpression(entity, whereExpression);
+		final ColumnExpression expression = property.getExpression(entity, whereExpression);
 		ModelException.test(expression != null, "Can't find any id for {} in property '{}'", this.idProperty, entity);
 		return expression;
 	}
 
-	private String getGeneratedIdReference(final E entity, final boolean whereExpression) {
+	private ColumnExpression getGeneratedIdReference(final E entity, final boolean whereExpression) {
 		final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
 		if (!generatedIdProperty.isReference(entity) && this.uniqueProperties != null) {
 			// Check to write "currval" of sequence if we just have written the same value
@@ -685,7 +694,8 @@ public class EntityClass<E> {
 			if (this.discriminator != null) {
 				condition.append(" AND ").append(this.discriminatorColumn).append(" = ").append(this.discriminator);
 			}
-			return "(SELECT " + generatedIdProperty.getColumn() + " FROM " + this.table + " WHERE " + condition + ')';
+			return new PlainColumnExpression(
+					"(SELECT " + generatedIdProperty.getColumn() + " FROM " + this.table + " WHERE " + condition + ')');
 		}
 		return generatedIdProperty.getExpression(entity, whereExpression);
 	}
@@ -700,7 +710,7 @@ public class EntityClass<E> {
 	 * @throws IllegalStateException
 	 *             if the id property is not singular and no MapsId is given
 	 */
-	String getIdColumn(final AttributeAccessor attribute) {
+	GeneratorColumn getIdColumn(final AttributeAccessor attribute) {
 		if (this.idProperty instanceof SingularProperty) {
 			return ((SingularProperty<?, ?>) this.idProperty).getColumn();
 		}

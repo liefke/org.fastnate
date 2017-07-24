@@ -7,11 +7,13 @@ import javax.persistence.MapKeyTemporal;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import lombok.RequiredArgsConstructor;
-
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PrimitiveColumnExpression;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Base class for converting a temporal property of an {@link EntityClass}.
@@ -59,8 +61,8 @@ public abstract class TemporalConverter<T> extends AbstractValueConverter<T> {
 	 *            the current context
 	 * @return the SQL expression
 	 */
-	public String getExpression(final Date value, final GeneratorContext context) {
-		return context.getDialect().convertTemporalValue(value, this.type);
+	public ColumnExpression getExpression(final Date value, final GeneratorContext context) {
+		return new PrimitiveColumnExpression<>(value, v -> context.getDialect().convertTemporalValue(v, this.type));
 	}
 
 }

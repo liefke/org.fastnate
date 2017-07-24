@@ -1,14 +1,12 @@
 package org.fastnate.generator.dialect;
 
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.Date;
-import java.util.List;
 
 import javax.persistence.TemporalType;
 
 import org.fastnate.generator.RelativeDate;
-import org.fastnate.generator.statements.EntityStatement;
-import org.fastnate.generator.statements.PlainStatement;
+import org.fastnate.generator.statements.StatementsWriter;
 
 /**
  * Handles Oracle specific conversions.
@@ -21,13 +19,12 @@ public class OracleDialect extends GeneratorDialect {
 	private static final int MAX_VARCHAR_LENGTH = 2000;
 
 	@Override
-	public List<? extends EntityStatement> adjustNextSequenceValue(final String sequenceName,
-			final long currentSequenceValue, final long nextSequenceValue, final int incrementSize) {
-		return Arrays.asList(
-				new PlainStatement("ALTER SEQUENCE " + sequenceName + " INCREMENT BY "
-						+ (nextSequenceValue - currentSequenceValue - incrementSize)),
-				new PlainStatement("SELECT " + sequenceName + ".nextval FROM dual"),
-				new PlainStatement("ALTER SEQUENCE " + sequenceName + " INCREMENT BY " + incrementSize));
+	public void adjustNextSequenceValue(final StatementsWriter writer, final String sequenceName,
+			final long currentSequenceValue, final long nextSequenceValue, final int incrementSize) throws IOException {
+		writer.writePlainStatement(this, "ALTER SEQUENCE " + sequenceName + " INCREMENT BY "
+				+ (nextSequenceValue - currentSequenceValue - incrementSize));
+		writer.writePlainStatement(this, "SELECT " + sequenceName + ".nextval FROM dual");
+		writer.writePlainStatement(this, "ALTER SEQUENCE " + sequenceName + " INCREMENT BY " + incrementSize);
 	}
 
 	@Override
@@ -77,6 +74,11 @@ public class OracleDialect extends GeneratorDialect {
 
 	@Override
 	public boolean isEmptyStringEqualToNull() {
+		return true;
+	}
+
+	@Override
+	public boolean isFastInTransaction() {
 		return true;
 	}
 
