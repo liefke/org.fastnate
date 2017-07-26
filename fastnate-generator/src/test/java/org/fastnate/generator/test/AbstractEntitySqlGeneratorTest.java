@@ -1,6 +1,8 @@
 package org.fastnate.generator.test;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
@@ -11,7 +13,9 @@ import javax.persistence.criteria.CriteriaQuery;
 
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ConnectedStatementsWriter;
 import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.internal.SessionImpl;
 import org.junit.After;
 import org.junit.Before;
 
@@ -24,6 +28,9 @@ import lombok.Getter;
  * @author Tobias Liefke
  */
 public class AbstractEntitySqlGeneratorTest {
+
+	/** The settings key that indicates to use the {@link ConnectedStatementsWriter} for tests. */
+	public static final String USE_CONNECTION_WRITER_KEY = "fastnate.test.writer.connection";
 
 	private EntityManagerFactory emf;
 
@@ -127,9 +134,23 @@ public class AbstractEntitySqlGeneratorTest {
 		this.emf = Persistence.createEntityManagerFactory(
 				properties.getProperty(GeneratorContext.PERSISTENCE_UNIT_KEY, "test-h2"), properties);
 		this.em = this.emf.createEntityManager();
-		@SuppressWarnings("resource")
-		final SqlEmWriter sqlWriter = new SqlEmWriter(this.em);
-		this.generator = new EntitySqlGenerator(context, sqlWriter);
+
+		if ("true".equals(context.getSettings().getProperty(USE_CONNECTION_WRITER_KEY))) {
+			try {
+				context.getSettings().setProperty(ConnectedStatementsWriter.MAX_BATCH_SIZE_KEY, "0");
+				@SuppressWarnings("resource")
+				final Connection connection = this.em.unwrap(SessionImpl.class).getJdbcConnectionAccess()
+						.obtainConnection();
+				this.generator = new EntitySqlGenerator(context, connection);
+				connection.setAutoCommit(true);
+			} catch (final SQLException e) {
+				throw new IllegalStateException(e);
+			}
+		} else {
+			@SuppressWarnings("resource")
+			final SqlEmWriter sqlWriter = new SqlEmWriter(this.em);
+			this.generator = new EntitySqlGenerator(context, sqlWriter);
+		}
 	}
 
 	/**
@@ -137,6 +158,13 @@ public class AbstractEntitySqlGeneratorTest {
 	 */
 	@After
 	public void tearDown() {
+		if (this.generator != null && this.generator.getWriter() instanceof ConnectedStatementsWriter) {
+			try {
+				((ConnectedStatementsWriter) this.generator.getWriter()).getConnection().close();
+			} catch (final SQLException e) {
+				// Ignore
+			}
+		}
 		if (this.em != null) {
 			this.em.close();
 			this.em = null;

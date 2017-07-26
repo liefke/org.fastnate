@@ -9,6 +9,8 @@ import org.fastnate.generator.statements.PlainColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
 
+import lombok.Getter;
+
 /**
  * Stores the current value for a {@link SequenceGenerator}.
  *
@@ -22,8 +24,10 @@ public class SequenceIdGenerator extends IdGenerator {
 
 	private final boolean relativeIds;
 
+	@Getter
 	private final int allocationSize;
 
+	@Getter
 	private long initialValue;
 
 	private long nextValue;

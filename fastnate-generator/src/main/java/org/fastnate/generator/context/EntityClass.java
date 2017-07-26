@@ -439,12 +439,14 @@ public class EntityClass<E> {
 	private void buildPrimaryKeyJoinColumn() {
 		if (this.joinedParentClass.getIdProperty() instanceof SingularProperty) {
 			final PrimaryKeyJoinColumn pkColumn = this.entityClass.getAnnotation(PrimaryKeyJoinColumn.class);
+			final String columnName;
 			if (pkColumn == null || StringUtils.isEmpty(pkColumn.name())) {
-				this.primaryKeyJoinColumn = ((SingularProperty<? super E, ?>) this.joinedParentClass.getIdProperty())
-						.getColumn();
+				columnName = ((SingularProperty<? super E, ?>) this.joinedParentClass.getIdProperty()).getColumn()
+						.getName();
 			} else {
-				this.primaryKeyJoinColumn = this.table.resolveColumn(pkColumn.name());
+				columnName = pkColumn.name();
 			}
+			this.primaryKeyJoinColumn = this.table.resolveColumn(columnName);
 		} else {
 			throw new IllegalArgumentException(
 					"JOINED inheritance strategy is currently only supported with singular ID properties.");

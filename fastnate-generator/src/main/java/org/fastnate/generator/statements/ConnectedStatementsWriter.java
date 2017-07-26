@@ -116,22 +116,22 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 					}
 					this.statement.setObject(parameterIndex, ((PrimitiveColumnExpression<?>) expression).getValue());
 				} catch (final SQLException e) {
-					throw new IllegalArgumentException(e);
+					throw new IllegalArgumentException("Can't set " + column + " to " + expression + " in " + this.sql,
+							e);
 				}
 			}
 		}
 
 	}
 
+	/**
+	 * Name of the setting, which controls the maximum size of generated batches. If set to something below 2, no
+	 * batches are used.
+	 */
+	public static final String MAX_BATCH_SIZE_KEY = "fastnate.generator.max.batch";
+
 	/** The count of milliseconds to wait, until a log message with the current count of statements is written. */
 	private static final long MILLISECONDS_BETWEEN_LOG_MESSAGES = 60 * 1000;
-
-	private static void checkUpdate(final int updatedRows, final String sql) {
-		if (updatedRows != 1) {
-			throw new IllegalStateException(
-					(updatedRows == 0 ? "No row created for " : "More than one rows created for ") + sql);
-		}
-	}
 
 	/** The database connection that was used when creating this generator. */
 	@Getter
@@ -145,6 +145,9 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
 	/** Indicates that the database connection supports batch statements. */
 	private final boolean batchSupported;
+
+	/** The maximum count of statements per batch job. */
+	private final int maxBatchSize;
 
 	/** Used to execute all plain SQL statements. */
 	private final Statement plainStatement;
@@ -181,6 +184,7 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 		this.inTransaction = context.getDialect().isFastInTransaction();
 		connection.setAutoCommit(!this.inTransaction);
 		this.batchSupported = connection.getMetaData().supportsBatchUpdates();
+		this.maxBatchSize = Integer.parseInt(context.getSettings().getProperty(MAX_BATCH_SIZE_KEY, "100"));
 		final Statement sharedStatement = connection.createStatement();
 		this.plainStatement = sharedStatement;
 
@@ -199,9 +203,16 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 					try (ResultSet resultSet = sharedStatement.executeQuery(sql)) {
 						if (resultSet.next()) {
 							final long currentValue = resultSet.getLong(1);
-							if (!resultSet.wasNull()) {
-								generator.setCurrentValue(currentValue);
+							if (resultSet.wasNull()) {
+								return;
 							}
+							if (generator instanceof SequenceIdGenerator) {
+								final SequenceIdGenerator sequence = (SequenceIdGenerator) generator;
+								if (sequence.getInitialValue() - sequence.getAllocationSize() == currentValue) {
+									return;
+								}
+							}
+							generator.setCurrentValue(currentValue);
 						}
 					} catch (final SQLException e) {
 						if (generator instanceof SequenceIdGenerator) {
@@ -213,6 +224,14 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 				}
 			}
 		});
+	}
+
+	private void checkUpdate(final int updatedRows, final String sql) {
+		if (updatedRows != 1) {
+			throw new IllegalStateException(
+					(updatedRows == 0 ? "No row created for " : "More than one rows created for ") + sql);
+		}
+		this.statementsCount++;
 	}
 
 	@Override
@@ -243,6 +262,7 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 		if (this.batchCount > 0) {
 			try {
 				this.plainStatement.executeBatch();
+				this.statementsCount += this.batchCount;
 			} catch (final SQLException e) {
 				throw new IOException("Could not execute statements: " + e, e);
 			} finally {
@@ -297,6 +317,7 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 		try {
 			closeBatch();
 			this.plainStatement.executeUpdate(sql);
+			this.statementsCount++;
 		} catch (final SQLException e) {
 			throw new IOException("Could not execute statement: " + sql, e);
 		}
@@ -311,7 +332,6 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 				log.info("{} SQL statements executed", this.statementsCount);
 			}
 		}
-		this.statementsCount++;
 
 		if (stmt instanceof PreparedInsertStatement) {
 			final PreparedInsertStatement insert = (PreparedInsertStatement) stmt;
@@ -336,9 +356,11 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
 	private void writeTableStatement(final String sql) throws IOException {
 		try {
-			if (this.batchSupported) {
+			if (this.batchSupported && this.maxBatchSize > 1) {
 				this.plainStatement.addBatch(sql);
-				this.batchCount++;
+				if (++this.batchCount > this.maxBatchSize) {
+					closeBatch();
+				}
 			} else {
 				checkUpdate(this.plainStatement.executeUpdate(sql), sql);
 			}

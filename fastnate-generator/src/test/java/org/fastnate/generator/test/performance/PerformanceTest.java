@@ -1,9 +1,14 @@
 package org.fastnate.generator.test.performance;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -11,8 +16,10 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.fastnate.generator.EntitySqlGenerator;
+import org.fastnate.generator.dialect.PostgresDialect;
 import org.fastnate.generator.statements.ConnectedStatementsWriter;
 import org.fastnate.generator.statements.ListStatementsWriter;
+import org.fastnate.generator.statements.PostgreSqlBulkWriter;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.hibernate.Session;
 import org.junit.Test;
@@ -55,6 +62,57 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 	}
 
 	/**
+	 * Tests the performance of fastnate with the {@link PostgreSqlBulkWriter}.
+	 */
+	@Test
+	public void testFastnateBulk() {
+		if (getGenerator().getContext().getDialect() instanceof PostgresDialect) {
+			((Session) getEm().getDelegate()).doWork(connection -> {
+				try {
+					final StringWriter sql = new StringWriter();
+
+					final File directory = new File("target", "test-sql");
+					directory.mkdirs();
+					@SuppressWarnings("resource")
+					final PostgreSqlBulkWriter writer = new PostgreSqlBulkWriter(directory, sql,
+							StandardCharsets.UTF_8);
+					try (EntitySqlGenerator generator = new EntitySqlGenerator(getGenerator().getContext(), writer);
+							Statement statement = connection.createStatement()) {
+						writer.truncateTables(getGenerator().getContext());
+						this.<List<String>> testHugeAmount(entity -> {
+							try {
+								generator.write(entity);
+								// Add a plain statement to ensure that all files are closed
+								generator.getWriter().writePlainStatement(getGenerator().getContext().getDialect(),
+										"UPDATE PerformanceTestEntity SET id = 1 WHERE id = 1");
+								generator.flush();
+								final List<String> result = Arrays.asList(sql.toString().split(";\n"));
+								sql.getBuffer().setLength(0);
+								return result;
+							} catch (final IOException e) {
+								throw new RuntimeException(e);
+							}
+						}, statements -> {
+							try {
+								for (final String stmt : statements) {
+									statement.executeUpdate(stmt);
+								}
+							} catch (final SQLException e) {
+								throw new IllegalArgumentException(e);
+							}
+						});
+					}
+					for (final File file : writer.getGeneratedFiles()) {
+						file.delete();
+					}
+				} catch (final IOException e) {
+					throw new IllegalStateException(e);
+				}
+			});
+		}
+	}
+
+	/**
 	 * Tests the performance of fastnate with the {@link ConnectedStatementsWriter}.
 	 */
 	@Test
@@ -91,6 +149,7 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 				testHugeAmount(entity -> {
 					try {
 						generator.write(entity);
+						generator.flush();
 						final ArrayList<String> result = new ArrayList<>(writer.getStatements());
 						writer.getStatements().clear();
 						return result;
@@ -99,15 +158,8 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 					}
 				}, statements -> {
 					try {
-						if (connection.getMetaData().supportsBatchUpdates()) {
-							for (final String stmt : statements) {
-								statement.addBatch(stmt);
-							}
-							statement.executeBatch();
-						} else {
-							for (final String stmt : statements) {
-								statement.executeUpdate(stmt);
-							}
+						for (final String stmt : statements) {
+							statement.executeUpdate(stmt);
 						}
 						if (fastInTransaction) {
 							connection.commit();
@@ -135,19 +187,21 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	private <T> void testHugeAmount(final Function<? super PerformanceTestEntity, T> transformation,
 			final Consumer<T> writer) {
-		final int maxElementsPerEntity = Integer.parseInt(System.getProperty("maxElementsPerEntity", "5"));
+		final int maxElementsPerEntity = Integer
+				.parseInt(System.getProperty("fastnate.test.performance.max.size", "5"));
 
 		// Warm up
 		writer.accept(transformation.apply(createRootEntity(-1, maxElementsPerEntity)));
 
 		// Run measurement
 		final Stopwatch stopwatch = Stopwatch.createUnstarted();
-		IntStream.range(0, Integer.parseInt(System.getProperty("rounds", "5"))).forEachOrdered(seed -> {
-			final T values = transformation.apply(createRootEntity(seed, maxElementsPerEntity));
-			stopwatch.start();
-			writer.accept(values);
-			stopwatch.stop();
-		});
+		IntStream.range(0, Integer.parseInt(System.getProperty("fastnate.test.performance.rounds", "5")))
+				.forEachOrdered(seed -> {
+					final T values = transformation.apply(createRootEntity(seed, maxElementsPerEntity));
+					stopwatch.start();
+					writer.accept(values);
+					stopwatch.stop();
+				});
 		log.info("Writing took: " + stopwatch);
 	}
 

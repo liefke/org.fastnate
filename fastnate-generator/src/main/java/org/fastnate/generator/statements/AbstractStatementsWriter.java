@@ -143,10 +143,9 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 
 				JOINER.appendTo(result, getValues().keySet()).append(") VALUES (");
 				for (final Iterator<ColumnExpression> iterator = getValues().values().iterator(); iterator.hasNext();) {
-					final ColumnExpression expression = iterator.next();
-					expression.appendSql(result);
+					iterator.next().appendSql(result);
 					if (iterator.hasNext()) {
-						result.append(',');
+						result.append(", ");
 					}
 				}
 				result.append(')');

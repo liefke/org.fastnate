@@ -93,11 +93,11 @@ public class RelativeDate extends Date {
 
 	private static final long serialVersionUID = 1L;
 
-	/** Represents the constant for writing the "now" function to SQL. */
-	public static final ReferenceDate NOW = new ReferenceDate(System.currentTimeMillis() - 1);
-
 	/** Represents the constant for writing the "today" function to SQL. */
 	public static final ReferenceDate TODAY = new ReferenceDate(System.currentTimeMillis() - 2);
+
+	/** Represents the constant for writing the "now" function to SQL. */
+	public static final ReferenceDate NOW = new ReferenceDate(System.currentTimeMillis() - 1);
 
 	/** Used for adding milliseconds to a reference date. */
 	public static final Precision MILLISECONDS = new Precision("MILLISECOND", 1);

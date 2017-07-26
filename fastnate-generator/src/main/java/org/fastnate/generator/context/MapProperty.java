@@ -97,18 +97,23 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 		this.keyClass = getPropertyArgument(attribute,
 				keyClassAnnotation != null ? keyClassAnnotation.value() : (Class<K>) void.class, 0);
 		this.keyEntityClass = sourceClass.getContext().getDescription(this.keyClass);
-		if (this.keyEntityClass != null) {
-			// Entity key
-			this.keyConverter = null;
-			this.keyColumn = buildKeyColumn(getTable(), attribute.getAnnotation(MapKeyJoinColumn.class),
-					attribute.getName() + "_KEY");
-		} else {
-			// Primitive key
-			this.keyConverter = PrimitiveProperty.createConverter(attribute, this.keyClass, true);
-			this.keyColumn = buildKeyColumn(getTable(), attribute.getAnnotation(MapKeyColumn.class),
-					attribute.getName() + "_KEY");
-		}
 
+		if (getMappedBy() != null) {
+			this.keyConverter = null;
+			this.keyColumn = null;
+		} else {
+			if (this.keyEntityClass != null) {
+				// Entity key
+				this.keyConverter = null;
+				this.keyColumn = buildKeyColumn(getTable(), attribute.getAnnotation(MapKeyJoinColumn.class),
+						attribute.getName() + "_KEY");
+			} else {
+				// Primitive key
+				this.keyConverter = PrimitiveProperty.createConverter(attribute, this.keyClass, true);
+				this.keyColumn = buildKeyColumn(getTable(), attribute.getAnnotation(MapKeyColumn.class),
+						attribute.getName() + "_KEY");
+			}
+		}
 	}
 
 	@Override

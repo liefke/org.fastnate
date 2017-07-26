@@ -289,6 +289,20 @@ public class EntitySqlGenerator implements Closeable {
 	}
 
 	/**
+	 * Writes a plain SQL statement to the target writer.
+	 *
+	 * Shortcut for {@code getWriter().writePlainStatement(getContext().getDialect(), statement)}.
+	 *
+	 * @param statement
+	 *            the statement to write
+	 * @throws IOException
+	 *             if the writer throws one
+	 */
+	public void writePlainStatement(final String statement) throws IOException {
+		this.writer.writePlainStatement(this.context.getDialect(), statement);
+	}
+
+	/**
 	 * Writes a new line to the target to separate different sections in the SQL file.
 	 *
 	 * Shortcut for {@code getWriter().writeSectionSeparator()}.

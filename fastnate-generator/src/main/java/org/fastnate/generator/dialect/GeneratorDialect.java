@@ -208,19 +208,28 @@ public abstract class GeneratorDialect {
 			return createAddDateExpression(convertTemporalValue(((RelativeDate) value).getReferenceDate(), type),
 					difference / precision.getMillis(), precision.getUnit());
 		}
-		final Date date;
+		return convertTemporalValue(convertToDatabaseDate(value, type));
+	}
+
+	/**
+	 * Converts any {@link Date} value to a {@link java.sql} specific date object.
+	 * 
+	 * @param value
+	 *            the Java-Date object
+	 * @param type
+	 *            the type of the conversion
+	 * @return the corresponding java.sql specific date object
+	 */
+	public Date convertToDatabaseDate(final Date value, final TemporalType type) {
 		switch (type) {
 			case DATE:
-				date = value instanceof java.sql.Date ? (java.sql.Date) value : new java.sql.Date(value.getTime());
-				break;
+				return value instanceof java.sql.Date ? (java.sql.Date) value : new java.sql.Date(value.getTime());
 			case TIME:
-				date = value instanceof Time ? (Time) value : new Time(value.getTime());
-				break;
+				return value instanceof Time ? (Time) value : new Time(value.getTime());
 			case TIMESTAMP:
 			default:
-				date = value instanceof Timestamp ? (Timestamp) value : new Timestamp(value.getTime());
+				return value instanceof Timestamp ? (Timestamp) value : new Timestamp(value.getTime());
 		}
-		return convertTemporalValue(date);
 	}
 
 	/**

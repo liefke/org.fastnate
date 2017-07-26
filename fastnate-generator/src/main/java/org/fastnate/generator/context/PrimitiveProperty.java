@@ -104,7 +104,7 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 			return (ValueConverter<T>) new BooleanConverter();
 		}
 		if (Number.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new NumberConverter();
+			return (ValueConverter<T>) new NumberConverter((Class<Number>) type);
 		}
 		if (Serializable.class.isAssignableFrom(type)) {
 			return (ValueConverter<T>) new SerializableConverter();
