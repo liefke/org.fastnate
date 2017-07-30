@@ -10,6 +10,8 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import org.fastnate.generator.dialect.GeneratorDialect;
+
 import com.google.common.io.Closeables;
 
 import lombok.Getter;
@@ -73,8 +75,34 @@ public class FileStatementsWriter extends AbstractStatementsWriter {
 	}
 
 	@Override
+	public void flush() throws IOException {
+		this.writer.flush();
+	}
+
+	/**
+	 * Writes a bunch of SQL statements to the file.
+	 *
+	 * @param statements
+	 *            the SQL statements (or anything else what should be added to the file)
+	 * @throws IOException
+	 *             if the writer throws one
+	 */
+	public void write(final String statements) throws IOException {
+		this.writer.write(statements);
+	}
+
+	@Override
 	public void writeComment(final String comment) throws IOException {
 		this.writer.write("/* " + comment + " */\n");
+	}
+
+	@Override
+	public void writePlainStatement(final GeneratorDialect dialect, final String sql) throws IOException {
+		this.writer.write(sql);
+		if (!sql.endsWith(this.statementSeparator)) {
+			this.writer.write(this.statementSeparator);
+		}
+		this.statementsCount++;
 	}
 
 	@Override
@@ -84,9 +112,9 @@ public class FileStatementsWriter extends AbstractStatementsWriter {
 
 	@Override
 	public void writeStatement(final EntityStatement statement) throws IOException {
-		this.statementsCount++;
 		this.writer.write(statement.toSql());
 		this.writer.write(this.statementSeparator);
+		this.statementsCount++;
 	}
 
 }

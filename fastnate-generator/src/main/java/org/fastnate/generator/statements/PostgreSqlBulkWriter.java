@@ -20,7 +20,6 @@ import org.fastnate.generator.context.GeneratorTable;
 import org.fastnate.generator.dialect.GeneratorDialect;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -30,15 +29,11 @@ import lombok.extern.slf4j.Slf4j;
  * @author Tobias Liefke
  */
 @Slf4j
-@RequiredArgsConstructor
-public class PostgreSqlBulkWriter extends AbstractStatementsWriter {
+public class PostgreSqlBulkWriter extends FileStatementsWriter {
 
 	/** The directory for the bulk files. */
 	@Getter
 	private final File directory;
-
-	/** The SQL file which contains the plain statements. */
-	private final Writer writer;
 
 	/** The encoding of the bulk files. */
 	@Getter
@@ -91,11 +86,27 @@ public class PostgreSqlBulkWriter extends AbstractStatementsWriter {
 		this.generatedFiles.add(sqlFile);
 	}
 
+	/**
+	 * Creates a new instance of {@link PostgreSqlBulkWriter}.
+	 *
+	 * @param directory
+	 *            the directory for the bulk files
+	 * @param writer
+	 *            the SQL file which contains the plain and the "COPY" statements
+	 * @param encoding
+	 *            The encoding of the bulk files.
+	 */
+	public PostgreSqlBulkWriter(final File directory, final Writer writer, final Charset encoding) {
+		super(writer);
+		this.directory = directory;
+		this.encoding = encoding;
+	}
+
 	@Override
 	public void close() throws IOException {
 		closeBulkWriters();
-		this.writer.close();
-		log.info("{} statements written", this.statementsCount);
+		getWriter().close();
+		log.info("{} statements and {} files written", this.statementsCount, this.generatedFiles.size());
 	}
 
 	private void closeBulkWriters() throws IOException {
@@ -112,16 +123,17 @@ public class PostgreSqlBulkWriter extends AbstractStatementsWriter {
 			final Integer number = this.fileNumbers.get(generatorTable);
 			String fileName = generatorTable.getName();
 			if (number == null) {
-				this.fileNumbers.put(generatorTable, 0);
+				this.fileNumbers.put(generatorTable, 2);
 			} else {
 				fileName += '.' + number.toString();
 				this.fileNumbers.put(generatorTable, number + 1);
 			}
 			final File file = new File(this.directory, fileName + ".blk");
-			this.writer.write("COPY " + generatorTable.getName() + " ("
+			write("COPY " + generatorTable.getName() + " ("
 					+ generatorTable.getColumns().keySet().stream().collect(Collectors.joining(", ")) + ") FROM "
 					+ dialect.quoteString(file.getAbsolutePath()) + " WITH ENCODING "
-					+ dialect.quoteString(this.encoding.name().toLowerCase()) + ";\n");
+					+ dialect.quoteString(this.encoding.name().toLowerCase()) + getStatementSeparator());
+			this.statementsCount++;
 			bulkWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), this.encoding));
 			this.bulkWriters.put(generatorTable, bulkWriter);
 			this.generatedFiles.add(file);
@@ -134,12 +146,7 @@ public class PostgreSqlBulkWriter extends AbstractStatementsWriter {
 		for (final Writer bulkWriter : this.bulkWriters.values()) {
 			bulkWriter.flush();
 		}
-		this.writer.flush();
-	}
-
-	@Override
-	public void writeComment(final String comment) throws IOException {
-		this.writer.write("/* " + comment + " */\n");
+		super.flush();
 	}
 
 	@Override
@@ -148,14 +155,14 @@ public class PostgreSqlBulkWriter extends AbstractStatementsWriter {
 	}
 
 	private void writePlainStatement(final String sql) throws IOException {
-		closeBulkWriters();
-		this.writer.write(sql + ";\n");
+		if (!sql.startsWith("TRUNCATE ")) {
+			closeBulkWriters();
+		}
+		write(sql);
+		if (!sql.endsWith(getStatementSeparator())) {
+			write(getStatementSeparator());
+		}
 		this.statementsCount++;
-	}
-
-	@Override
-	public void writeSectionSeparator() throws IOException {
-		this.writer.write('\n');
 	}
 
 	@Override
