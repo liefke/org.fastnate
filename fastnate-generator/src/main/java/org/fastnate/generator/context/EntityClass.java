@@ -28,8 +28,10 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
+import javax.persistence.OneToOne;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -527,8 +529,20 @@ public class EntityClass<E> {
 
 	private void buildUniqueProperty(final SingularProperty<E, ?> property) {
 		if (this.context.getMaxUniqueProperties() > 0) {
+			final boolean unique;
 			final Column column = property.getAttribute().getAnnotation(Column.class);
 			if (column != null && column.unique()) {
+				unique = true;
+			} else {
+				final OneToOne oneToOne = property.getAttribute().getAnnotation(OneToOne.class);
+				if (oneToOne != null) {
+					unique = StringUtils.isEmpty(oneToOne.mappedBy());
+				} else {
+					final JoinColumn joinColumn = property.getAttribute().getAnnotation(JoinColumn.class);
+					unique = joinColumn != null && joinColumn.unique();
+				}
+			}
+			if (unique) {
 				final UniquePropertyQuality propertyQuality = UniquePropertyQuality.getMatchingQuality(property);
 				if (propertyQuality != null && isBetterUniquePropertyQuality(propertyQuality)) {
 					this.uniquePropertiesQuality = propertyQuality;
