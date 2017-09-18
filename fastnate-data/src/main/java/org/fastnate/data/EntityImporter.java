@@ -208,8 +208,9 @@ public class EntityImporter {
 	 *            the provider class
 	 * @return the provider with that class or {@code null} if no such provider exists
 	 */
-	public DataProvider findDataProvider(final Class<? extends DataProvider> providerClass) {
-		return this.dataProviders.stream().filter(providerClass::isInstance).findFirst().orElse(null);
+	public <P extends DataProvider> P findDataProvider(final Class<P> providerClass) {
+		return providerClass
+				.cast(this.dataProviders.stream().filter(providerClass::isInstance).findFirst().orElse(null));
 	}
 
 	private Charset getEncoding() {
