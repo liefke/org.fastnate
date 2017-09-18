@@ -99,6 +99,9 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	/** The current context. */
 	private final GeneratorContext context;
 
+	/** The description of the type of this property. */
+	private final EntityClass<T> targetClass;
+
 	/** Indicates, that this property needs a value. */
 	private final boolean required;
 
@@ -135,8 +138,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		this.context = context;
 
 		// Initialize the target class description
-		@SuppressWarnings("unchecked")
-		final EntityClass<T> targetClass = context.getDescription((Class<T>) attribute.getType());
+		this.targetClass = context.getDescription((Class<T>) attribute.getType());
 
 		// Initialize according to the *ToOne annotations
 		final MappingInformation mapping = new MappingInformation(attribute);
@@ -152,8 +154,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			if (joinColumn != null && joinColumn.name().length() > 0) {
 				this.column = containerTable.resolveColumn(joinColumn.name());
 			} else {
-				this.column = containerTable.resolveColumn(
-						attribute.getName() + "_" + (targetClass == null ? "id" : targetClass.getIdColumn(attribute)));
+				this.column = containerTable.resolveColumn(attribute.getName() + "_"
+						+ (this.targetClass == null ? "id" : this.targetClass.getIdColumn(attribute)));
 			}
 		} else {
 			this.column = null;
