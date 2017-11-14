@@ -259,7 +259,7 @@ public enum AccessStyle {
 		public <E> Iterable<AttributeAccessor> getDeclaredAttributes(final Class<E> inspectedClass) {
 			final List<AttributeAccessor> result = new ArrayList<>();
 			for (final Method method : inspectedClass.getDeclaredMethods()) {
-				if (!Modifier.isStatic(method.getModifiers())) {
+				if (!Modifier.isStatic(method.getModifiers()) && !method.isSynthetic()) {
 					final String name = method.getName();
 					if (name.startsWith("get") || name.startsWith("is")) {
 						result.add(new Accessor(method));
