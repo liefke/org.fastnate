@@ -147,7 +147,7 @@ public enum AccessStyle {
 				final Class<? extends E> implementationClass) {
 			final List<AttributeAccessor> result = new ArrayList<>();
 			for (final Field field : inspectedClass.getDeclaredFields()) {
-				if (!Modifier.isStatic(field.getModifiers())) {
+				if (!Modifier.isStatic(field.getModifiers()) && !field.isSynthetic()) {
 					result.add(new Accessor(implementationClass, field));
 				}
 			}
@@ -261,10 +261,12 @@ public enum AccessStyle {
 						final String setterName = "set" + StringUtils.capitalize(this.name);
 						final Class<?> paramType = this.method.getReturnType();
 						for (final Method m : this.method.getDeclaringClass().getDeclaredMethods()) {
-							if (m.getName().equals(setterName) && m.getParameterTypes().length == 1
-									&& m.getParameterTypes()[0] == paramType) {
-								this.setter = m;
-								break;
+							if (m.getName().equals(setterName)) {
+								final Class<?>[] parameterTypes = m.getParameterTypes();
+								if (parameterTypes.length == 1 && parameterTypes[0] == paramType) {
+									this.setter = m;
+									break;
+								}
 							}
 						}
 						if (this.setter == null) {
@@ -294,7 +296,8 @@ public enum AccessStyle {
 				final Class<? extends E> implementationClass) {
 			final List<AttributeAccessor> result = new ArrayList<>();
 			for (final Method method : inspectedClass.getDeclaredMethods()) {
-				if (!Modifier.isStatic(method.getModifiers())) {
+				if (!Modifier.isStatic(method.getModifiers()) && !method.isSynthetic()
+						&& method.getParameterCount() == 0) {
 					final String name = method.getName();
 					if (name.startsWith("get") || name.startsWith("is")) {
 						result.add(new Accessor(implementationClass, method));
