@@ -210,17 +210,18 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 
 		@Override
 		public String toSql() {
-			final StringBuilder result = new StringBuilder("UPDATE ").append(getTable()).append(" SET ");
+			final StringBuilder result = new StringBuilder("UPDATE ").append(getTable().getName()).append(" SET ");
 			for (final Iterator<Map.Entry<GeneratorColumn, ColumnExpression>> entries = getValues().entrySet()
 					.iterator(); entries.hasNext();) {
 				final Entry<GeneratorColumn, ColumnExpression> entry = entries.next();
-				result.append(entry.getKey()).append(" = ");
+				result.append(entry.getKey().getName()).append(" = ");
 				entry.getValue().appendSql(result);
 				if (entries.hasNext()) {
 					result.append(", ");
 				}
 			}
-			result.append(" WHERE ").append(this.idColumn).append(" = ").append(this.idValue);
+			result.append(" WHERE ").append(this.idColumn.getName()).append(" = ");
+			this.idValue.appendSql(result);
 			return result.toString();
 		}
 
