@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<name>FastNate Root</name>
-	<description>The FastNate root project</description>
+	<name>Fastnate Root</name>
+	<description>The Fastnate root project</description>
 	<url>http://api.fastnate.org/latest</url>
 
 	<groupId>org.fastnate</groupId>

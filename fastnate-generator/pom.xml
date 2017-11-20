@@ -2,8 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<name>FastNate Generator</name>
-	<description>The FastNate Offline SQL Generator</description>
+	<name>Fastnate Generator</name>
+	<description>The Fastnate Offline SQL Generator</description>
 
 	<parent>
 		<groupId>org.fastnate</groupId>
