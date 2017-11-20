@@ -1,4 +1,4 @@
 /*!
- * FastNate (http://fastnate.org)
+ * Fastnate (http://fastnate.org)
  */
 
