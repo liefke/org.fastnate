@@ -108,11 +108,11 @@
 					<p>Nate found out that he has two options:</p>
 					<ol>
 						<li><p>He could use JPA to create and fill his database on the fly.</p>
-							<p>The biggest problem with that is, that JPA is really slow for write operations, as in most cases
-								it needs some additional read statements before and after the update. During the lifetime of an
-								application this is not really a problem, but during setup of a database this can take some time. And if
-								he (or one of his teammates) changes the content or layout of the database, he has to do it again and
-								again.</p>
+							<p>The biggest problem with that is, that JPA is slow for write operations, as in most cases it needs
+								some additional read statements before or after the update, it needs to update resp. flush its caches
+								and it has a complex transaction management. During the lifetime of an application this is not really a
+								problem, but during setup of a database this can take some time. And if he (or one of his teammates)
+								changes the content or layout of the database, he has to do it again and again.</p>
 							<p>And eventually it may block refactorings or enhancements, because nobody likes to wait.</p></li>
 						<li><p>
 								As another option he could write all the necessary SQL <em>insert</em> and <em>update</em> statements by
@@ -151,7 +151,7 @@
 			</dd>
 			<dt></dt>
 			<dd class="row">
-				<div class="col-md-10">
+				<div class="col-md-10 separate">
 					<div class="panel panel-default">
 						<div class="panel-heading">Comparison of available options</div>
 						<div class="panel-body">
@@ -196,6 +196,21 @@
 						</table>
 						<div class="panel-footer">* Fasnate tries to generate the best SQL for the target database, which is
 							usually faster than "handcrafted" SQL.</div>
+					</div>
+				</div>
+			</dd>
+			<dt></dt>
+			<dd class="row">
+				<div class="col-md-10">
+					<div class="panel panel-default">
+						<div class="panel-heading">A comparison chart of the performance of Hibernate and Fastnate</div>
+						<div class="panel-body">
+							<img src="https://github.com/liefke/org.fastnate/wiki/performance.png" alt="comparison chart">
+						</div>
+						<div class="panel-footer">
+							You can find more about the measurement of the performance <a
+								href="https://github.com/liefke/org.fastnate/wiki/Performance">here</a>
+						</div>
 					</div>
 				</div>
 			</dd>
