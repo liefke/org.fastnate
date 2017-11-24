@@ -21,6 +21,7 @@ import org.fastnate.generator.statements.ConnectedStatementsWriter;
 import org.fastnate.generator.statements.ListStatementsWriter;
 import org.fastnate.generator.statements.PostgreSqlBulkWriter;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
+import org.fastnate.util.ClassUtil;
 import org.hibernate.Session;
 import org.junit.Test;
 
@@ -36,12 +37,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 
-	private PerformanceTestEntity createRootEntity(final long seed, final int maxElementsPerEntity) {
+	private List<PerformanceTestEntity> createRootEntities(final long seed, final int maxElementsPerEntity,
+			final int countOfRootEntities) {
 		final Random random = new Random(seed);
-		final PerformanceTestEntity root = new PerformanceTestEntity(
-				Long.toString(random.nextLong(), Character.MAX_RADIX));
-		fillEntity(root, maxElementsPerEntity, random);
-		return root;
+		final List<PerformanceTestEntity> result = new ArrayList<>(countOfRootEntities);
+		for (int i = 0; i < countOfRootEntities; i++) {
+			final PerformanceTestEntity root = new PerformanceTestEntity(
+					Long.toString(random.nextLong(), Character.MAX_RADIX));
+			fillEntity(root, maxElementsPerEntity, random);
+			result.add(root);
+		}
+		return result;
 	}
 
 	private void fillEntity(final PerformanceTestEntity entity, final int maxElementsPerEntity, final Random random) {
@@ -120,7 +126,7 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 		((Session) getEm().getDelegate()).doWork(connection -> {
 			try {
 				try (EntitySqlGenerator generator = new EntitySqlGenerator(getGenerator().getContext(), connection)) {
-					testHugeAmount(Function.<PerformanceTestEntity> identity(), entity -> {
+					testHugeAmount(Function.identity(), entity -> {
 						try {
 							generator.write(entity);
 							generator.flush();
@@ -185,24 +191,26 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 	 * @param writer
 	 *            used to write the entity
 	 */
-	private <T> void testHugeAmount(final Function<? super PerformanceTestEntity, T> transformation,
+	private <T> void testHugeAmount(final Function<List<? super PerformanceTestEntity>, T> transformation,
 			final Consumer<T> writer) {
 		final int maxElementsPerEntity = Integer
-				.parseInt(System.getProperty("fastnate.test.performance.max.size", "5"));
+				.parseInt(System.getProperty("fastnate.test.performance.max.depth", "4"));
+
+		final int rootElements = Integer.parseInt(System.getProperty("fastnate.test.performance.size", "100"));
 
 		// Warm up
-		writer.accept(transformation.apply(createRootEntity(-1, maxElementsPerEntity)));
+		writer.accept(transformation.apply(createRootEntities(-1, maxElementsPerEntity, 2)));
 
 		// Run measurement
 		final Stopwatch stopwatch = Stopwatch.createUnstarted();
-		IntStream.range(0, Integer.parseInt(System.getProperty("fastnate.test.performance.rounds", "5")))
-				.forEachOrdered(seed -> {
-					final T values = transformation.apply(createRootEntity(seed, maxElementsPerEntity));
-					stopwatch.start();
-					writer.accept(values);
-					stopwatch.stop();
-				});
-		log.info("Writing took: " + stopwatch);
+		final int rounds = Integer.parseInt(System.getProperty("fastnate.test.performance.rounds", "5"));
+		IntStream.range(0, rounds).forEachOrdered(seed -> {
+			final T values = transformation.apply(createRootEntities(seed, maxElementsPerEntity, rootElements));
+			stopwatch.start();
+			writer.accept(values);
+			stopwatch.stop();
+		});
+		log.info("{} - writing took: {}", ClassUtil.getCallerMethod(PerformanceTest.class), stopwatch);
 	}
 
 	/**
@@ -210,9 +218,11 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testJpa() {
-		testHugeAmount(Function.identity(), entity -> {
+		testHugeAmount(Function.identity(), entities -> {
 			getEm().getTransaction().begin();
-			getEm().persist(entity);
+			for (final Object entity : entities) {
+				getEm().persist(entity);
+			}
 			getEm().getTransaction().commit();
 		});
 	}

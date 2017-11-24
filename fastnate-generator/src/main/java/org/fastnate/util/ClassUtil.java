@@ -122,6 +122,44 @@ public final class ClassUtil {
 				+ " and implented in " + instanceClass);
 	}
 
+	/**
+	 * Resolves the name of the method that called the caller of this method.
+	 *
+	 * @return the name of the caller
+	 */
+	public static String getCallerMethod() {
+		final StackTraceElement[] stackTrace = new Throwable().getStackTrace();
+		for (int i = 2; i < stackTrace.length; i++) {
+			final String methodName = stackTrace[i].getMethodName();
+			if (methodName.indexOf('$') < 0) {
+				return methodName;
+			}
+		}
+		return stackTrace[1].getMethodName();
+	}
+
+	/**
+	 * Resolves the name of the method that called the caller of this method.
+	 *
+	 * Steps up until the caller belongs to the given class
+	 * 
+	 * @param callerClass
+	 *            the class that the method belongs to
+	 *
+	 * @return the name of the caller
+	 */
+	public static String getCallerMethod(final Class<?> callerClass) {
+		final String callerClassName = callerClass.getName();
+		final StackTraceElement[] stackTrace = new Throwable().getStackTrace();
+		for (int i = 2; i < stackTrace.length; i++) {
+			final String methodName = stackTrace[i].getMethodName();
+			if (methodName.indexOf('$') < 0 && callerClassName.equals(stackTrace[i].getClassName())) {
+				return methodName;
+			}
+		}
+		return stackTrace[1].getMethodName();
+	}
+
 	private ClassUtil() {
 		// Helper class
 	}
