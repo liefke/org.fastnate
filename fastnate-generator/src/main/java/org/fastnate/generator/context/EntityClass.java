@@ -778,7 +778,7 @@ public class EntityClass<E> {
 			for (final Property<E, ?> property : this.properties.values()) {
 				if (property instanceof SingularProperty) {
 					final SingularProperty<E, ?> singularProperty = (SingularProperty<E, ?>) property;
-					if (columnName.equals(singularProperty.getColumn())) {
+					if (columnName.equals(singularProperty.getColumn().getName())) {
 						final UniquePropertyQuality quality = UniquePropertyQuality.getMatchingQuality(property);
 						if (quality != null) {
 							if (quality.ordinal() > currentQuality.ordinal()) {
