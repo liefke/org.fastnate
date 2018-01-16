@@ -215,11 +215,10 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 							generator.setCurrentValue(currentValue);
 						}
 					} catch (final SQLException e) {
-						if (generator instanceof SequenceIdGenerator) {
-							// Ignore if sequence.currval is not available
-						} else {
+						if (!(generator instanceof SequenceIdGenerator)) {
 							throw new IllegalStateException("Can't initialize generator with " + sql, e);
 						}
+						// Ignore if sequence.currval is not available for a new sequence - for example in Oracle
 					}
 				}
 			}
