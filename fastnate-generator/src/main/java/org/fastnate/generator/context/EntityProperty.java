@@ -150,7 +150,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		// Initialize the column name
 		if (this.mappedBy == null) {
 			final JoinColumn joinColumn = override != null && override.joinColumns().length > 0
-					? override.joinColumns()[0] : attribute.getAnnotation(JoinColumn.class);
+					? override.joinColumns()[0]
+					: attribute.getAnnotation(JoinColumn.class);
 			if (joinColumn != null && joinColumn.name().length() > 0) {
 				this.column = containerTable.resolveColumn(joinColumn.name());
 			} else {
@@ -178,15 +179,18 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			// Resolve the entity
 			final T value = getValue(entity);
 			if (value != null) {
+				if (this.anyColumn != null) {
+					statement.setColumnValue(this.anyColumn, findAnyDesc(value));
+				}
+
 				final EntityClass<T> entityClass = this.context.getDescription(value);
-				final ColumnExpression expression = entityClass.getEntityReference(value, this.idField, false);
-				if (expression != null) {
-					// We have an ID - use the expression
-					statement.setColumnValue(this.column, expression);
-					if (this.anyColumn != null) {
-						statement.setColumnValue(this.anyColumn, findAnyDesc(value));
+				if (!entityClass.isNew(value)) {
+					final ColumnExpression expression = entityClass.getEntityReference(value, this.idField, false);
+					if (expression != null) {
+						// We have an ID - use the expression
+						statement.setColumnValue(this.column, expression);
+						return;
 					}
-					return;
 				}
 				// If the id of the target entity is not set up to now, then the given entity is written _before_ the
 				// target entity is created and we will update the property for the entity later
@@ -195,7 +199,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			failIfRequired(entity);
 			if (this.context.isWriteNullValues()) {
 				statement.setColumnValue(this.column, PrimitiveColumnExpression.NULL);
-				if (this.anyColumn != null) {
+				if (this.anyColumn != null && value == null) {
 					statement.setColumnValue(this.anyColumn, PrimitiveColumnExpression.NULL);
 				}
 			}
