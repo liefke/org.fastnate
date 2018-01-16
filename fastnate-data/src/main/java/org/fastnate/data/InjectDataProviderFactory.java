@@ -211,8 +211,8 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 					injection = buildInjection(possibleImplementations.get(0));
 				} else if (qualifier != null) {
 					// Find the correct instance
-					possibleImplementations
-							.removeIf(c -> !qualifier.equals(c.getAnnotationsByType(qualifier.getClass())));
+					possibleImplementations.removeIf(
+							c -> !Arrays.asList(c.getAnnotationsByType(qualifier.getClass())).contains(qualifier));
 					ModelException.test(!possibleImplementations.isEmpty(),
 							"Could not find subclass of {} with qualifier {}", type, qualifier);
 					ModelException.test(possibleImplementations.size() == 1,
