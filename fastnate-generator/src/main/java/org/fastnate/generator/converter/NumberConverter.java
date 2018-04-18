@@ -15,7 +15,7 @@ import org.fastnate.generator.statements.PrimitiveColumnExpression;
  */
 public class NumberConverter extends AbstractValueConverter<Number> {
 
-	private Constructor<Number> stringConstructor;
+	private Constructor<? extends Number> stringConstructor;
 
 	/**
 	 * Creates a new instance of {@link NumberConverter}.
@@ -25,7 +25,7 @@ public class NumberConverter extends AbstractValueConverter<Number> {
 	 * @throws ModelException
 	 *             if the String constructor is missing from the given number class
 	 */
-	public NumberConverter(final Class<Number> type) {
+	public NumberConverter(final Class<? extends Number> type) {
 		try {
 			this.stringConstructor = type.getConstructor(String.class);
 		} catch (final NoSuchMethodException e) {

@@ -28,6 +28,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
+@AnyMetaDef(name = "AnyMetaDefInClass", idType = "long", metaType = "string", metaValues = {
+		@MetaValue(targetEntity = SimpleTestEntity.class, value = "SimpleTestEntity"), //
+		@MetaValue(targetEntity = AnyContainer.class, value = "AnyContainer") })
 public class AnyContainer extends BaseTestEntity {
 
 	@Any(metaColumn = @Column(name = "classId"))
@@ -37,22 +40,16 @@ public class AnyContainer extends BaseTestEntity {
 	@JoinColumn(name = "entityId")
 	private BaseTestEntity singleAny;
 
-	@ManyToAny(metaColumn = @Column(name = "classId"))
+	@ManyToAny(metaColumn = @Column(name = "classId"), metaDef = "AnyMetaDefInClass")
 	@JoinTable(name = "ManyAny", //
 			joinColumns = @JoinColumn(name = "containerId"), //
 			inverseJoinColumns = @JoinColumn(name = "entityId"))
 	@OrderColumn(name = "orderId")
-	@AnyMetaDef(idType = "long", metaType = "string", metaValues = {
-			@MetaValue(targetEntity = SimpleTestEntity.class, value = "STE"),
-			@MetaValue(targetEntity = AnyContainer.class, value = "AC") })
 	private List<BaseTestEntity> manyAny;
 
-	@ManyToAny(metaColumn = @Column(name = "classId"))
+	@ManyToAny(metaColumn = @Column(name = "classId"), metaDef = "AnyMetaDefInPackage")
 	@JoinTable(name = "AnyMap", //
 			joinColumns = @JoinColumn(name = "containerId"), //
 			inverseJoinColumns = @JoinColumn(name = "entityId"))
-	@AnyMetaDef(idType = "long", metaType = "string", metaValues = {
-			@MetaValue(targetEntity = SimpleTestEntity.class, value = "STE"),
-			@MetaValue(targetEntity = AnyContainer.class, value = "AC") })
 	private Map<String, BaseTestEntity> anyMap;
 }

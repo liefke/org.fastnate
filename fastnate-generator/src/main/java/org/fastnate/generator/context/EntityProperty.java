@@ -42,45 +42,51 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 
 		private final AttributeAccessor attribute;
 
+		private final Class<?> valueClass;
+
 		private final boolean optional;
 
 		private final String mappedBy;
 
-		private final String anyMetaColumn;
+		private final String anyColumn;
 
-		private final Class<?> valueClass;
+		private final String anyDefName;
 
 		MappingInformation(final AttributeAccessor attribute) {
 			this.attribute = attribute;
 			final OneToOne oneToOne = attribute.getAnnotation(OneToOne.class);
 			final NotNull notNull = attribute.getAnnotation(NotNull.class);
 			if (oneToOne != null) {
+				this.valueClass = oneToOne.targetEntity();
 				this.optional = oneToOne.optional() && notNull == null;
 				this.mappedBy = oneToOne.mappedBy();
-				this.anyMetaColumn = null;
-				this.valueClass = oneToOne.targetEntity();
+				this.anyColumn = null;
+				this.anyDefName = null;
 			} else {
 				this.mappedBy = "";
 				final ManyToOne manyToOne = attribute.getAnnotation(ManyToOne.class);
 				if (manyToOne != null) {
-					this.optional = manyToOne.optional() && notNull == null;
-					this.anyMetaColumn = null;
 					this.valueClass = manyToOne.targetEntity();
+					this.optional = manyToOne.optional() && notNull == null;
+					this.anyColumn = null;
+					this.anyDefName = null;
 				} else {
 					final Any any = attribute.getAnnotation(Any.class);
 					ModelException.mustExist(any, "{} declares none of OneToOne, ManyToOne, or Any", attribute);
-					this.optional = any.optional() && notNull == null;
-					this.anyMetaColumn = any.metaColumn().name();
 					this.valueClass = null;
+					this.optional = any.optional() && notNull == null;
+					this.anyColumn = any.metaColumn().name();
+					this.anyDefName = any.metaDef();
 				}
 			}
 		}
 
 		<T> AnyMapping<T> buildAnyMapping(final GeneratorContext context, final GeneratorTable containerTable) {
-			if (this.anyMetaColumn == null) {
+			if (this.anyColumn == null) {
 				return null;
 			}
-			return new AnyMapping<>(context, this.attribute, containerTable.resolveColumn(this.anyMetaColumn));
+			return new AnyMapping<>(context, this.attribute, containerTable.resolveColumn(this.anyColumn),
+					this.anyDefName);
 		}
 
 	}

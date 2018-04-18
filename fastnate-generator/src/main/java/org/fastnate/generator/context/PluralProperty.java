@@ -52,7 +52,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 * Helper for evaluating correct mapping information from the annotations.
 	 */
 	@Getter
-	private static class MappingInformation {
+	private static class EntityMappingInformation {
 
 		private static boolean useTargetTable(final AttributeAccessor attribute, final AssociationOverride override) {
 			final JoinColumn joinColumn = override != null && override.joinColumns().length > 0
@@ -66,15 +66,17 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 		private final AttributeAccessor attribute;
 
+		private final Class<?> valueClass;
+
 		private final String mappedBy;
 
-		private boolean useTargetTable;
+		private final boolean useTargetTable;
 
 		private final String anyColumn;
 
-		private final Class<?> valueClass;
+		private final String anyDefName;
 
-		MappingInformation(final AttributeAccessor attribute, final AssociationOverride override,
+		EntityMappingInformation(final AttributeAccessor attribute, final AssociationOverride override,
 				final int valueArgumentIndex) {
 			this.attribute = attribute;
 			final OneToMany oneToMany = attribute.getAnnotation(OneToMany.class);
@@ -83,6 +85,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				this.mappedBy = oneToMany.mappedBy().length() == 0 ? null : oneToMany.mappedBy();
 				this.useTargetTable = this.mappedBy != null || useTargetTable(attribute, override);
 				this.anyColumn = null;
+				this.anyDefName = null;
 			} else {
 				final ManyToMany manyToMany = attribute.getAnnotation(ManyToMany.class);
 				if (manyToMany != null) {
@@ -90,6 +93,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					this.mappedBy = manyToMany.mappedBy().length() == 0 ? null : manyToMany.mappedBy();
 					this.useTargetTable = this.mappedBy != null;
 					this.anyColumn = null;
+					this.anyDefName = null;
 				} else {
 					final ManyToAny manyToAny = attribute.getAnnotation(ManyToAny.class);
 					ModelException.mustExist(manyToAny,
@@ -98,6 +102,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					this.mappedBy = null;
 					this.useTargetTable = false;
 					this.anyColumn = manyToAny.metaColumn().name();
+					this.anyDefName = manyToAny.metaDef();
 				}
 			}
 		}
@@ -106,7 +111,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			if (this.anyColumn == null) {
 				return null;
 			}
-			return new AnyMapping<>(context, this.attribute, containerTable.resolveColumn(this.anyColumn));
+			return new AnyMapping<>(context, this.attribute, containerTable.resolveColumn(this.anyColumn),
+					this.anyDefName);
 		}
 	}
 
@@ -374,7 +380,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		if (values == null) {
 			// Entity mapping, either OneToMany, ManyToMany or ManyToAny
 
-			final MappingInformation mappingInformation = new MappingInformation(attribute, override,
+			final EntityMappingInformation mappingInformation = new EntityMappingInformation(attribute, override,
 					valueArgumentIndex);
 			this.mappedBy = mappingInformation.getMappedBy();
 			this.useTargetTable = mappingInformation.isUseTargetTable();
