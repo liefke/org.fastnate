@@ -50,7 +50,7 @@ public enum UniquePropertyQuality {
 	 * @return the quality with the lowest ordinal, that matches the given property, or {@code null} if the property is
 	 *         never allowed
 	 */
-	public static final UniquePropertyQuality getMatchingQuality(final Property<?, ?> property) {
+	public static UniquePropertyQuality getMatchingQuality(final Property<?, ?> property) {
 		if (property instanceof PrimitiveProperty) {
 			if (property.isRequired()) {
 				return onlyRequiredPrimitives;

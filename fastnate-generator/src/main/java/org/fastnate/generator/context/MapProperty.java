@@ -7,12 +7,9 @@ import java.util.Collections;
 import java.util.Map;
 
 import javax.persistence.AssociationOverride;
-import javax.persistence.ElementCollection;
-import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyClass;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.MapKeyJoinColumn;
-import javax.persistence.OneToMany;
 
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.converter.ValueConverter;
@@ -60,9 +57,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	 * @return {@code true} if an {@link MapProperty} may be created for the given attribute
 	 */
 	static boolean isMapProperty(final AttributeAccessor attribute) {
-		return Map.class.isAssignableFrom(attribute.getType())
-				&& (attribute.isAnnotationPresent(OneToMany.class) || attribute.isAnnotationPresent(ManyToMany.class)
-						|| attribute.isAnnotationPresent(ElementCollection.class));
+		return Map.class.isAssignableFrom(attribute.getType()) && hasPluralAnnotation(attribute);
 	}
 
 	/** The class of the key of the map. */
@@ -87,7 +82,6 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	 * @param override
 	 *            the configured assocation override
 	 */
-	@SuppressWarnings("unchecked")
 	public MapProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
 			final AssociationOverride override) {
 		super(sourceClass, attribute, override, 1);
@@ -165,7 +159,6 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 		return entities;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Map<K, T> getValue(final E entity) {
 		final Map<K, T> value = super.getValue(entity);

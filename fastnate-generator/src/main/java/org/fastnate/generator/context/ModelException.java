@@ -10,6 +10,23 @@ public class ModelException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 
 	/**
+	 * Throws a {@link ModelException} if the given value is {@code null}.
+	 *
+	 * @param value
+	 *            the value that should not be {@code null}
+	 * @param errorMessage
+	 *            the message to include in the exception, if the value is {@code null}, each of <code>{}</code> is
+	 *            replaced by one of the given parameters
+	 * @param parameters
+	 *            the optional parameters for the error message
+	 * @throws ModelException
+	 *             if the value is {@code null}
+	 */
+	public static void mustExist(final Object value, final String errorMessage, final Object... parameters) {
+		test(value != null, errorMessage, parameters);
+	}
+
+	/**
 	 * Throws a {@link ModelException} if the given condition is not met.
 	 *
 	 * @param condition

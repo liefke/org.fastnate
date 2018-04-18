@@ -7,9 +7,6 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.persistence.AssociationOverride;
-import javax.persistence.ElementCollection;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 
 import org.fastnate.generator.converter.EntityConverter;
@@ -40,9 +37,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	 * @return {@code true} if an {@link CollectionProperty} may be created for the given attribute
 	 */
 	static boolean isCollectionProperty(final AttributeAccessor attribute) {
-		return Collection.class.isAssignableFrom(attribute.getType())
-				&& (attribute.isAnnotationPresent(OneToMany.class) || attribute.isAnnotationPresent(ManyToMany.class)
-						|| attribute.isAnnotationPresent(ElementCollection.class));
+		return Collection.class.isAssignableFrom(attribute.getType()) && hasPluralAnnotation(attribute);
 	}
 
 	/** The name of the column that saves the order of the entries in the collection. */

@@ -3,8 +3,6 @@ package org.fastnate.generator.context;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 import javax.persistence.AssociationOverride;
@@ -16,15 +14,11 @@ import javax.persistence.OneToOne;
 import javax.validation.constraints.NotNull;
 
 import org.fastnate.generator.converter.EntityConverter;
-import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.PrimitiveColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
 import org.hibernate.annotations.Any;
-import org.hibernate.annotations.AnyMetaDef;
-import org.hibernate.annotations.ManyToAny;
-import org.hibernate.annotations.MetaValue;
 
 import lombok.Getter;
 
@@ -46,42 +40,49 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	@Getter
 	private static class MappingInformation {
 
+		private final AttributeAccessor attribute;
+
 		private final boolean optional;
 
 		private final String mappedBy;
 
 		private final String anyMetaColumn;
 
+		private final Class<?> valueClass;
+
 		MappingInformation(final AttributeAccessor attribute) {
+			this.attribute = attribute;
 			final OneToOne oneToOne = attribute.getAnnotation(OneToOne.class);
 			final NotNull notNull = attribute.getAnnotation(NotNull.class);
 			if (oneToOne != null) {
 				this.optional = oneToOne.optional() && notNull == null;
 				this.mappedBy = oneToOne.mappedBy();
 				this.anyMetaColumn = null;
+				this.valueClass = oneToOne.targetEntity();
 			} else {
 				this.mappedBy = "";
 				final ManyToOne manyToOne = attribute.getAnnotation(ManyToOne.class);
 				if (manyToOne != null) {
 					this.optional = manyToOne.optional() && notNull == null;
 					this.anyMetaColumn = null;
+					this.valueClass = manyToOne.targetEntity();
 				} else {
 					final Any any = attribute.getAnnotation(Any.class);
-					if (any != null) {
-						this.optional = any.optional() && notNull == null;
-						this.anyMetaColumn = any.metaColumn().name();
-					} else {
-						final ManyToAny manyToAny = attribute.getAnnotation(ManyToAny.class);
-						if (manyToAny == null) {
-							throw new IllegalArgumentException(
-									attribute + " is neither declared as OneToOne nor ManyToOne");
-						}
-						this.optional = notNull == null;
-						this.anyMetaColumn = manyToAny.metaColumn().name();
-					}
+					ModelException.mustExist(any, "{} declares none of OneToOne, ManyToOne, or Any", attribute);
+					this.optional = any.optional() && notNull == null;
+					this.anyMetaColumn = any.metaColumn().name();
+					this.valueClass = null;
 				}
 			}
 		}
+
+		<T> AnyMapping<T> buildAnyMapping(final GeneratorContext context, final GeneratorTable containerTable) {
+			if (this.anyMetaColumn == null) {
+				return null;
+			}
+			return new AnyMapping<>(context, this.attribute, containerTable.resolveColumn(this.anyMetaColumn));
+		}
+
 	}
 
 	/**
@@ -93,13 +94,13 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	 */
 	static boolean isEntityProperty(final AttributeAccessor attribute) {
 		return attribute.isAnnotationPresent(OneToOne.class) || attribute.isAnnotationPresent(ManyToOne.class)
-				|| attribute.isAnnotationPresent(Any.class) || attribute.isAnnotationPresent(ManyToAny.class);
+				|| attribute.isAnnotationPresent(Any.class);
 	}
 
 	/** The current context. */
 	private final GeneratorContext context;
 
-	/** The description of the type of this property. */
+	/** The description of the type of this property. {@code null} if the attribute is defined as type {@link Any}. */
 	private final EntityClass<T> targetClass;
 
 	/** Indicates, that this property needs a value. */
@@ -114,11 +115,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	/** The name of the id for referencing an embedded id. */
 	private final String idField;
 
-	/** The name of the column that contains the id of the entity class, if {@link Any} or {@link ManyToAny} is used. */
-	private final GeneratorColumn anyColumn;
-
-	/** Contains the mapping from a class to its id in the database. */
-	private final Map<Class<?>, ColumnExpression> anyClasses = new HashMap<>();
+	/** Contains information about an addition class column, if {@link Any} is used. */
+	private final AnyMapping<T> anyMapping;
 
 	/**
 	 * Creates a new instance of {@link EntityProperty}.
@@ -137,11 +135,11 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		super(attribute);
 		this.context = context;
 
-		// Initialize the target class description
-		this.targetClass = context.getDescription((Class<T>) attribute.getType());
-
 		// Initialize according to the *ToOne annotations
 		final MappingInformation mapping = new MappingInformation(attribute);
+		final Class<T> type = (Class<T>) (mapping.getValueClass() != null ? mapping.getValueClass()
+				: attribute.getType());
+		this.targetClass = context.getDescription(type);
 		this.required = !mapping.isOptional();
 		this.mappedBy = mapping.getMappedBy().length() == 0 ? null : mapping.getMappedBy();
 		final MapsId mapsId = attribute.getAnnotation(MapsId.class);
@@ -163,13 +161,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		}
 
 		// Initialize ANY meta information
-		final String anyColumnName = mapping.getAnyMetaColumn();
-		if (anyColumnName != null) {
-			this.anyColumn = containerTable.resolveColumn(anyColumnName);
-			fillMetaDefs(attribute, context.getDialect());
-		} else {
-			this.anyColumn = null;
-		}
+		this.anyMapping = mapping.buildAnyMapping(context, containerTable);
 	}
 
 	@Override
@@ -179,8 +171,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			// Resolve the entity
 			final T value = getValue(entity);
 			if (value != null) {
-				if (this.anyColumn != null) {
-					statement.setColumnValue(this.anyColumn, findAnyDesc(value));
+				if (this.anyMapping != null) {
+					this.anyMapping.setColumnValue(statement, value);
 				}
 
 				final EntityClass<T> entityClass = this.context.getDescription(value);
@@ -199,30 +191,11 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			failIfRequired(entity);
 			if (this.context.isWriteNullValues()) {
 				statement.setColumnValue(this.column, PrimitiveColumnExpression.NULL);
-				if (this.anyColumn != null && value == null) {
-					statement.setColumnValue(this.anyColumn, PrimitiveColumnExpression.NULL);
+				if (this.anyMapping != null && value == null) {
+					this.anyMapping.setColumnValue(statement, value);
 				}
 			}
 		}
-	}
-
-	private void fillMetaDefs(final AttributeAccessor attribute, final GeneratorDialect dialect) {
-		final AnyMetaDef metaDef = attribute.getAnnotation(AnyMetaDef.class);
-		if (metaDef == null) {
-			throw new IllegalArgumentException("Missing AnyMetaDef for " + attribute);
-		}
-		for (final MetaValue metaValue : metaDef.metaValues()) {
-			this.anyClasses.put(metaValue.targetEntity(), PrimitiveColumnExpression.create(metaValue.value(), dialect));
-		}
-	}
-
-	private ColumnExpression findAnyDesc(final T entity) {
-		final ColumnExpression desc = this.anyClasses.get(entity.getClass());
-		if (desc == null) {
-			throw new IllegalArgumentException(
-					"Can'f find meta description for " + entity.getClass() + " on " + getAttribute());
-		}
-		return desc;
 	}
 
 	@Override
@@ -236,9 +209,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			final Object... arguments) throws IOException {
 		final ColumnExpression expression = this.context.getDescription(writtenEntity).getEntityReference(writtenEntity,
 				this.idField, false);
-		if (expression == null) {
-			throw new ModelException("Entity can't be referenced: " + writtenEntity);
-		}
+		ModelException.mustExist(expression, "Entity can't be referenced: {}", writtenEntity);
+
 		final EntityClass<E> entityClass = this.context.getDescription(entity);
 		final TableStatement stmt = writer.createUpdateStatement(this.context.getDialect(), entityClass.getTable(),
 				entityClass.getIdColumn(getAttribute()), entityClass.getEntityReference(entity, this.idField, true));
@@ -265,11 +237,12 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		if (reference == null) {
 			return null;
 		}
-		if (this.anyColumn != null) {
-			return '(' + this.column.getName() + " = " + reference.toSql() + " AND " + this.anyColumn.getName() + " = "
-					+ findAnyDesc(value) + ')';
+		final String predicate = this.column + " = " + reference.toSql();
+		if (this.anyMapping == null) {
+			return predicate;
 		}
-		return this.column + " = " + reference.toSql();
+
+		return '(' + predicate + " AND " + this.anyMapping.getPredicate(value) + ')';
 	}
 
 	@Override
