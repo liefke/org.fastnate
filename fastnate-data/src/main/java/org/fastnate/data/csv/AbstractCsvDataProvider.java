@@ -194,7 +194,6 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	 *            the string representation of the value
 	 * @return the value for the property
 	 */
-	@SuppressWarnings("unchecked")
 	protected <T> T convertColumn(final String column, final Class<T> targetType, final String value) {
 		CsvPropertyConverter<? super T> converter = (CsvPropertyConverter<T>) this.columnConverter.get(column);
 		if (converter == null) {
@@ -230,7 +229,6 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 	 *
 	 * @return the new entity
 	 */
-	@SuppressWarnings("unchecked")
 	protected E createEntity() {
 		try {
 			return getEntityClass().getConstructor().newInstance();
@@ -256,7 +254,6 @@ public abstract class AbstractCsvDataProvider<E> extends AbstractCsvReader<E> im
 		return entity;
 	}
 
-	@SuppressWarnings("unchecked")
 	private <T> CsvPropertyConverter<? super T> findConverter(final Class<T> targetType) {
 		if (targetType == null) {
 			return null;

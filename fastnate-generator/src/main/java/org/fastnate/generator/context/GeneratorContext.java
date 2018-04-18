@@ -371,7 +371,6 @@ public class GeneratorContext {
 	 *            the class to lookup
 	 * @return the description for the class or {@code null} if the class is not an {@link Entity}
 	 */
-	@SuppressWarnings("unchecked")
 	public <E> EntityClass<E> getDescription(final Class<E> entityClass) {
 		// Lookup description
 		EntityClass<E> description = (EntityClass<E>) this.descriptions.get(entityClass);
@@ -417,7 +416,6 @@ public class GeneratorContext {
 	 * @throws IllegalArgumentException
 	 *             if the given object is no {@link Entity}
 	 */
-	@SuppressWarnings("unchecked")
 	public <E> EntityClass<E> getDescription(final E entity) {
 		if (entity == null) {
 			throw new IllegalArgumentException("Can't inspect null entity");

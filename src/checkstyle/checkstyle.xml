@@ -12,7 +12,6 @@ The checkstyle configuration for fastnate.org
 <module name="Checker">
   <property name="severity" value="warning"/>
   <module name="TreeWalker">
-    <module name="FileContentsHolder"/>
     <module name="JavadocMethod">
       <property name="scope" value="package"/>
       <property name="excludeScope" value="private"/>
@@ -191,6 +190,15 @@ The checkstyle configuration for fastnate.org
       <property name="format" value="^\s*//.*\);.*$"/>
       <property name="message" value="Avoid commented-out lines of code"/>
     </module>
+    <module name="SuppressionCommentFilter">
+	  <property name="offCommentFormat" value="CHECKSTYLE OFF\: ([\S\|]+)"/>
+	  <property name="onCommentFormat" value="CHECKSTYLE ON\: ([\S\|]+)"/>
+	  <property name="checkFormat" value="$1"/>
+	</module>
+	<module name="SuppressionCommentFilter">
+	  <property name="offCommentFormat" value="CHECKSTYLE OFF$"/>
+	  <property name="onCommentFormat" value="CHECKSTYLE ON$"/>
+	</module>
   </module>
   <module name="Translation"/>
   <module name="FileLength">
@@ -200,14 +208,5 @@ The checkstyle configuration for fastnate.org
     <metadata name="net.sf.eclipsecs.core.comment" value="Line has trailing spaces."/>
     <property name="format" value="^[^\*]*\s+$"/>
     <property name="message" value="Line has trailing spaces."/>
-  </module>
-  <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="CHECKSTYLE OFF\: ([\S\|]+)"/>
-    <property name="onCommentFormat" value="CHECKSTYLE ON\: ([\S\|]+)"/>
-    <property name="checkFormat" value="$1"/>
-  </module>
-  <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="CHECKSTYLE OFF$"/>
-    <property name="onCommentFormat" value="CHECKSTYLE ON$"/>
   </module>
 </module>
