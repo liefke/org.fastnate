@@ -57,7 +57,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			final OneToOne oneToOne = attribute.getAnnotation(OneToOne.class);
 			final NotNull notNull = attribute.getAnnotation(NotNull.class);
 			if (oneToOne != null) {
-				this.valueClass = oneToOne.targetEntity();
+				this.valueClass = oneToOne.targetEntity() == void.class ? attribute.getType() : oneToOne.targetEntity();
 				this.optional = oneToOne.optional() && notNull == null;
 				this.mappedBy = oneToOne.mappedBy();
 				this.anyColumn = null;
@@ -66,14 +66,15 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 				this.mappedBy = "";
 				final ManyToOne manyToOne = attribute.getAnnotation(ManyToOne.class);
 				if (manyToOne != null) {
-					this.valueClass = manyToOne.targetEntity();
+					this.valueClass = manyToOne.targetEntity() == void.class ? attribute.getType()
+							: manyToOne.targetEntity();
 					this.optional = manyToOne.optional() && notNull == null;
 					this.anyColumn = null;
 					this.anyDefName = null;
 				} else {
 					final Any any = attribute.getAnnotation(Any.class);
 					ModelException.mustExist(any, "{} declares none of OneToOne, ManyToOne, or Any", attribute);
-					this.valueClass = null;
+					this.valueClass = attribute.getType();
 					this.optional = any.optional() && notNull == null;
 					this.anyColumn = any.metaColumn().name();
 					this.anyDefName = any.metaDef();
@@ -106,7 +107,9 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	/** The current context. */
 	private final GeneratorContext context;
 
-	/** The description of the type of this property. {@code null} if the attribute is defined as type {@link Any}. */
+	/**
+	 * The description of the type of this property. Usually {@code null} for attributes defined as type {@link Any}.
+	 */
 	private final EntityClass<T> targetClass;
 
 	/** Indicates, that this property needs a value. */
@@ -143,8 +146,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 
 		// Initialize according to the *ToOne annotations
 		final MappingInformation mapping = new MappingInformation(attribute);
-		final Class<T> type = (Class<T>) (mapping.getValueClass() != null ? mapping.getValueClass()
-				: attribute.getType());
+		final Class<T> type = (Class<T>) mapping.getValueClass();
 		this.targetClass = context.getDescription(type);
 		this.required = !mapping.isOptional();
 		this.mappedBy = mapping.getMappedBy().length() == 0 ? null : mapping.getMappedBy();
