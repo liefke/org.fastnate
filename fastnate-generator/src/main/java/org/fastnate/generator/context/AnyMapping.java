@@ -90,7 +90,7 @@ public class AnyMapping<T> {
 	private void fillMetaDefs(final AttributeAccessor attribute, final String metaDefName,
 			final GeneratorContext context) {
 		final AnyMetaDef metaDef;
-		if (metaDefName != null) {
+		if (metaDefName != null && metaDefName.length() > 0) {
 			// Global defined AnyMetaDef
 			metaDef = findGlobalMetaDef(attribute, metaDefName);
 			ModelException.mustExist(metaDef, "Can't find AnyMetaDef with name {} for {} in the class hierarchy",
