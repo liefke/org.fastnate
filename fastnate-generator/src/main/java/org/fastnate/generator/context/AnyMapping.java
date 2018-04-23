@@ -2,8 +2,10 @@ package org.fastnate.generator.context;
 
 import java.lang.reflect.AnnotatedElement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.fastnate.generator.converter.BooleanConverter;
@@ -102,8 +104,14 @@ public class AnyMapping<T> {
 		}
 
 		final ValueConverter<?> converter = META_TYPES.getOrDefault(metaDef.metaType(), StringConverter::new).get();
+		final Set<String> duplicates = new HashSet<>();
 		for (final MetaValue metaValue : metaDef.metaValues()) {
-			this.anyClasses.put(metaValue.targetEntity(), converter.getExpression(metaValue.value(), context));
+			ModelException.test(!duplicates.add(metaValue.value()),
+					"The value {} is defined twice for AnyMetaDef assigned to {}", metaValue.value(), attribute);
+			ModelException.test(
+					this.anyClasses.put(metaValue.targetEntity(),
+							converter.getExpression(metaValue.value(), context)) == null,
+					"The class {} is defined twice for AnyMetaDef assigned to {}", metaValue.targetEntity(), attribute);
 		}
 	}
 
