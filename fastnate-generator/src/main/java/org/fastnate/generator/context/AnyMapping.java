@@ -106,7 +106,7 @@ public class AnyMapping<T> {
 		final ValueConverter<?> converter = META_TYPES.getOrDefault(metaDef.metaType(), StringConverter::new).get();
 		final Set<String> duplicates = new HashSet<>();
 		for (final MetaValue metaValue : metaDef.metaValues()) {
-			ModelException.test(!duplicates.add(metaValue.value()),
+			ModelException.test(duplicates.add(metaValue.value()),
 					"The value {} is defined twice for AnyMetaDef assigned to {}", metaValue.value(), attribute);
 			ModelException.test(
 					this.anyClasses.put(metaValue.targetEntity(),
