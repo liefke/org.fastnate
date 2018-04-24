@@ -26,7 +26,7 @@ public class StringConverter extends AbstractValueConverter<String> {
 
 	private boolean nullable;
 
-	private final AttributeAccessor attribute;
+	private final String attributeName;
 
 	/**
 	 * Creates a new instance of a StringConverter that accepts strings of arbitrary length.
@@ -34,7 +34,8 @@ public class StringConverter extends AbstractValueConverter<String> {
 	public StringConverter() {
 		this.minSize = 0;
 		this.maxSize = Integer.MAX_VALUE;
-		this.attribute = null;
+		this.attributeName = "column";
+		this.nullable = true;
 	}
 
 	/**
@@ -46,19 +47,19 @@ public class StringConverter extends AbstractValueConverter<String> {
 	 *            indicates that the converter is used for the key of a map property
 	 */
 	public StringConverter(final AttributeAccessor attribute, final boolean mapKey) {
-		this.attribute = attribute;
+		this.attributeName = attribute.toString();
 
 		// Build constraints
 		if (mapKey) {
 			final MapKeyColumn column = attribute.getAnnotation(MapKeyColumn.class);
-			this.nullable = column != null && !column.nullable();
+			this.nullable = column == null || column.nullable();
 
 			this.maxSize = column != null ? column.length() : DEFAULT_COLUMN_LENGTH;
 			this.minSize = 0;
 		} else {
 			final Column column = attribute.getAnnotation(Column.class);
 			final int columnLength = column != null ? column.length() : DEFAULT_COLUMN_LENGTH;
-			this.nullable = column != null && !column.nullable() || attribute.isAnnotationPresent(NotNull.class);
+			this.nullable = (column == null || column.nullable()) && !attribute.isAnnotationPresent(NotNull.class);
 
 			final Size size = attribute.getAnnotation(Size.class);
 			if (size != null) {
@@ -71,21 +72,37 @@ public class StringConverter extends AbstractValueConverter<String> {
 		}
 	}
 
+	/**
+	 * Creates a new instance of a StringConverter for the given column definition.
+	 *
+	 * @param column
+	 *            contains the optional definition, the converter uses the defaults if the column is {@code null}
+	 * @param nullable
+	 *            indicates that the column may be {@code null} according to other settings (may be overridden by the
+	 *            column definition)
+	 */
+	public StringConverter(final Column column, final boolean nullable) {
+		this.attributeName = column == null || column.name().length() == 0 ? "column" : column.name();
+		this.minSize = 0;
+		this.maxSize = column != null ? column.length() : DEFAULT_COLUMN_LENGTH;
+		this.nullable = nullable && (column == null || column.nullable());
+	}
+
 	@Override
 	public ColumnExpression getExpression(final String value, final GeneratorContext context) {
 		// Check constraints
 		if (value.length() > this.maxSize) {
 			throw new IllegalArgumentException("The length of the given string value (" + value.length()
-					+ ") exceeds the maximum allowed length of " + this.attribute + " (" + this.maxSize + "): "
+					+ ") exceeds the maximum allowed length of " + this.attributeName + " (" + this.maxSize + "): "
 					+ value);
 		}
 		if (value.length() < this.minSize) {
 			throw new IllegalArgumentException("The length of the given string value (" + value.length()
-					+ ") is shorter that the minimum allowed length of " + this.attribute + " (" + this.minSize + "): "
-					+ value);
+					+ ") is smaller than the minimum allowed length of " + this.attributeName + " (" + this.minSize
+					+ "): " + value);
 		}
-		if (value.length() == 0 && this.nullable && context.getDialect().isEmptyStringEqualToNull()) {
-			throw new IllegalArgumentException("The given string is empty, but property " + this.attribute
+		if (value.length() == 0 && !this.nullable && context.getDialect().isEmptyStringEqualToNull()) {
+			throw new IllegalArgumentException("The given string is empty, but property " + this.attributeName
 					+ " must be not empty for the current database type.");
 		}
 

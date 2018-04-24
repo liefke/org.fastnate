@@ -72,7 +72,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 		private final boolean useTargetTable;
 
-		private final String anyColumn;
+		private final Column anyColumn;
 
 		private final String anyDefName;
 
@@ -101,7 +101,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					this.valueClass = getPropertyArgument(attribute, void.class, valueArgumentIndex);
 					this.mappedBy = null;
 					this.useTargetTable = false;
-					this.anyColumn = manyToAny.metaColumn().name();
+					this.anyColumn = manyToAny.metaColumn();
 					this.anyDefName = manyToAny.metaDef();
 				}
 			}
@@ -111,8 +111,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			if (this.anyColumn == null) {
 				return null;
 			}
-			return new AnyMapping<>(context, this.attribute, containerTable.resolveColumn(this.anyColumn),
-					this.anyDefName);
+			return new AnyMapping<>(context, this.attribute, containerTable, this.anyColumn, this.anyDefName);
 		}
 	}
 

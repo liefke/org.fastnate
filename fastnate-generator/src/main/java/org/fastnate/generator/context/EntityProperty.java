@@ -7,6 +7,7 @@ import java.util.Collections;
 import javax.annotation.Nullable;
 import javax.persistence.AssociationOverride;
 import javax.persistence.AttributeOverride;
+import javax.persistence.Column;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
@@ -48,7 +49,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 
 		private final String mappedBy;
 
-		private final String anyColumn;
+		private final Column anyColumn;
 
 		private final String anyDefName;
 
@@ -76,7 +77,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 					ModelException.mustExist(any, "{} declares none of OneToOne, ManyToOne, or Any", attribute);
 					this.valueClass = attribute.getType();
 					this.optional = any.optional() && notNull == null;
-					this.anyColumn = any.metaColumn().name();
+					this.anyColumn = any.metaColumn();
 					this.anyDefName = any.metaDef();
 				}
 			}
@@ -86,8 +87,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			if (this.anyColumn == null) {
 				return null;
 			}
-			return new AnyMapping<>(context, this.attribute, containerTable.resolveColumn(this.anyColumn),
-					this.anyDefName);
+			return new AnyMapping<>(context, this.attribute, containerTable, this.anyColumn, this.anyDefName);
 		}
 
 	}

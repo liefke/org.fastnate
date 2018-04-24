@@ -8,6 +8,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import javax.persistence.Column;
+import javax.validation.constraints.NotNull;
+
 import org.fastnate.generator.converter.BooleanConverter;
 import org.fastnate.generator.converter.NumberConverter;
 import org.fastnate.generator.converter.StringConverter;
@@ -78,18 +81,20 @@ public class AnyMapping<T> {
 	 *            the current generation context
 	 * @param attribute
 	 *            the attribute that this mapping is attached to
-	 * @param column
-	 *            contains the meta information about the generated column
+	 * @param containerTabble
+	 *            the table that contains the type column
+	 * @param typeColumn
+	 *            contains the meta information about the generated type column
 	 * @param metaDefName
 	 *            the name of the global meta definition, if any is used (otherwise the one from the attribute is used)
 	 */
-	public AnyMapping(final GeneratorContext context, final AttributeAccessor attribute, final GeneratorColumn column,
-			final String metaDefName) {
-		this.column = column;
-		fillMetaDefs(attribute, metaDefName, context);
+	public AnyMapping(final GeneratorContext context, final AttributeAccessor attribute,
+			final GeneratorTable containerTabble, final Column typeColumn, final String metaDefName) {
+		this.column = containerTabble.resolveColumn(typeColumn.name());
+		fillMetaDefs(attribute, typeColumn, metaDefName, context);
 	}
 
-	private void fillMetaDefs(final AttributeAccessor attribute, final String metaDefName,
+	private void fillMetaDefs(final AttributeAccessor attribute, final Column typeColumn, final String metaDefName,
 			final GeneratorContext context) {
 		final AnyMetaDef metaDef;
 		if (metaDefName != null && metaDefName.length() > 0) {
@@ -103,15 +108,16 @@ public class AnyMapping<T> {
 			ModelException.mustExist(metaDef, "Missing AnyMetaDef annotation for {}", attribute);
 		}
 
-		final ValueConverter<?> converter = META_TYPES.getOrDefault(metaDef.metaType(), StringConverter::new).get();
+		final ValueConverter<?> converter = META_TYPES.getOrDefault(metaDef.metaType(),
+				() -> new StringConverter(typeColumn, !attribute.isAnnotationPresent(NotNull.class))).get();
 		final Set<String> duplicates = new HashSet<>();
 		for (final MetaValue metaValue : metaDef.metaValues()) {
-			ModelException.test(duplicates.add(metaValue.value()),
-					"The value {} is defined twice for AnyMetaDef assigned to {}", metaValue.value(), attribute);
 			ModelException.test(
 					this.anyClasses.put(metaValue.targetEntity(),
 							converter.getExpression(metaValue.value(), context)) == null,
 					"The class {} is defined twice for AnyMetaDef assigned to {}", metaValue.targetEntity(), attribute);
+			ModelException.test(duplicates.add(metaValue.value()),
+					"The value {} is defined twice for AnyMetaDef assigned to {}", metaValue.value(), attribute);
 		}
 	}
 
