@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -308,10 +309,14 @@ public class EntityClass<E> {
 			buildProperties(this.entityClass, this.joinedParentClass.entityClass);
 		}
 
-		// And inspect unique constraints
+		// Inspect unique constraints
 		if (tableMetadata != null && this.uniqueProperties == null) {
 			buildUniqueProperties(tableMetadata.uniqueConstraints());
 		}
+
+		// Sort properties by name to have "stable" SQL (which looks the same between different runs)
+		this.allProperties.sort(Comparator.comparing(Property::getName));
+		this.additionalProperties.sort(Comparator.comparing(Property::getName));
 
 		// Inform any listners
 		this.builtListeners.stream().forEach(listener -> listener.accept(this));
