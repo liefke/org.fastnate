@@ -676,7 +676,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	private void initializeIdColumnForMappedBy() {
 		this.valueEntityClass.onPropertiesAvailable(entityClass -> {
-			final Property<T, ?> mappedByProperty = entityClass.getProperties().get(this.mappedBy);
+			final Property<? super T, ?> mappedByProperty = entityClass.getProperties().get(this.mappedBy);
 			if (mappedByProperty instanceof EntityProperty) {
 				this.idColumn = ((EntityProperty<?, ?>) mappedByProperty).getColumn();
 			} else if (mappedByProperty instanceof PluralProperty) {
@@ -695,7 +695,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			this.idColumn = this.table.resolveColumn(idColumnName);
 		} else {
 			this.valueEntityClass.onPropertiesAvailable(entityClass -> {
-				final String entityName = entityClass.getProperties().values().stream()
+				final String entityName = entityClass.getAllProperties().stream()
 						.filter(p -> p instanceof PluralProperty
 								&& getName().equals(((PluralProperty<?, ?, ?>) p).getMappedBy()))
 						.map(Property::getName).findFirst().orElseGet(sourceClass::getEntityName);

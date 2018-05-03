@@ -262,7 +262,7 @@ public class EntitySqlGenerator implements Closeable {
 		}
 
 		// Now add all other properties
-		for (final Property<E, ?> property : classDescription.getProperties().values()) {
+		for (final Property<? super E, ?> property : classDescription.getAdditionalProperties()) {
 			property.createPreInsertStatements(this.writer, entity);
 
 			property.addInsertExpression(stmt, entity);
@@ -274,7 +274,7 @@ public class EntitySqlGenerator implements Closeable {
 		// And all postponed statements
 		classDescription.createPostInsertStatements(entity, this.writer);
 
-		for (final Property<E, ?> property : classDescription.getProperties().values()) {
+		for (final Property<? super E, ?> property : classDescription.getAllProperties()) {
 			// Write all missing entities, even those that have no column (because they are referencing us and
 			// we are created now)
 			for (final Object referencedEntity : property.findReferencedEntities(entity)) {

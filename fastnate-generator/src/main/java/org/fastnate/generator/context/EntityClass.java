@@ -229,14 +229,14 @@ public class EntityClass<E> {
 	/** Indicates the quality of {@link #uniqueProperties}. */
 	private UniquePropertyQuality uniquePropertiesQuality;
 
-	/**
-	 * Mapping from the name list of persistent properties (except the {@link #idProperty}) and properties from
-	 * {@link #joinedParentClass}.
-	 */
-	private final Map<String, Property<E, ?>> properties = new TreeMap<>();
+	/** Mapping from the name of all persistent properties to their description. */
+	private final Map<String, Property<? super E, ?>> properties = new TreeMap<>();
 
 	/** All properties of this entity, including {@link #idProperty} and properties from {@link #joinedParentClass}. */
 	private final List<Property<? super E, ?>> allProperties = new ArrayList<>();
+
+	/** Properties of this entity, excluding the {@link #idProperty} or properties from {@link #joinedParentClass}. */
+	private final List<Property<? super E, ?>> additionalProperties = new ArrayList<>();
 
 	/** The states of written entities. Only interesting for pending updates and if the ID is not generated. */
 	private final Map<Object, GenerationState> entityStates;
@@ -294,13 +294,15 @@ public class EntityClass<E> {
 		if (this.joinedParentClass == null) {
 			buildIdProperty(this.entityClass);
 			ModelException.test(this.idProperty != null, "No id found for {}", this.entityClass);
+			this.properties.put(this.idProperty.getName(), this.idProperty);
 			this.allProperties.add(this.idProperty);
 
 			// Add all other properties
 			buildProperties(this.entityClass, Object.class);
 		} else {
 			this.idProperty = this.joinedParentClass.getIdProperty();
-			this.allProperties.add(this.idProperty);
+			this.properties.putAll(this.joinedParentClass.getProperties());
+			this.allProperties.addAll(this.joinedParentClass.getAllProperties());
 
 			// Add all other properties
 			buildProperties(this.entityClass, this.joinedParentClass.entityClass);
@@ -459,7 +461,7 @@ public class EntityClass<E> {
 			}
 			this.primaryKeyJoinColumn = this.table.resolveColumn(columnName);
 		} else {
-			throw new IllegalArgumentException(
+			throw new ModelException(
 					"JOINED inheritance strategy is currently only supported with singular ID properties.");
 		}
 	}
@@ -480,13 +482,14 @@ public class EntityClass<E> {
 
 		// And now fill the properties of this class
 		if (c.isAnnotationPresent(MappedSuperclass.class) || c.isAnnotationPresent(Entity.class)) {
-			for (final AttributeAccessor field : this.accessStyle.getDeclaredAttributes(c, this.entityClass)) {
-				if (!field.isAnnotationPresent(EmbeddedId.class) && !field.isAnnotationPresent(Id.class)) {
-					final Property<E, ?> property = buildProperty(field, getColumnAnnotation(field),
-							this.associationOverrides.get(field.getName()));
+			for (final AttributeAccessor attribute : this.accessStyle.getDeclaredAttributes(c, this.entityClass)) {
+				if (!attribute.isAnnotationPresent(EmbeddedId.class) && !attribute.isAnnotationPresent(Id.class)) {
+					final Property<E, ?> property = buildProperty(attribute, getColumnAnnotation(attribute),
+							this.associationOverrides.get(attribute.getName()));
 					if (property != null) {
-						this.properties.put(field.getName(), property);
+						this.properties.put(attribute.getName(), property);
 						this.allProperties.add(property);
+						this.additionalProperties.add(property);
 						if (property instanceof SingularProperty) {
 							buildUniqueProperty((SingularProperty<E, ?>) property);
 						}
@@ -784,7 +787,7 @@ public class EntityClass<E> {
 		final List<SingularProperty<E, ?>> uniques = new ArrayList<>();
 		final String[] columnNames = constraint.columnNames();
 		for (final String columnName : columnNames) {
-			for (final Property<E, ?> property : this.properties.values()) {
+			for (final Property<? super E, ?> property : this.properties.values()) {
 				if (property instanceof SingularProperty) {
 					final SingularProperty<E, ?> singularProperty = (SingularProperty<E, ?>) property;
 					if (columnName.equals(singularProperty.getColumn().getName())) {
