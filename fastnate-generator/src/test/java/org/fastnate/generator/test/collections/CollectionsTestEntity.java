@@ -76,6 +76,9 @@ public class CollectionsTestEntity extends BaseTestEntity {
 	@OrderColumn
 	private List<ChildTestEntity> children = new ArrayList<>();
 
+	@ManyToMany
+	private Set<ChildTestEntity> otherChildren = new HashSet<>();
+
 	@ElementCollection
 	private Set<CollectionsTestElement> elements = new HashSet<>();
 

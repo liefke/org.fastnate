@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.test.SimpleTestEntity;
@@ -61,34 +63,26 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 	@Test
 	public void testPlural() throws IOException {
 		final CollectionsTestEntity testEntity = new CollectionsTestEntity();
-		testEntity.getStringSet().add("Test1");
-		testEntity.getStringSet().add("Test2");
+		testEntity.getStringSet().addAll(Arrays.asList("Test1", "Test2"));
 
 		final CollectionsTestEntity otherEntity = new CollectionsTestEntity();
-		otherEntity.getStringSet().add("Test2");
-		otherEntity.getStringSet().add("Test3");
+		otherEntity.getStringSet().addAll(Arrays.asList("Test2", "Test3"));
 
-		testEntity.getEnumList().add(TestEnum.two);
-		testEntity.getEnumList().add(TestEnum.one);
+		testEntity.getEnumList().addAll(Arrays.asList(TestEnum.two, TestEnum.one));
 
-		testEntity.getStringList().add("list1");
-		testEntity.getStringList().add("list2");
+		testEntity.getStringList().addAll(Arrays.asList("list1", "list2"));
 
-		testEntity.getOrderedStringList().add("A");
-		testEntity.getOrderedStringList().add("Z");
-		testEntity.getOrderedStringList().add("M");
+		testEntity.getOrderedStringList().addAll(Arrays.asList("A", "Z", "M"));
 
 		testEntity.getEmbeddedList().add(new CollectionsTestEntityProperty("Test desc", otherEntity));
 		testEntity.getEmbeddedList().add(new CollectionsTestEntityProperty("Test desc 2", otherEntity));
 
 		final SimpleTestEntity testChild1 = new SimpleTestEntity("Plural test child 1");
 		final SimpleTestEntity testChild2 = new SimpleTestEntity("Plural test child 2");
-		testEntity.getEntitySet().add(testChild1);
-		testEntity.getEntitySet().add(testChild2);
+		testEntity.getEntitySet().addAll(Arrays.asList(testChild1, testChild2));
 
 		final SimpleTestEntity testChild3 = new SimpleTestEntity("Plural test child 3");
-		testEntity.getEntityList().add(testChild1);
-		testEntity.getEntityList().add(testChild3);
+		testEntity.getEntityList().addAll(Arrays.asList(testChild1, testChild3));
 
 		testEntity.getOrderedEntityList().add(new SimpleTestEntity("Plural sort test 1"));
 		testEntity.getOrderedEntityList().add(new SimpleTestEntity("Plural sort test 3"));
@@ -96,6 +90,9 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 
 		testEntity.getChildren().add(new ChildTestEntity(testEntity, "First child"));
 		testEntity.getChildren().add(new ChildTestEntity(testEntity, "Second child"));
+
+		testEntity.getChildren().get(0).getOtherParents().add(otherEntity);
+		otherEntity.getOtherChildren().add(testEntity.getChildren().get(0));
 		write(testEntity);
 
 		final CollectionsTestEntity result = findSingleResult(
@@ -125,8 +122,14 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 				"Plural sort test 3", "Plural sort test 2");
 
 		assertThat(result.getChildren()).hasSize(2);
-		assertThat(result.getChildren().get(0).getName()).isEqualTo("First child");
+		final ChildTestEntity firstChild = result.getChildren().get(0);
+		assertThat(firstChild.getName()).isEqualTo("First child");
 		assertThat(result.getChildren().get(1).getName()).isEqualTo("Second child");
+
+		final Set<CollectionsTestEntity> otherParents = firstChild.getOtherParents();
+		assertThat(otherParents).hasSize(1);
+		assertThat(otherParents.iterator().next()).isEqualTo(result.getEmbeddedList().get(0).getOtherEntity());
+		assertThat(otherParents.iterator().next().getOtherChildren()).containsOnly(firstChild);
 	}
 
 }

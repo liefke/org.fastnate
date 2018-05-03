@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 import javax.persistence.Access;
@@ -45,6 +46,7 @@ import org.fastnate.generator.statements.PlainColumnExpression;
 import org.fastnate.generator.statements.PrimitiveColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -245,6 +247,10 @@ public class EntityClass<E> {
 	/** All association overriddes of this class and the parent classes. */
 	private final Map<String, AssociationOverride> associationOverrides = new HashMap<>();
 
+	/** The list of listeners that are informed when this class has finished to build all properties. */
+	@Getter(AccessLevel.NONE)
+	private List<Consumer<EntityClass<E>>> builtListeners = new ArrayList<>();
+
 	/**
 	 * Creates a new description of an entity class.
 	 *
@@ -305,6 +311,9 @@ public class EntityClass<E> {
 			buildUniqueProperties(tableMetadata.uniqueConstraints());
 		}
 
+		// Inform any listners
+		this.builtListeners.stream().forEach(listener -> listener.accept(this));
+		this.builtListeners = null;
 	}
 
 	private void buildDiscriminator() {
@@ -861,6 +870,22 @@ public class EntityClass<E> {
 			this.entityStates.put(id, pendingState);
 		}
 		pendingState.addPendingUpdate(entityToUpdate, propertyToUpdate, arguments);
+	}
+
+	/**
+	 * Registers a listener that is called as soon as all properties of this class are built.
+	 *
+	 * If the properties are already build, the listener is called immediately.
+	 *
+	 * @param listener
+	 *            called as soon as all properties are available
+	 */
+	public void onPropertiesAvailable(final Consumer<EntityClass<E>> listener) {
+		if (this.builtListeners == null) {
+			listener.accept(this);
+		} else {
+			this.builtListeners.add(listener);
+		}
 	}
 
 	@Override

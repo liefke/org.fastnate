@@ -30,8 +30,6 @@ import org.fastnate.generator.statements.TableStatement;
 import org.fastnate.util.ClassUtil;
 import org.hibernate.annotations.ManyToAny;
 
-import com.google.common.base.Preconditions;
-
 import lombok.Getter;
 
 /**
@@ -399,10 +397,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			if (this.mappedBy != null) {
 				// Bidirectional - use the columns of the target class
 				this.table = this.valueEntityClass.getTable();
-				// Find the mappedBy property later - may be that is not created in the target class up to now
-				final Property<? super T, ?> idProperty = this.valueEntityClass.getIdProperty();
-				Preconditions.checkArgument(idProperty instanceof SingularProperty,
-						"Can only handle singular properties for ID in mapped by " + attribute);
+				initializeIdColumnForMappedBy();
 				this.valueColumn = buildValueColumn(this.table, attribute,
 						this.valueEntityClass.getIdColumn(attribute).getName());
 				this.anyMapping = null;
@@ -415,13 +410,12 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 						this.valueEntityClass.getIdColumn(attribute).getName());
 				this.anyMapping = null;
 			} else {
-				// Unidirectional and we need a mapping table
+				// We need a mapping table
 				final JoinTable joinTable = attribute.getAnnotation(JoinTable.class);
 				this.table = this.context.resolveTable(
 						buildTableName(attribute, override, joinTable, collectionTable, sourceClass.getTable().getName()
 								+ '_' + (this.valueEntityClass == null ? "table" : this.valueEntityClass.getTable())));
-				this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, override, joinTable, collectionTable,
-						sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute)));
+				initializeIdColumnForMappingTable(sourceClass, attribute, override, joinTable, collectionTable);
 				this.valueColumn = buildValueColumn(this.table, attribute, attribute.getName() + '_'
 						+ (this.valueEntityClass == null ? "id" : this.valueEntityClass.getIdColumn(attribute)));
 				this.anyMapping = mappingInformation.buildAnyMapping(this.context, this.table);
@@ -535,15 +529,6 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			final ColumnExpression sourceId, final ColumnExpression key, final T value) throws IOException {
 		final ColumnExpression target = createValueExpression(entity, sourceId, value, key);
 		if (target != null) {
-			if (this.idColumn == null && this.mappedBy != null) {
-				final Property<T, ?> mappedByProperty = this.valueEntityClass.getProperties().get(this.mappedBy);
-				Preconditions.checkArgument(mappedByProperty != null,
-						"Could not find property: " + this.mappedBy + " in " + this.valueClass);
-				Preconditions.checkArgument(mappedByProperty instanceof SingularProperty,
-						"Can only handle singular properties for mapped by in " + getAttribute().getElement());
-				this.idColumn = ((SingularProperty<?, ?>) mappedByProperty).getColumn();
-			}
-
 			final TableStatement stmt;
 			if (this.useTargetTable) {
 				// Unidirectional, but from target table
@@ -688,6 +673,36 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 * @return the key column for map properties resp. the index column for list properties
 	 */
 	protected abstract GeneratorColumn getKeyColumn();
+
+	private void initializeIdColumnForMappedBy() {
+		this.valueEntityClass.onPropertiesAvailable(entityClass -> {
+			final Property<T, ?> mappedByProperty = entityClass.getProperties().get(this.mappedBy);
+			if (mappedByProperty instanceof EntityProperty) {
+				this.idColumn = ((EntityProperty<?, ?>) mappedByProperty).getColumn();
+			} else if (mappedByProperty instanceof PluralProperty) {
+				this.idColumn = ((PluralProperty<?, ?, ?>) mappedByProperty).getValueColumn();
+			} else {
+				throw new ModelException("Unsupported \"mapped by\" property for " + getAttribute().getElement());
+			}
+		});
+	}
+
+	private void initializeIdColumnForMappingTable(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
+			final AssociationOverride override, final JoinTable joinTable, final CollectionTable collectionTable) {
+		// Name of the ID column could be derived from a "mapped by" property in the target class
+		final String idColumnName = buildIdColumn(attribute, override, joinTable, collectionTable, null);
+		if (idColumnName != null) {
+			this.idColumn = this.table.resolveColumn(idColumnName);
+		} else {
+			this.valueEntityClass.onPropertiesAvailable(entityClass -> {
+				final String entityName = entityClass.getProperties().values().stream()
+						.filter(p -> p instanceof PluralProperty
+								&& getName().equals(((PluralProperty<?, ?, ?>) p).getMappedBy()))
+						.map(Property::getName).findFirst().orElseGet(sourceClass::getEntityName);
+				this.idColumn = this.table.resolveColumn(entityName + '_' + sourceClass.getIdColumn(getAttribute()));
+			});
+		}
+	}
 
 	/**
 	 * Indicates that this propery is a {@link ElementCollection} that references {@link Embeddable}s.
