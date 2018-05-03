@@ -125,10 +125,13 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	}
 
 	/**
-	 * Name of the setting, which controls the maximum size of generated batches. If set to something below 2, no
-	 * batches are used.
+	 * Name of the setting which controls the maximum size of generated batches. If set to something below 2, no batches
+	 * are used.
 	 */
 	public static final String MAX_BATCH_SIZE_KEY = "fastnate.generator.max.batch";
+
+	/** Name of the setting which turns logging of statements on or off. */
+	public static final String LOG_STATEMENTS_KEY = "fastnate.generator.log.statements";
 
 	/** The count of milliseconds to wait, until a log message with the current count of statements is written. */
 	private static final long MILLISECONDS_BETWEEN_LOG_MESSAGES = 60 * 1000;
@@ -145,6 +148,9 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
 	/** Indicates that the database connection supports batch statements. */
 	private final boolean batchSupported;
+
+	/** Indicates that we log each statement for debugging purposes. */
+	private final boolean logStatements;
 
 	/** The maximum count of statements per batch job. */
 	private final int maxBatchSize;
@@ -184,6 +190,7 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 		this.inTransaction = context.getDialect().isFastInTransaction();
 		connection.setAutoCommit(!this.inTransaction);
 		this.batchSupported = connection.getMetaData().supportsBatchUpdates();
+		this.logStatements = Boolean.parseBoolean(context.getSettings().getProperty(LOG_STATEMENTS_KEY, "false"));
 		this.maxBatchSize = Integer.parseInt(context.getSettings().getProperty(MAX_BATCH_SIZE_KEY, "100"));
 		final Statement sharedStatement = connection.createStatement();
 		this.plainStatement = sharedStatement;
@@ -315,6 +322,9 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	private void writePlainStatement(final String sql) throws IOException {
 		try {
 			closeBatch();
+			if (this.logStatements) {
+				log.info(sql);
+			}
 			this.plainStatement.executeUpdate(sql);
 			this.statementsCount++;
 		} catch (final SQLException e) {
@@ -338,6 +348,9 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 			if (!insert.isPlainExpressionAvailable()) {
 				closeBatch();
 				final String sql = insert.getSql();
+				if (this.logStatements) {
+					log.info(insert.toSql());
+				}
 				try {
 					checkUpdate(insert.executeUpdate(), sql);
 				} catch (final SQLException e) {
@@ -354,6 +367,9 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	}
 
 	private void writeTableStatement(final String sql) throws IOException {
+		if (this.logStatements) {
+			log.info(sql);
+		}
 		try {
 			if (this.batchSupported && this.maxBatchSize > 1) {
 				this.plainStatement.addBatch(sql);

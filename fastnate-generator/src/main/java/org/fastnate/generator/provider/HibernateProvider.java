@@ -9,6 +9,7 @@ import org.fastnate.generator.dialect.MsSqlDialect;
 import org.fastnate.generator.dialect.MySqlDialect;
 import org.fastnate.generator.dialect.OracleDialect;
 import org.fastnate.generator.dialect.PostgresDialect;
+import org.fastnate.generator.statements.ConnectedStatementsWriter;
 import org.hibernate.cfg.AvailableSettings;
 
 /**
@@ -126,6 +127,11 @@ public class HibernateProvider implements JpaProvider {
 			if (dialect != null) {
 				settings.setProperty(GeneratorContext.DIALECT_KEY, dialect.getName());
 			}
+		}
+
+		if (!settings.contains(ConnectedStatementsWriter.LOG_STATEMENTS_KEY)) {
+			settings.setProperty(ConnectedStatementsWriter.LOG_STATEMENTS_KEY,
+					settings.getProperty(AvailableSettings.SHOW_SQL));
 		}
 	}
 
