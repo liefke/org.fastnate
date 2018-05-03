@@ -115,7 +115,7 @@ public class HibernateProvider implements JpaProvider {
 
 	@Override
 	public void initialize(final Properties settings) {
-		if (!settings.contains(GeneratorContext.DIALECT_KEY)) {
+		if (!settings.containsKey(GeneratorContext.DIALECT_KEY)) {
 			// Try to determine the dialect dynamically
 			Class<? extends GeneratorDialect> dialect = getGeneratorDialectFromHibernateDialect(settings);
 			if (dialect == null) {
@@ -129,7 +129,8 @@ public class HibernateProvider implements JpaProvider {
 			}
 		}
 
-		if (!settings.contains(ConnectedStatementsWriter.LOG_STATEMENTS_KEY)) {
+		if (!settings.containsKey(ConnectedStatementsWriter.LOG_STATEMENTS_KEY)
+				&& settings.containsKey(AvailableSettings.SHOW_SQL)) {
 			settings.setProperty(ConnectedStatementsWriter.LOG_STATEMENTS_KEY,
 					settings.getProperty(AvailableSettings.SHOW_SQL));
 		}
