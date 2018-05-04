@@ -212,9 +212,7 @@ public class GeneratorContext {
 	 */
 	private boolean writeRelativeIds;
 
-	/**
-	 * Indicates to include null values explictly in statements.
-	 */
+	/** Indicates to include null values in statements. */
 	private boolean writeNullValues;
 
 	/** Contains the settings that were given during creation, resp. as read from the persistence configuration. */
@@ -223,7 +221,7 @@ public class GeneratorContext {
 	/** Contains the extracted metadata to every known class of an {@link Entity}. */
 	private final Map<Class<?>, EntityClass<?>> descriptions = new HashMap<>();
 
-	/** Contains the extracted metadata to every known class of an {@link Entity}. */
+	/** Mapping from the names of all known database table to their description (including column information). */
 	private final Map<String, GeneratorTable> tables = new HashMap<>();
 
 	/** Contains the state of single entities, maps from an entity name to the mapping of an id to its state. */
