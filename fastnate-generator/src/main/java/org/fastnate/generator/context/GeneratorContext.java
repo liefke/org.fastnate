@@ -504,11 +504,15 @@ public class GeneratorContext {
 		final SequenceGenerator sequenceGenerator = element.getAnnotation(SequenceGenerator.class);
 		if (sequenceGenerator != null) {
 			GeneratorId key = new GeneratorId(sequenceGenerator.name(), null);
-			if (this.generators.containsKey(key)) {
-				key = new GeneratorId(sequenceGenerator.name(), table);
+			final IdGenerator existingGenerator = this.generators.get(key);
+			if (!(existingGenerator instanceof SequenceIdGenerator) || !((SequenceIdGenerator) existingGenerator)
+					.getSequenceName().equals(sequenceGenerator.sequenceName())) {
+				if (existingGenerator != null) {
+					key = new GeneratorId(sequenceGenerator.name(), table);
+				}
+				addContextObject(this.generators, ContextModelListener::foundGenerator, key,
+						new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
 			}
-			addContextObject(this.generators, ContextModelListener::foundGenerator, key,
-					new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
 		}
 
 		final TableGenerator tableGenerator = element.getAnnotation(TableGenerator.class);

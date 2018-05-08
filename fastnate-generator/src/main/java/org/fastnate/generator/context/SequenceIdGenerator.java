@@ -20,6 +20,7 @@ public class SequenceIdGenerator extends IdGenerator {
 
 	private final GeneratorDialect dialect;
 
+	@Getter
 	private final String sequenceName;
 
 	private final boolean relativeIds;
