@@ -31,14 +31,6 @@ public abstract class AbstractDataProvider implements DataProvider {
 	protected abstract Collection<?> getEntities();
 
 	/**
-	 * The order of a data provider in comparison to others, defaults to 0.
-	 */
-	@Override
-	public int getOrder() {
-		return 0;
-	}
-
-	/**
 	 * The default implementation just writes all {@link #getEntities() entities} that were created during
 	 * {@link #buildEntities()}.
 	 *

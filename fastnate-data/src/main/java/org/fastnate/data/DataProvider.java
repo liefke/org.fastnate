@@ -36,9 +36,11 @@ public interface DataProvider {
 	 * Providers with a smaller order criteria will write their data before providers with a higher order criteria,
 	 * except in the case that the first is depending on the second.
 	 *
-	 * @return the order criteria
+	 * @return the order criteria - defaults to 0
 	 */
-	int getOrder();
+	default int getOrder() {
+		return 0;
+	}
 
 	/**
 	 * Adds all {@link #buildEntities() entities} to the SQL file using the given generator.
