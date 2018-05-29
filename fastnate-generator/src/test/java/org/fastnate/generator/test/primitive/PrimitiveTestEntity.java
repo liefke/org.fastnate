@@ -1,6 +1,9 @@
 package org.fastnate.generator.test.primitive;
 
+import java.awt.Color;
+
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -75,6 +78,9 @@ public class PrimitiveTestEntity {
 
 	@Enumerated(EnumType.STRING)
 	private TestEnum stringEnum;
+
+	@Convert(converter = ColorAttributeConverter.class)
+	private Color color;
 
 	/**
 	 * Creates a new instance of {@link PrimitiveTestEntity}.

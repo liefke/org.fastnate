@@ -2,6 +2,7 @@ package org.fastnate.generator.test.primitive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.awt.Color;
 import java.io.IOException;
 
 import org.assertj.core.api.Assertions;
@@ -16,6 +17,27 @@ import org.junit.Test;
 public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 
 	private static final float MINIMUM_FLOAT_PRECISION = 0.000001f;
+
+	/**
+	 * Tests that converted properties are written.
+	 *
+	 * @throws IOException
+	 *             if the generator throws one
+	 */
+	@Test
+	public void testConvertedProperties() throws IOException {
+		final PrimitiveTestEntity testEntity = new PrimitiveTestEntity("Test Converter");
+
+		final int rgba = 0x04010203;
+		testEntity.setColor(new Color(rgba, true));
+		write(testEntity);
+
+		// Check that the color is written correctly
+		final PrimitiveTestEntity result = findSingleResult(
+				"SELECT e FROM PrimitiveTestEntity e WHERE e.color = coalesce(" + rgba + ')',
+				PrimitiveTestEntity.class);
+		assertThat(result.getColor()).isEqualTo(testEntity.getColor());
+	}
 
 	/**
 	 * Tests to write enum properties in an entity.
@@ -150,5 +172,4 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getTransient1()).isNull();
 		assertThat(result.getTransient2()).isNull();
 	}
-
 }

@@ -1,0 +1,24 @@
+package org.fastnate.generator.test.primitive;
+
+import java.awt.Color;
+
+import javax.persistence.AttributeConverter;
+
+/**
+ * Converts a color to an int and vice versa.
+ *
+ * @author Tobias Liefke
+ */
+public class ColorAttributeConverter implements AttributeConverter<Color, Integer> {
+
+	@Override
+	public Integer convertToDatabaseColumn(final Color color) {
+		return color.getRGB();
+	}
+
+	@Override
+	public Color convertToEntityAttribute(final Integer rgba) {
+		return new Color(rgba, true);
+	}
+
+}

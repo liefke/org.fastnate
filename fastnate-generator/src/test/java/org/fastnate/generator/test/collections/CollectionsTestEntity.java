@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -84,5 +85,8 @@ public class CollectionsTestEntity extends BaseTestEntity {
 
 	@ManyToOne
 	private CollectionsTestEntity other;
+
+	@Convert(converter = StringListConverter.class)
+	private List<String> convertedStrings = new ArrayList<>();
 
 }

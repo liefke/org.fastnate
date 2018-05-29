@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.Convert;
+
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.test.SimpleTestEntity;
 import org.fastnate.generator.test.primitive.TestEnum;
@@ -52,6 +54,29 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(target).isNotEqualTo(result);
 		assertThat(target.getElements()).hasSize(1);
 		assertThat(target.getElements().iterator().next().getEntity()).isEqualTo(result);
+	}
+
+	/**
+	 * Tests to write {@link Convert}.
+	 *
+	 * @throws IOException
+	 *             if the generator throws one
+	 */
+	@Test
+	public void testListConverter() throws IOException {
+		final CollectionsTestEntity testEntity = new CollectionsTestEntity();
+		testEntity.getConvertedStrings().addAll(Arrays.asList("abc", "ab", "bc", "de"));
+		write(testEntity);
+
+		final CollectionsTestEntity testEntity2 = new CollectionsTestEntity();
+		testEntity2.getConvertedStrings().add("abcdef");
+		write(testEntity2);
+
+		final CollectionsTestEntity result = getEm().createQuery(
+				"SELECT e FROM CTE e WHERE concat(',', e.convertedStrings, ',') LIKE concat('%,', :item, ',%')",
+				CollectionsTestEntity.class).setParameter("item", "de").getSingleResult();
+
+		assertThat(result.getConvertedStrings()).containsExactlyElementsOf(testEntity.getConvertedStrings());
 	}
 
 	/**
