@@ -17,7 +17,7 @@ import org.fastnate.generator.statements.PrimitiveColumnExpression;
  * @param <E>
  *            the type of the enum
  */
-public class EnumConverter<E extends Enum<E>> extends AbstractValueConverter<E> {
+public class EnumConverter<E extends Enum<E>> implements ValueConverter<E> {
 
 	private final Class<E> targetType;
 

@@ -14,7 +14,7 @@ import org.fastnate.generator.statements.PrimitiveColumnExpression;
  *
  * @author Tobias Liefke
  */
-public class SerializableConverter extends AbstractValueConverter<Serializable> {
+public class SerializableConverter implements ValueConverter<Serializable> {
 
 	/** Serializable objects tend to be big, so start not to small with the buffer. */
 	private static final int DEFAULT_BUFFER_SIZE = 512;

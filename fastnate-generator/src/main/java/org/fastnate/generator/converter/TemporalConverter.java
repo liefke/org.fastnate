@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
  *            the temporal type (e.g. Date or {@link Calendar})
  */
 @RequiredArgsConstructor
-public abstract class TemporalConverter<T> extends AbstractValueConverter<T> {
+public abstract class TemporalConverter<T> implements ValueConverter<T> {
 
 	private final TemporalType type;
 

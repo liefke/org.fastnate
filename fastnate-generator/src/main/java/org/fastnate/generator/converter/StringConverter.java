@@ -16,7 +16,7 @@ import org.fastnate.generator.statements.PrimitiveColumnExpression;
  *
  * @author Tobias Liefke
  */
-public class StringConverter extends AbstractValueConverter<String> {
+public class StringConverter implements ValueConverter<String> {
 
 	private static final int DEFAULT_COLUMN_LENGTH = 255;
 

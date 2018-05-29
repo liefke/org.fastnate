@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
  * @author Tobias Liefke
  */
 @RequiredArgsConstructor
-public class UnsupportedTypeConverter extends AbstractValueConverter<Object> {
+public class UnsupportedTypeConverter implements ValueConverter<Object> {
 
 	private final AttributeAccessor attribute;
 

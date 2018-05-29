@@ -12,7 +12,7 @@ import lombok.Getter;
  * @author Tobias Liefke
  */
 @Getter
-public class EntityConverter extends AbstractValueConverter<Object> {
+public class EntityConverter implements ValueConverter<Object> {
 
 	/**
 	 * Creates an expression for an entity.

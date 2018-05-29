@@ -10,7 +10,7 @@ import org.fastnate.generator.statements.PrimitiveColumnExpression;
  *
  * @author Tobias Liefke
  */
-public class CharConverter extends AbstractValueConverter<Character> {
+public class CharConverter implements ValueConverter<Character> {
 
 	@Override
 	public ColumnExpression getExpression(final Character value, final GeneratorContext context) {

@@ -9,7 +9,7 @@ import org.fastnate.generator.statements.PrimitiveColumnExpression;
  *
  * @author Tobias Liefke
  */
-public class BooleanConverter extends AbstractValueConverter<Boolean> {
+public class BooleanConverter implements ValueConverter<Boolean> {
 
 	@Override
 	public ColumnExpression getExpression(final Boolean value, final GeneratorContext context) {

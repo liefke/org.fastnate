@@ -13,7 +13,7 @@ import org.fastnate.generator.statements.PrimitiveColumnExpression;
  *
  * @author Tobias Liefke
  */
-public class NumberConverter extends AbstractValueConverter<Number> {
+public class NumberConverter implements ValueConverter<Number> {
 
 	private Constructor<? extends Number> stringConstructor;
 
