@@ -18,11 +18,17 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
 
 	@Override
 	public String convertToDatabaseColumn(final List<String> list) {
+		if (list == null) {
+			return null;
+		}
 		return String.join(",", list);
 	}
 
 	@Override
 	public List<String> convertToEntityAttribute(final String joined) {
+		if (joined == null) {
+			return null;
+		}
 		return new ArrayList<>(Arrays.asList(joined.split(",")));
 	}
 

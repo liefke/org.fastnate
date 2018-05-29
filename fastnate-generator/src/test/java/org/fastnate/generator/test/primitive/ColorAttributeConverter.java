@@ -13,12 +13,12 @@ public class ColorAttributeConverter implements AttributeConverter<Color, Intege
 
 	@Override
 	public Integer convertToDatabaseColumn(final Color color) {
-		return color.getRGB();
+		return color == null ? null : color.getRGB();
 	}
 
 	@Override
 	public Color convertToEntityAttribute(final Integer rgba) {
-		return new Color(rgba, true);
+		return rgba == null ? null : new Color(rgba, true);
 	}
 
 }
