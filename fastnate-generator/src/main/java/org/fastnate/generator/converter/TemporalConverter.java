@@ -1,12 +1,20 @@
 package org.fastnate.generator.converter;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import javax.persistence.MapKeyTemporal;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.fastnate.generator.RelativeDate;
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
@@ -25,6 +33,29 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public abstract class TemporalConverter<T> implements ValueConverter<T> {
+
+	private static final Map<Pattern, DateFormat> DEFAULT_FORMATS = new LinkedHashMap<>();
+
+	static {
+		// ISO 8601 formats for date
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}"), new SimpleDateFormat("yyyy-MM-dd"));
+
+		// ISO 8601 formats for time
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{2}:\\d{2}:\\d{2}"), new SimpleDateFormat("HH:mm:ss"));
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{2}:\\d{2}:\\d{2}\\.\\d{3}"), new SimpleDateFormat("HH:mm:ss.S"));
+
+		// ISO 8601 formats for timestamps
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"));
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-][\\d:]{1,5}"),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX"));
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[A-Z]{3}[\\d:+-]{0,6}"),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssz"));
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}"),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S"));
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-][\\d:]{1,5}"),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SX"));
+	}
 
 	private final TemporalType type;
 
@@ -64,6 +95,26 @@ public abstract class TemporalConverter<T> implements ValueConverter<T> {
 	public ColumnExpression getExpression(final Date value, final GeneratorContext context) {
 		return new PrimitiveColumnExpression<>(context.getDialect().convertToDatabaseDate(value, this.type),
 				v -> context.getDialect().convertTemporalValue(value, this.type));
+	}
+
+	/** Use database independent default values. */
+	@Override
+	public ColumnExpression getExpression(final String defaultValue, final GeneratorContext context) {
+		if ("CURRENT_TIMESTAMP".equals(defaultValue)) {
+			return getExpression(RelativeDate.NOW, context);
+		} else if ("CURRENT_DATE".equals(defaultValue)) {
+			return getExpression(RelativeDate.TODAY, context);
+		}
+		for (final Map.Entry<Pattern, DateFormat> format : DEFAULT_FORMATS.entrySet()) {
+			if (format.getKey().matcher(defaultValue).matches()) {
+				try {
+					return getExpression(format.getValue().parse(defaultValue), context);
+				} catch (final ParseException e) {
+					throw new IllegalArgumentException("Can't parse " + defaultValue + " as date", e);
+				}
+			}
+		}
+		return new PrimitiveColumnExpression<>(defaultValue, Function.identity());
 	}
 
 }

@@ -1,5 +1,7 @@
 package org.fastnate.generator.converter;
 
+import java.util.function.Function;
+
 import org.fastnate.generator.DefaultValue;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.statements.ColumnExpression;
@@ -24,7 +26,7 @@ public interface ValueConverter<T> {
 	 * @return the expression (that is including surrounding ' for string literals)
 	 */
 	default ColumnExpression getExpression(final String defaultValue, final GeneratorContext context) {
-		return PrimitiveColumnExpression.create(defaultValue, context.getDialect());
+		return new PrimitiveColumnExpression<>(defaultValue, Function.identity());
 	}
 
 	/**

@@ -28,7 +28,11 @@ public @interface DefaultValue {
 	 * <dd>for fields of type {@link String}, {@link Character} and {@code char}</dd>
 	 * <dt>the name of an enum constant</dt>
 	 * <dd>for fields of type {@link Enum}</dd>
-	 * <dt>a SQL expression which is used "as is" during export</dt>
+	 * <dt>A number</dt>
+	 * <dd>for all numeric fields</dd>
+	 * <dt>CURRENT_TIMESTAMP, CURRENT_DATE or a ISO 8601 compliant timestamp (yyyy-mm-ddThh:mm:ss.SX)</dt>
+	 * <dd>for temporal fields like date or timestamp</dd>
+	 * <dt>an SQL expression which is used "as is" during export</dt>
 	 * <dd>for all other fields</dd>
 	 * </dl>
 	 *
