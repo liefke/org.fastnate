@@ -3,6 +3,8 @@ package org.fastnate.generator.test.date;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -52,6 +54,14 @@ public class DateEntityTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(new Date(
 				result.getTimestamp().getTime() - result.getTimestamp().getTime() % DateUtils.MILLIS_PER_SECOND))
 						.isEqualTo(testEntity.getTimestamp());
+
+		// Check that the default is written correctly
+		try {
+			assertThat(result.getDefaultDate2000().equals(
+					new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").parse("2000-01-01T01:02:03.456+02:00")));
+		} catch (final ParseException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	/**
@@ -115,6 +125,10 @@ public class DateEntityTest extends AbstractEntitySqlGeneratorTest {
 		// The timestamp is nearly the time of writing (and not the time of generation)
 		assertThat(Math.abs(result.getTimestamp().getTime() - writeTime - hours * DateUtils.MILLIS_PER_HOUR))
 				.as("Deviation from two hours from now").isLessThan(2 * DateUtils.MILLIS_PER_SECOND);
+
+		// Check that the default is written correctly
+		assertThat(Math.abs(result.getDefaultDateNow().getTime() - writeTime)).as("Deviation from now")
+				.isLessThan(2 * DateUtils.MILLIS_PER_SECOND);
 	}
 
 }

@@ -9,6 +9,8 @@ import javax.persistence.Id;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.fastnate.generator.DefaultValue;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,6 +33,7 @@ public class DateTestEntity {
 
 	@Temporal(TemporalType.DATE)
 	@Column(name = "dateColumn")
+	@DefaultValue("CURRENT_TIMESTAMP")
 	private Date date;
 
 	@Temporal(TemporalType.TIME)
@@ -40,6 +43,14 @@ public class DateTestEntity {
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "timestampColumn")
 	private Date timestamp;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@DefaultValue("CURRENT_TIMESTAMP")
+	private Date defaultDateNow;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@DefaultValue("2000-01-01T01:02:03.456+0200")
+	private Date defaultDate2000;
 
 	@Override
 	public boolean equals(final Object obj) {

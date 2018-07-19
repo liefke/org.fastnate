@@ -47,14 +47,16 @@ public abstract class TemporalConverter<T> implements ValueConverter<T> {
 		// ISO 8601 formats for timestamps
 		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"),
 				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"));
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-][\\d:]{1,5}"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX"));
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[A-Z]{3}[\\d:+-]{0,6}"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssz"));
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}:\\d{2}"),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"));
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}\\d{2}?"),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:sszzz"));
 		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S"));
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-][\\d:]{1,5}"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SX"));
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"));
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-]\\d{2}:\\d{2}"),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-]\\d{2}\\d{2}?"),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSzzz"));
 	}
 
 	private final TemporalType type;
