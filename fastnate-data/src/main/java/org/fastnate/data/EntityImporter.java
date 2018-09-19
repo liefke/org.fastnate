@@ -240,7 +240,15 @@ public class EntityImporter {
 	 */
 	public void importData(final Connection connection) throws IOException, SQLException {
 		try (EntitySqlGenerator generator = new EntitySqlGenerator(this.context, connection)) {
+			final boolean transation = connection.getAutoCommit() && this.context.getDialect().isFastInTransaction();
+			if (transation) {
+				connection.setAutoCommit(false);
+			}
 			importData(generator);
+			if (transation) {
+				connection.commit();
+				connection.setAutoCommit(true);
+			}
 		} catch (final IOException e) {
 			if (e.getCause() instanceof SQLException) {
 				throw (SQLException) e.getCause();
