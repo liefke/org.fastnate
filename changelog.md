@@ -38,3 +38,17 @@ Fastnate Changelog
 * Support for null values in entity collections
 * Support "byte", "short" resp. "int" IDs as well
 * Improved documentation / examples
+
+### 1.4.0 (2018-09-20)
+* #21 Support @Inject in DataProvider
+* #23 Collection of embedded elements with required entity reference
+* #24 Support Spring persistence classes
+* #25 Support bulk import of PostgreSQL
+* #28 Skip synthetic fields
+* #30 Parent child relationship with preassigned ids
+* #32 Support for globally defined AnyMetaDef
+* #33 Default column names in bidirectional ManyToMany relationship
+* #34 Log statements from ConnectedStatementsWriter
+* #36 Support AttributeConverter
+* #37 Database independent DefaultValue annotation for temporal attributes (date, time, timestamp)
+* Accept @OneToOne and @JoinColumn(unique = true) as unique properties
