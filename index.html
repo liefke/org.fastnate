@@ -57,6 +57,19 @@
 	</div>
 
 	<div class="container" role="main">
+
+		<!-- News -->
+		<div id="news" class="panel panel-default">
+			<div class="panel-heading">New Fastnate version 1.4.0 released</div>
+			<div class="panel-body">
+				<p>
+					<span class="glyphicon glyphicon-flag"></span> <strong>2018-09-20</strong>
+				</p>
+				After only 19 month of hard development we finally managed to release Fastnate 1.4.0 with many new features.
+				Checkout the <a href="https://github.com/liefke/org.fastnate/blob/master/changelog.md">changelog</a>!
+			</div>
+		</div>
+
 		<!-- Introduction -->
 		<h2 id="introduction" class="page-header">Introduction</h2>
 		<dl class="dl-horizontal introduction">
@@ -67,10 +80,10 @@
 				<div class="col-md-10 separate">
 					<p>This is Nate.</p>
 					<p>
-						Nate is a software developer. (<i>I know, we've just lost half of the audience ... </i>)
+						Nate is a software developer. (<em>I know, we've just lost half of the audience ... </em>)
 					</p>
 					<p>
-						Nate is a Java developer. (<i>Now we've lost the other half, except ... you</i>)
+						Nate is a Java developer. (<em>Now we've lost the other half, except ... you</em>)
 					</p>
 					<p>Nate likes many things. He likes programming, he likes agile software development, he likes if
 						things fit together.</p>
@@ -268,7 +281,6 @@
     private final List&lt;ExampleEntity&gt; entities = new ArrayList&lt;&gt;();
 
     /** Create the entities. */
-    @Override
     public void buildEntities() throws IOException {
         this.entities.add(new ExampleEntity("Example Entity"));
         
@@ -279,6 +291,96 @@
 
 }</pre>
 		</div>
+		<p>
+			See the <a href="#download">download section</a> for a description how you can add the Fastnate library to
+			your build path.
+		</p>
+
+		<p>You can generate the SQL for your entities either during build time or during application startup with
+			one of the following options:</p>
+
+		<!-- Integration -->
+		<dl class="download">
+			<dt>Use the Maven build task</dt>
+			<dd>
+				<p>You can use the importData task to generate an offline SQL file during build time:</p>
+				<div class="highlight">
+					<pre>&lt;build>
+	&lt;plugins>
+		&lt;plugin>
+			&lt;groupId>org.fastnate&lt;/groupId>
+			&lt;artifactId>fastnate-maven-plugin&lt;/artifactId>
+			&lt;version>1.4.0&lt;/version>
+			&lt;executions>
+				&lt;execution>
+					&lt;goals>
+						&lt;goal>import-data&lt;/goal>
+					&lt;/goals>
+					&lt;configuration>
+						&lt;packages>...my data provider package...&lt;/packages>
+					&lt;/configuration>
+				&lt;/execution>
+			&lt;/executions>
+		&lt;/plugin>
+	&lt;/plugins>
+&lt;/build></pre>
+				</div>
+			</dd>
+			<dt>Command line</dt>
+			<dd>
+				<p>You can generate the SQL file from the command line:</p>
+				<div class="highlight">
+					<pre>java -cp ...;fastnate-data.jar;fastnate-generator.jar -Dfastnate.data.provider.packages=...my data provider package... org.fastnate.data.EntityImporter [SQL file]</pre>
+				</div>
+				<p>If you don't specify any SQL file, the default is used: <em>data.sql</em></p>
+			</dd>
+			<dt>Application startup</dt>
+			<dd>
+				<p>
+					You can import your data on application startup, for example directly after a clean database is created by
+					Hibernate. For that you need to define a <em>SessionFactoryObserver</em>:
+				</p>
+				<div class="highlight">
+					<pre>public class DatabaseStartupImport implements SessionFactoryObserver {
+
+	public void sessionFactoryCreated(final SessionFactory factory) {
+		// Only import, if we have just created an empty database:
+		final SchemaAutoTooling autoTooling = factory.getSessionFactoryOptions().getSchemaAutoTooling();
+		if (autoTooling == SchemaAutoTooling.CREATE || autoTooling == SchemaAutoTooling.CREATE_DROP) {
+			// Find a connection:
+			final SessionFactoryImplementor sessionFactoryImplementor = (SessionFactoryImplementor) factory;
+			try (Connection connection = sessionFactoryImplementor.getServiceRegistry()
+					.getService(ConnectionProvider.class).getConnection()) {
+				// Import data
+				final Properties settings = new Properties();
+				settings.setProperty(EntityImporter.PACKAGES_KEY, "... my data provider package ...");
+				new EntityImporter(settings).importData(connection);
+			} catch (final SQLException | IOException e) {
+				throw new IllegalStateException("Could not import SQL data: " + e, e);
+			}
+		}
+	}
+}</pre>
+				</div>
+				<p>
+					To tell Hibernate to use that observer you need to define a <em>hibernate.ejb.session_factory_observer</em>
+					in your persistence.xml:
+				</p>
+				<div class="highlight">
+					<pre>&lt;persistence ...>
+	&lt;persistence-unit ...>
+		&lt;properties>
+			&lt;property name="hibernate.ejb.session_factory_observer" value="...mypackage...DatabaseStartupImport" />
+			
+			&lt;!-- Tell Hibernate to recreate the schema on every startup. You can define that as a system property, too: -->
+			&lt;property name="hibernate.hbm2ddl.auto" value="CREATE" />
+			
+		&lt;/properties>
+	&lt;/persistence-unit>
+&lt;/persistence></pre>
+				</div>
+			</dd>
+		</dl>
 
 		<!-- Download -->
 		<h2 id="download" class="page-header">Download Fastnate</h2>
@@ -307,25 +409,6 @@
 		&lt;version>1.4.0&lt;/version>
 	&lt;/dependency>
 &lt;/dependencies></pre>
-				</div>
-				And use the importData task:
-				<div class="highlight">
-					<pre>&lt;build>
-	&lt;plugins>
-		&lt;plugin>
-			&lt;groupId>org.fastnate&lt;/groupId>
-			&lt;artifactId>fastnate-maven-plugin&lt;/artifactId>
-			&lt;version>1.4.0&lt;/version>
-			&lt;executions>
-				&lt;execution>
-					&lt;goals>
-						&lt;goal>import-data&lt;/goal>
-					&lt;/goals>
-				&lt;/execution>
-			&lt;/executions>
-		&lt;/plugin>
-	&lt;/plugins>
-&lt;/build></pre>
 				</div>
 			</dd>
 			<dt>Standalone</dt>
@@ -427,8 +510,8 @@
 		<!-- About -->
 		<h2 id="about" class="page-header">About Fastnate</h2>
 		<p>
-			Fastnate was initially created for the <a href="http://www.init.de/eGovernment-Application-Framework">eGovernment
-				Application Framework</a> at <a href="http://www.init.de/">]init[ AG</a>.
+			Fastnate was initially created for the <em>eGovernment Application Framework</em> at <a
+				href="http://www.init.de/">]init[ AG</a>.
 		</p>
 		<p>In 2014 the ]init[ AG gave their pemission to publish Fastnate as standalone library under an
 			OpenSource license.</p>
@@ -440,6 +523,7 @@
 			<li>Andreas Penski</li>
 			<li>Heiko Schefter</li>
 			<li>André Babinski</li>
+			<li>Mathieu Lavigne</li>
 		</ul>
 		<p>
 			If you would like to contribute to Fastnate, you can create a <a

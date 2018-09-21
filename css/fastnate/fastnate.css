@@ -33,8 +33,18 @@ footer {
 .page-header {
 	border-bottom: 1px solid #E75A0A;
 	margin-top: 0;
-	padding-top: 60px;
+	padding-top: 20px;
 }
+
+.container {
+	position: relative;
+}
+
+#news {
+	margin-top: 40px;
+}
+
+.introduction
 
 .introduction dt {
 	padding-bottom: 20px;
