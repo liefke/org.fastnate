@@ -30,9 +30,9 @@ ${@{page}.links}				&lt;/ul></property>
 		</sequential>
 	</macrodef>
 	
-	<target name="upload" if="ftp.user" depends="insertWikiLinks" description="Uploads all *.html files to the webserver using FTP.">
+	<target name="upload" if="ftp.user" depends="insertWikiLinks" description="Uploads all *.html, *.css and *.js files to the webserver using FTP.">
 		<ftp server="fastnate.org" userid="${ftp.user}" password="${ftp.password}" passive="true">
-			<fileset dir="${basedir}" includes="*.html" />
+			<fileset dir="${basedir}" includes="*.html css/fastnate/*.css js/fastnate/*.js" />
 		</ftp>
 	</target>
 	
