@@ -24,3 +24,4 @@ How to create a new release
 		
 * Checkout latest commit
 * Adjust website and wiki to new version
+* Upload website
