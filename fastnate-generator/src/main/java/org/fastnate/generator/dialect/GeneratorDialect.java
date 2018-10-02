@@ -213,7 +213,7 @@ public abstract class GeneratorDialect {
 
 	/**
 	 * Converts any {@link Date} value to a {@link java.sql} specific date object.
-	 * 
+	 *
 	 * @param value
 	 *            the Java-Date object
 	 * @param type
@@ -221,14 +221,24 @@ public abstract class GeneratorDialect {
 	 * @return the corresponding java.sql specific date object
 	 */
 	public Date convertToDatabaseDate(final Date value, final TemporalType type) {
+		Date actualTime = value;
+		if (value instanceof RelativeDate) {
+			final RelativeDate relativeDate = (RelativeDate) value;
+			if (RelativeDate.NOW == relativeDate.getReferenceDate()) {
+				actualTime = new Date(System.currentTimeMillis() + relativeDate.getDifference());
+			}
+		} else if (RelativeDate.NOW.equals(value)) {
+			actualTime = new Date(System.currentTimeMillis());
+		}
 		switch (type) {
 			case DATE:
-				return value instanceof java.sql.Date ? (java.sql.Date) value : new java.sql.Date(value.getTime());
+				return actualTime instanceof java.sql.Date ? (java.sql.Date) actualTime
+						: new java.sql.Date(actualTime.getTime());
 			case TIME:
-				return value instanceof Time ? (Time) value : new Time(value.getTime());
+				return actualTime instanceof Time ? (Time) actualTime : new Time(actualTime.getTime());
 			case TIMESTAMP:
 			default:
-				return value instanceof Timestamp ? (Timestamp) value : new Timestamp(value.getTime());
+				return actualTime instanceof Timestamp ? (Timestamp) actualTime : new Timestamp(actualTime.getTime());
 		}
 	}
 
