@@ -13,15 +13,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fastnate.generator.context.ContextModelListener;
 import org.fastnate.generator.context.DefaultContextModelListener;
 import org.fastnate.generator.context.GeneratorColumn;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.GeneratorTable;
 import org.fastnate.generator.context.IdGenerator;
+import org.fastnate.generator.context.ModelException;
 import org.fastnate.generator.context.SequenceIdGenerator;
 import org.fastnate.generator.dialect.GeneratorDialect;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -32,11 +35,77 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
+	@RequiredArgsConstructor
+	private static final class ContextListener extends DefaultContextModelListener {
+
+		private final GeneratorContext context;
+
+		private final Statement plainStatement;
+
+		private final List<PreparedInsertStatement> preparedStatements;
+
+		private final Map<GeneratorTable, List<PreparedInsertStatement>> availablePreparedStatements;
+
+		@Override
+		public void foundColumn(final GeneratorColumn column) {
+			final List<PreparedInsertStatement> statements = this.availablePreparedStatements.get(column.getTable());
+
+			if (statements != null) {
+				// Found additional columns in another subclass, after the first insert statement for the table was created
+
+				// Close all statements
+				for (int i = statements.size() - 1; i >= 0; i--) {
+					try {
+						final PreparedInsertStatement statement = statements.remove(i);
+						this.preparedStatements.remove(statement);
+						statement.close();
+					} catch (final SQLException e) {
+						throw new ModelException("Could not close statement after new column was added", e);
+					}
+				}
+			}
+		}
+
+		@Override
+		public void foundGenerator(final IdGenerator generator) {
+			// Initialize generator, if necessary
+			if (!this.context.isWriteRelativeIds()) {
+				String sql = generator.getExpression(null, null, generator.getCurrentValue(), false);
+				if (sql.matches("(SELECT\\W.*)")) {
+					sql = sql.substring(1, sql.length() - 1);
+				} else {
+					sql = "SELECT (" + sql + ") currentValue " + this.context.getDialect().getOptionalTable();
+				}
+				try (ResultSet resultSet = this.plainStatement.executeQuery(sql)) {
+					if (resultSet.next()) {
+						final long currentValue = resultSet.getLong(1);
+						if (resultSet.wasNull()) {
+							return;
+						}
+						if (generator instanceof SequenceIdGenerator) {
+							final SequenceIdGenerator sequence = (SequenceIdGenerator) generator;
+							if (sequence.getInitialValue() - sequence.getAllocationSize() == currentValue) {
+								return;
+							}
+						}
+						generator.setCurrentValue(currentValue);
+					}
+				} catch (final SQLException e) {
+					if (!(generator instanceof SequenceIdGenerator)) {
+						throw new IllegalStateException("Can't initialize generator with " + sql, e);
+					}
+					// Ignore if sequence.currval is not available for a new sequence - for example in Oracle
+				}
+			}
+		}
+	}
+
 	private static final class PreparedInsertStatement extends InsertStatement {
 
 		@Getter
 		private final PreparedStatement statement;
 
+		@Getter
 		private final int columnCount;
 
 		@Getter
@@ -136,6 +205,12 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	/** The count of milliseconds to wait, until a log message with the current count of statements is written. */
 	private static final long MILLISECONDS_BETWEEN_LOG_MESSAGES = 60 * 1000;
 
+	/** The generator context that is attached to this writer. */
+	private final GeneratorContext context;
+
+	/** The listener for model changes in the context when new classes are discovered. */
+	private final ContextModelListener contextListener;
+
 	/** The database connection that was used when creating this generator. */
 	@Getter
 	private final Connection connection;
@@ -186,50 +261,17 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	 */
 	public ConnectedStatementsWriter(final Connection connection, final GeneratorContext context) throws SQLException {
 		this.connection = connection;
+		this.context = context;
 		this.autoCommitOldState = connection.getAutoCommit();
 		this.inTransaction = context.getDialect().isFastInTransaction();
 		connection.setAutoCommit(!this.inTransaction);
 		this.batchSupported = connection.getMetaData().supportsBatchUpdates();
 		this.logStatements = Boolean.parseBoolean(context.getSettings().getProperty(LOG_STATEMENTS_KEY, "false"));
 		this.maxBatchSize = Integer.parseInt(context.getSettings().getProperty(MAX_BATCH_SIZE_KEY, "100"));
-		final Statement sharedStatement = connection.createStatement();
-		this.plainStatement = sharedStatement;
-
-		context.addContextModelListener(new DefaultContextModelListener() {
-
-			@Override
-			public void foundGenerator(final IdGenerator generator) {
-				// Initialize generator, if necessary
-				if (!context.isWriteRelativeIds()) {
-					String sql = generator.getExpression(null, null, generator.getCurrentValue(), false);
-					if (sql.matches("(SELECT\\W.*)")) {
-						sql = sql.substring(1, sql.length() - 1);
-					} else {
-						sql = "SELECT (" + sql + ") currentValue " + context.getDialect().getOptionalTable();
-					}
-					try (ResultSet resultSet = sharedStatement.executeQuery(sql)) {
-						if (resultSet.next()) {
-							final long currentValue = resultSet.getLong(1);
-							if (resultSet.wasNull()) {
-								return;
-							}
-							if (generator instanceof SequenceIdGenerator) {
-								final SequenceIdGenerator sequence = (SequenceIdGenerator) generator;
-								if (sequence.getInitialValue() - sequence.getAllocationSize() == currentValue) {
-									return;
-								}
-							}
-							generator.setCurrentValue(currentValue);
-						}
-					} catch (final SQLException e) {
-						if (!(generator instanceof SequenceIdGenerator)) {
-							throw new IllegalStateException("Can't initialize generator with " + sql, e);
-						}
-						// Ignore if sequence.currval is not available for a new sequence - for example in Oracle
-					}
-				}
-			}
-		});
+		this.plainStatement = connection.createStatement();
+		this.contextListener = new ContextListener(context, this.plainStatement, this.preparedStatements,
+				this.availablePreparedStatements);
+		context.addContextModelListener(this.contextListener);
 	}
 
 	private void checkUpdate(final int updatedRows, final String sql) {
@@ -243,6 +285,7 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	@Override
 	public void close() throws IOException {
 		try {
+			this.context.removeContextModelListener(this.contextListener);
 			closeBatch();
 			commit();
 
@@ -344,8 +387,9 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
 		if (stmt instanceof PreparedInsertStatement) {
 			final PreparedInsertStatement insert = (PreparedInsertStatement) stmt;
-			this.availablePreparedStatements.get(insert.getTable()).add(insert);
-			if (!insert.isPlainExpressionAvailable()) {
+			if (insert.isPlainExpressionAvailable()) {
+				writeTableStatement(insert.toSql());
+			} else {
 				closeBatch();
 				final String sql = insert.getSql();
 				if (this.logStatements) {
@@ -356,8 +400,17 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 				} catch (final SQLException e) {
 					throw new IOException("Could not execute statement: " + sql, e);
 				}
+			}
+			if (insert.getTable().getColumns().size() > insert.getColumnCount()) {
+				// The count of columns has changed since we created the prepared statement
+				this.preparedStatements.remove(insert);
+				try {
+					insert.close();
+				} catch (final SQLException e) {
+					throw new IOException("Could not close prepared statement: " + e, e);
+				}
 			} else {
-				writeTableStatement(insert.toSql());
+				this.availablePreparedStatements.get(insert.getTable()).add(insert);
 			}
 		} else if (stmt instanceof TableStatement) {
 			writeTableStatement(stmt.toSql());

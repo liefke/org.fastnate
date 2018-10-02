@@ -18,8 +18,8 @@ import lombok.Setter;
  * @author Tobias Liefke
  */
 @Entity
-@DiscriminatorColumn(discriminatorType = DiscriminatorType.INTEGER)
 @NoArgsConstructor
+@DiscriminatorColumn(discriminatorType = DiscriminatorType.INTEGER)
 public class MappedSubclassTestEntity extends MappedSuperclassTestEntity<Integer> implements SuperclassEntity {
 
 	@Getter

@@ -15,11 +15,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.fastnate.generator.context.ContextModelListener;
+import org.fastnate.generator.context.DefaultContextModelListener;
 import org.fastnate.generator.context.GeneratorColumn;
+import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.GeneratorTable;
+import org.fastnate.generator.context.ModelException;
 import org.fastnate.generator.dialect.GeneratorDialect;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -30,6 +35,27 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class PostgreSqlBulkWriter extends FileStatementsWriter {
+
+	@RequiredArgsConstructor
+	private final class ContextListener extends DefaultContextModelListener {
+
+		@Override
+		public void foundColumn(final GeneratorColumn column) {
+			try {
+				// Close the writer of the new column, as this will change the file structure
+				closeBulkWriter(column.getTable());
+			} catch (final IOException e) {
+				throw new ModelException("Could not close the writer for " + column.getTable(), e);
+			}
+		}
+
+	}
+
+	/** The current generation context. */
+	private final GeneratorContext context;
+
+	/** The current generation context. */
+	private final ContextModelListener contextListener = new ContextListener();
 
 	/** The directory for the bulk files. */
 	@Getter
@@ -58,13 +84,15 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 	 *
 	 * All bulk files will end up in the same directory as the given file.
 	 *
+	 * @param context
+	 *            the current generation context
 	 * @param sqlFile
 	 *            the file that is feeded with all plain statements
 	 * @throws FileNotFoundException
 	 *             if the directory is not available
 	 */
-	public PostgreSqlBulkWriter(final File sqlFile) throws FileNotFoundException {
-		this(sqlFile, StandardCharsets.UTF_8);
+	public PostgreSqlBulkWriter(final GeneratorContext context, final File sqlFile) throws FileNotFoundException {
+		this(context, sqlFile, StandardCharsets.UTF_8);
 	}
 
 	/**
@@ -72,6 +100,8 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 	 *
 	 * All bulk files will end up in the same directory as the given file.
 	 *
+	 * @param context
+	 *            the current generation context
 	 * @param sqlFile
 	 *            the file that is feeded with all plain statements
 	 * @param encoding
@@ -80,8 +110,9 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 	 *             if the directory is not available
 	 */
 	@SuppressWarnings("resource")
-	public PostgreSqlBulkWriter(final File sqlFile, final Charset encoding) throws FileNotFoundException {
-		this(sqlFile.getAbsoluteFile().getParentFile(),
+	public PostgreSqlBulkWriter(final GeneratorContext context, final File sqlFile, final Charset encoding)
+			throws FileNotFoundException {
+		this(context, sqlFile.getAbsoluteFile().getParentFile(),
 				new BufferedWriter(new OutputStreamWriter(new FileOutputStream(sqlFile), encoding)), encoding);
 		this.generatedFiles.add(sqlFile);
 	}
@@ -89,6 +120,8 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 	/**
 	 * Creates a new instance of {@link PostgreSqlBulkWriter}.
 	 *
+	 * @param context
+	 *            the current generation context
 	 * @param directory
 	 *            the directory for the bulk files
 	 * @param writer
@@ -96,17 +129,37 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 	 * @param encoding
 	 *            The encoding of the bulk files.
 	 */
-	public PostgreSqlBulkWriter(final File directory, final Writer writer, final Charset encoding) {
+	public PostgreSqlBulkWriter(final GeneratorContext context, final File directory, final Writer writer,
+			final Charset encoding) {
 		super(writer);
+		this.context = context;
+		this.context.addContextModelListener(this.contextListener);
 		this.directory = directory;
 		this.encoding = encoding;
 	}
 
 	@Override
 	public void close() throws IOException {
+		this.context.removeContextModelListener(this.contextListener);
 		closeBulkWriters();
 		getWriter().close();
 		log.info("{} statements and {} files written", this.statementsCount, this.generatedFiles.size());
+	}
+
+	/**
+	 * Closes the current writer of the given table (for example when the table structure has changed).
+	 *
+	 * @param table
+	 *            the table of the writer
+	 * @throws IOException
+	 *             if there was a problem when closing the writer
+	 */
+	public void closeBulkWriter(final GeneratorTable table) throws IOException {
+		@SuppressWarnings("resource")
+		final Writer writer = this.bulkWriters.remove(table);
+		if (writer != null) {
+			writer.close();
+		}
 	}
 
 	private void closeBulkWriters() throws IOException {

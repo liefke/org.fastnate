@@ -12,6 +12,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GeneratorColumn {
 
+	/** The table of this column. */
+	@Getter
+	private final GeneratorTable table;
+
 	/** The index of this column in the list of all columns of the associated table. */
 	@Getter
 	private final int index;
