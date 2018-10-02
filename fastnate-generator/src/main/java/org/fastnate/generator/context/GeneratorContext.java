@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.AnnotatedElement;
 import java.net.URL;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -31,8 +34,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
-import com.google.common.collect.ImmutableMap;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -342,12 +343,12 @@ public class GeneratorContext {
 
 	private IdGenerator getDefaultSequenceGenerator() {
 		if (this.defaultSequenceGenerator == null) {
+			final Map<String, Object> defaults = Stream
+					.of(new SimpleEntry<String, Object>("sequenceName", this.provider.getDefaultSequence()),
+							new SimpleEntry<String, Object>("allocationSize", Integer.valueOf(1)))
+					.collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
 			this.defaultSequenceGenerator = new SequenceIdGenerator(
-					AnnotationDefaults
-							.create(SequenceGenerator.class,
-									ImmutableMap.of("sequenceName", this.provider.getDefaultSequence(),
-											"allocationSize", Integer.valueOf(1))),
-					this.dialect, this.writeRelativeIds);
+					AnnotationDefaults.create(SequenceGenerator.class, defaults), this.dialect, this.writeRelativeIds);
 			fireContextObjectAdded(ContextModelListener::foundGenerator, this.defaultSequenceGenerator);
 		}
 		return this.defaultSequenceGenerator;
@@ -355,8 +356,12 @@ public class GeneratorContext {
 
 	private IdGenerator getDefaultTableGenerator() {
 		if (this.defaultTableGenerator == null) {
-			this.defaultTableGenerator = new TableIdGenerator(AnnotationDefaults.create(TableGenerator.class,
-					ImmutableMap.of("pkColumnValue", "default", "allocationSize", Integer.valueOf(1))), this);
+			final Map<String, Object> defaults = Stream
+					.of(new SimpleEntry<String, Object>("pkColumnValue", "default"),
+							new SimpleEntry<String, Object>("allocationSize", Integer.valueOf(1)))
+					.collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
+			this.defaultTableGenerator = new TableIdGenerator(AnnotationDefaults.create(TableGenerator.class, defaults),
+					this);
 			fireContextObjectAdded(ContextModelListener::foundGenerator, this.defaultTableGenerator);
 		}
 		return this.defaultTableGenerator;

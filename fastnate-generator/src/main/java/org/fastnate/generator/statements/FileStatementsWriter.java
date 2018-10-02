@@ -12,8 +12,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.fastnate.generator.dialect.GeneratorDialect;
 
-import com.google.common.io.Closeables;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -70,7 +68,7 @@ public class FileStatementsWriter extends AbstractStatementsWriter {
 
 	@Override
 	public void close() throws IOException {
-		Closeables.close(this.writer, false);
+		this.writer.close();
 		log.info("{} statements written", this.statementsCount);
 	}
 

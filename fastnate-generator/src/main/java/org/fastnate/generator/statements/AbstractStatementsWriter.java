@@ -2,6 +2,7 @@ package org.fastnate.generator.statements;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,8 +14,6 @@ import java.util.regex.Pattern;
 import org.fastnate.generator.context.GeneratorColumn;
 import org.fastnate.generator.context.GeneratorTable;
 import org.fastnate.generator.dialect.GeneratorDialect;
-
-import com.google.common.base.Joiner;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +34,6 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 	@Getter
 	@RequiredArgsConstructor
 	protected abstract static class AbstractTableStatement implements TableStatement {
-
-		/** Used to separate the column expressions in the SQL. */
-		protected static final Joiner JOINER = Joiner.on(", ");
 
 		/** The current database dialect */
 		private final GeneratorDialect dialect;
@@ -110,6 +106,27 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 			super(dialect, table);
 		}
 
+		/**
+		 * Adds columns to an SQL expression.
+		 * 
+		 * @param result
+		 *            the string builder
+		 * @param columns
+		 *            contains the columns
+		 * @return {@code result} for chaining
+		 */
+		protected StringBuilder addColumns(final StringBuilder result, final Collection<?> columns) {
+			final Iterator<?> it = columns.iterator();
+			if (it.hasNext()) {
+				result.append(it.next());
+			}
+			while (it.hasNext()) {
+				result.append(", ");
+				result.append(it.next());
+			}
+			return result;
+		}
+
 		@Override
 		public String toSql() {
 			final StringBuilder result = new StringBuilder("INSERT INTO ").append(getTable().getName());
@@ -125,7 +142,7 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 							Pattern.CASE_INSENSITIVE);
 					if (getValues().values().stream().anyMatch(e -> !(e instanceof PrimitiveColumnExpression)
 							&& subselectPattern.matcher(e.toSql()).matches())) {
-						JOINER.appendTo(result, getValues().keySet()).append(") SELECT ");
+						addColumns(result, getValues().keySet()).append(") SELECT ");
 						final List<String> rewrite = new ArrayList<>();
 						for (final ColumnExpression value : getValues().values()) {
 							final String sql = value.toSql();
@@ -136,12 +153,12 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 								rewrite.add(sql);
 							}
 						}
-						JOINER.appendTo(result, rewrite).append(" FROM ").append(getTable().getName());
+						addColumns(result, rewrite).append(" FROM ").append(getTable().getName());
 						return result.toString();
 					}
 				}
 
-				JOINER.appendTo(result, getValues().keySet()).append(") VALUES (");
+				addColumns(result, getValues().keySet()).append(") VALUES (");
 				for (final Iterator<ColumnExpression> iterator = getValues().values().iterator(); iterator.hasNext();) {
 					iterator.next().appendSql(result);
 					if (iterator.hasNext()) {

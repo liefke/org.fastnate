@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.dialect.PostgresDialect;
 import org.fastnate.generator.statements.ConnectedStatementsWriter;
@@ -24,8 +25,6 @@ import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.util.ClassUtil;
 import org.hibernate.Session;
 import org.junit.Test;
-
-import com.google.common.base.Stopwatch;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -202,13 +201,15 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 		writer.accept(transformation.apply(createRootEntities(-1, maxElementsPerEntity, 2)));
 
 		// Run measurement
-		final Stopwatch stopwatch = Stopwatch.createUnstarted();
+		final StopWatch stopwatch = new StopWatch();
+		stopwatch.start();
+		stopwatch.suspend();
 		final int rounds = Integer.parseInt(System.getProperty("fastnate.test.performance.rounds", "5"));
 		IntStream.range(0, rounds).forEachOrdered(seed -> {
 			final T values = transformation.apply(createRootEntities(seed, maxElementsPerEntity, rootElements));
-			stopwatch.start();
+			stopwatch.resume();
 			writer.accept(values);
-			stopwatch.stop();
+			stopwatch.suspend();
 		});
 		log.info("{} - writing took: {}", ClassUtil.getCallerMethod(PerformanceTest.class), stopwatch);
 	}

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import javax.persistence.Column;
@@ -23,8 +24,6 @@ import org.hibernate.annotations.AnyMetaDef;
 import org.hibernate.annotations.AnyMetaDefs;
 import org.hibernate.annotations.ManyToAny;
 import org.hibernate.annotations.MetaValue;
-
-import com.google.common.base.Supplier;
 
 /**
  * A column that is responsible to store the information for references to arbitrary entity types that are stored in the
