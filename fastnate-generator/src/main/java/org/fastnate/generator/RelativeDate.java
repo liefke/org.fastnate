@@ -35,6 +35,12 @@ public class RelativeDate extends Date {
 
 		/** The precision of the unit in milliseconds. */
 		private final long millis;
+
+		@Override
+		public String toString() {
+			return this.unit;
+		}
+
 	}
 
 	/** Marker for {@link RelativeDate#NOW} and {@link RelativeDate#TODAY}. */

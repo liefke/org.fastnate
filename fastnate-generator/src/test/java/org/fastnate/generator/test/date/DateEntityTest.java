@@ -122,13 +122,14 @@ public class DateEntityTest extends AbstractEntitySqlGeneratorTest {
 		// The date is correct
 		assertThat(result.getDate()).isEqualTo(DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DATE), -days));
 
+		final long maxDeviation = 2 * DateUtils.MILLIS_PER_SECOND;
 		// The timestamp is nearly the time of writing (and not the time of generation)
 		assertThat(Math.abs(result.getTimestamp().getTime() - writeTime - hours * DateUtils.MILLIS_PER_HOUR))
-				.as("Deviation from two hours from now").isLessThan(2 * DateUtils.MILLIS_PER_SECOND);
+				.as("Deviation from two hours from now").isLessThan(maxDeviation);
 
 		// Check that the default is written correctly
 		assertThat(Math.abs(result.getDefaultDateNow().getTime() - writeTime)).as("Deviation from now")
-				.isLessThan(2 * DateUtils.MILLIS_PER_SECOND);
+				.isLessThan(maxDeviation);
 	}
 
 }
