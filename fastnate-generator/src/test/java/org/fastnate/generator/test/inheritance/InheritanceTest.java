@@ -17,29 +17,28 @@ import org.junit.Test;
  */
 public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 
-	private <T extends SuperclassEntity> T testInheritance(final SubclassEntity subEntity, final T superEntity)
+	private <T extends SuperclassEntity> T testInheritance(final T superEntity, final SubclassEntity... subEntities)
 			throws IOException {
-		write(subEntity);
 		write(superEntity);
+		for (final SubclassEntity subEntity : subEntities) {
+			write(subEntity);
+		}
 
-		final Class<? extends SubclassEntity> subclass = subEntity.getClass();
 		final Class<? extends SuperclassEntity> superclass = superEntity.getClass();
-		final SubclassEntity foundSubEntity = findSingleResult(subclass);
-		assertThat(foundSubEntity.getName()).isEqualTo(subEntity.getName());
-		assertThat(foundSubEntity.getDescription()).isEqualTo(subEntity.getDescription());
-		assertThat(foundSubEntity.getSuperProperty()).isEqualTo(subEntity.getSuperProperty());
+		for (final SubclassEntity subEntity : subEntities) {
+			final Class<? extends SubclassEntity> subclass = subEntity.getClass();
+			final SubclassEntity foundSubEntity = findSingleResult(subclass);
+			assertThat(foundSubEntity.getName()).isEqualTo(subEntity.getName());
+			assertThat(foundSubEntity.getDescription()).isEqualTo(subEntity.getDescription());
+			assertThat(foundSubEntity.getSuperProperty()).isEqualTo(subEntity.getSuperProperty());
+			assertThat(superclass).isAssignableFrom(subclass);
+		}
 
 		final List<? extends SuperclassEntity> foundEntities = findResults(superclass);
-		assertThat(foundEntities).hasSize(2);
-		final T foundSuperEntity;
-		if (foundEntities.get(0).equals(foundSubEntity)) {
-			assertThat(foundEntities.get(0)).isInstanceOf(subclass);
-			foundSuperEntity = (T) foundEntities.get(1);
-		} else {
-			foundSuperEntity = (T) foundEntities.get(0);
-			assertThat(foundEntities.get(1)).isInstanceOf(subclass);
-		}
-		assertThat(foundSuperEntity).isNotInstanceOf(subclass);
+		assertThat(foundEntities).hasSize(1 + subEntities.length);
+		final T foundSuperEntity = (T) foundEntities.stream().filter(superEntity::equals).findFirst()
+				.orElseThrow(AssertionError::new);
+		assertThat(foundSuperEntity).hasSameClassAs(superEntity);
 		assertThat(foundSuperEntity.getName()).isEqualTo(superEntity.getName());
 		assertThat(foundSuperEntity.getSuperProperty()).isEqualTo(superEntity.getSuperProperty());
 		return foundSuperEntity;
@@ -59,7 +58,7 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 				"Saved to master table for super entity");
 		superEntity.setSuperReference(subEntity);
 		superEntity.setSubReference(subEntity);
-		final JoinedSuperclassTestEntity foundSuperEntity = testInheritance(subEntity, superEntity);
+		final JoinedSuperclassTestEntity foundSuperEntity = testInheritance(superEntity, subEntity);
 		assertThat(foundSuperEntity.getSuperReference()).isInstanceOf(JoinedSubclassTestEntity.class);
 		assertThat(foundSuperEntity.getSuperReference().getName()).isEqualTo(subEntity.getName());
 		assertThat(foundSuperEntity.getSubReference().getName()).isEqualTo(subEntity.getName());
@@ -92,11 +91,13 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 	 */
 	@Test
 	public void testSingleTableInheritance() throws Exception {
+		final MappedSubclassTestEntity superEntity = new MappedSubclassTestEntity("Main entity", "property.main");
 		final SingleTableSubclassTestEntity subEntity = new SingleTableSubclassTestEntity("Sub entity",
-				"The inherited entity", "property1");
-		final MappedSubclassTestEntity superEntity = new MappedSubclassTestEntity("Main entity", "property2");
+				"The inherited entity", "property.sub");
+		final SecondSingleTableSubclassTestEntity secondEntity = new SecondSingleTableSubclassTestEntity(
+				"Second sub entity", 2, "property.second");
+		testInheritance(superEntity, subEntity, secondEntity);
 
-		testInheritance(subEntity, superEntity);
 	}
 
 	/**
@@ -110,7 +111,7 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 		final TablePerClassSubclassTestEntity subEntity = new TablePerClassSubclassTestEntity(0, "Sub entity",
 				"The inherited entity");
 		final TablePerClassSuperclassTestEntity superEntity = new TablePerClassSuperclassTestEntity(1, "Super entity");
-		testInheritance(subEntity, superEntity);
+		testInheritance(superEntity, subEntity);
 	}
 
 }
