@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -50,8 +51,8 @@ import lombok.Setter;
  * </ul>
  *
  * The factory will search for the available data providers in the packages defined in the property
- * {@link EntityImporter#PACKAGES_KEY}. In addition one can define one or more DataProviders in the file
- * {@code META-INF/services/org.fastnate.data.DataProvider}.
+ * {@link EntityImporter#PACKAGES_KEY}. In addition one can define one or more data providers in the file
+ * {@code /META-INF/services/org.fastnate.data.DataProvider}.
  *
  * @author Tobias Liefke
  */
@@ -209,12 +210,18 @@ public class DefaultDataProviderFactory implements DataProviderFactory {
 	protected List<Class<? extends DataProvider>> findProviderClasses(final EntityImporter importer) {
 		final String packages = EntityImporter.class.getPackage().getName() + ";"
 				+ importer.getSettings().getProperty(EntityImporter.PACKAGES_KEY, "").trim();
+
+		// Use reflections to find all providers from a specific package
 		final Reflections reflections = new Reflections((Object[]) packages.split("[\\s;,:]+"));
 		final List<Class<? extends DataProvider>> providerClasses = new ArrayList<>(
 				reflections.getSubTypesOf(DataProvider.class));
 
+		// Use ServiceLoader to find all providers defined in /META-INF/services/org.fastnate.data.DataProvider
+		final ServiceLoader<? extends DataProvider> serviceLoader = ServiceLoader.load(DataProvider.class);
+		serviceLoader.forEach(provider -> providerClasses.add(provider.getClass()));
+
 		// Use a fixed order to ensure always the same order of instantiation
-		Collections.sort(providerClasses, (c1, c2) -> c1.getName().compareTo(c2.getName()));
+		Collections.sort(providerClasses, Comparator.comparing(Class::getName));
 		return providerClasses;
 	}
 

@@ -13,11 +13,13 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -137,8 +139,12 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 		final List<Class<? extends DataProvider>> providerClasses = new ArrayList<>(
 				this.reflections.getSubTypesOf(DataProvider.class));
 
+		// Use ServiceLoader to find all providers defined in /META-INF/services/org.fastnate.data.DataProvider
+		final ServiceLoader<? extends DataProvider> serviceLoader = ServiceLoader.load(DataProvider.class);
+		serviceLoader.forEach(provider -> providerClasses.add(provider.getClass()));
+
 		// Use a fixed order to ensure always the same order of instantiation
-		Collections.sort(providerClasses, (c1, c2) -> c1.getName().compareTo(c2.getName()));
+		Collections.sort(providerClasses, Comparator.comparing(Class::getName));
 
 		// Create instances
 		for (final Class<? extends DataProvider> providerClass : providerClasses) {
