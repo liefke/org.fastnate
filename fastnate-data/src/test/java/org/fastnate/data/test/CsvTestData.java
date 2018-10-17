@@ -14,6 +14,9 @@ import org.fastnate.data.csv.CsvMapConverter;
  */
 public class CsvTestData extends AbstractCsvDataProvider<TestEntity> {
 
+	/** The position of this data provider. */
+	public static final int ORDER = 2;
+
 	private final Map<String, TestEntity> entities = new HashMap<>();
 
 	/**
@@ -38,6 +41,12 @@ public class CsvTestData extends AbstractCsvDataProvider<TestEntity> {
 		// Remember the entity to look it up as parent
 		this.entities.put(entity.getName(), entity);
 		return entity;
+	}
+
+	@Override
+	public int getOrder() {
+		// We want to run as late as possible
+		return ORDER;
 	}
 
 }

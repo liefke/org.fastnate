@@ -24,24 +24,24 @@ public class InjectTestData extends AbstractDataProvider {
 	@Getter
 	private final List<TestEntity> entities = new ArrayList<>();
 
-	private SuccessorData successorData;
+	private DependentResourceData dependentResourceData;
 
 	@Override
 	public void buildEntities() throws IOException {
 		// Use an existing entity from the preceding data provider to create our test entity
 		this.entities.add(new TestEntity(this.existingData.getTestEntities().get("Child2"), "Injected Child"));
-		this.entities.add(new TestEntity(this.successorData.getEntities().get(0), "Injected Child 2"));
+		this.entities.add(new TestEntity(this.dependentResourceData.getEntities().get(0), "Injected Child 2"));
 	}
 
 	/**
 	 * Used to test that {@link Inject} works for methods as well.
 	 *
-	 * @param successorData
+	 * @param dependentResourceData
 	 *            the other data provider
 	 */
 	@Inject
-	public void setSuccessorData(final SuccessorData successorData) {
-		this.successorData = successorData;
+	public void setDependentResourceData(final DependentResourceData dependentResourceData) {
+		this.dependentResourceData = dependentResourceData;
 	}
 
 }

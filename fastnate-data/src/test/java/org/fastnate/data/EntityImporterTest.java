@@ -13,6 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import org.fastnate.data.test.InjectTestData;
 import org.fastnate.data.test.TestData;
 import org.fastnate.data.test.TestEntity;
 import org.fastnate.generator.context.GeneratorContext;
@@ -26,12 +27,71 @@ import org.junit.Test;
  */
 public class EntityImporterTest {
 
+	/** Tests the {@link DefaultDataProviderFactory}, but removes the {@link InjectTestData}. */
+	public static final class TestDefaultDataProviderFactory extends DefaultDataProviderFactory {
+
+		@Override
+		protected List<Class<? extends DataProvider>> findProviderClasses(final EntityImporter importer) {
+			final List<Class<? extends DataProvider>> providerClasses = super.findProviderClasses(importer);
+			providerClasses.remove(InjectTestData.class);
+			return providerClasses;
+		}
+
+	}
+
 	private static Properties createDefaultSettings() {
 		final Properties settings = new Properties();
 		settings.setProperty(EntityImporter.PACKAGES_KEY, TestData.class.getPackage().getName());
 		settings.setProperty(EntityImporter.DATA_FOLDER_KEY, "src/test/data");
 		settings.setProperty(GeneratorContext.RELATIVE_IDS_KEY, "true");
 		return settings;
+	}
+
+	private static void testFile(final Class<? extends DataProviderFactory> factoryClass, final String sqlSuffix)
+			throws IOException {
+		final Properties settings = createDefaultSettings();
+		settings.setProperty(EntityImporter.FACTORY_KEY, factoryClass.getName());
+
+		final String prefix = "// This is the prefix";
+		settings.setProperty(EntityImporter.PREFIX_KEY, prefix);
+		final String postfix = "// This is the postfix";
+		settings.setProperty(EntityImporter.POSTFIX_KEY, postfix);
+
+		final EntityImporter entityImporter = new EntityImporter(settings);
+
+		final StringWriter sqlWriter = new StringWriter();
+		entityImporter.importData(sqlWriter);
+
+		// Normalize string
+		final String sql = sqlWriter.toString().replaceAll("/\\*.*?\\*/", "").replaceAll("\\s+", " ").trim();
+
+		// Check prefix and postfix
+		assertThat(sql).startsWith(prefix);
+		assertThat(sql).endsWith(postfix);
+
+		final String content = sql.substring(prefix.length(), sql.length() - postfix.length()).trim();
+
+		assertThat(content).isEqualTo(
+				// TestData
+				"INSERT INTO TestEntity (name) VALUES ('Root');"
+						+ " INSERT INTO TestEntity (name, parent_id) VALUES ('Child1', (SELECT max(id) FROM TestEntity));"
+						+ " INSERT INTO TestEntity (name, parent_id) VALUES ('Child2', (SELECT max(id) - 1 FROM TestEntity));"
+
+						// CSVData
+						+ " INSERT INTO TestEntity (bool, name, integ) VALUES (1, 'CSV Root', 1);"
+						+ " INSERT INTO TestEntity (bool, name, integ, parent_id)"
+						+ " VALUES (0, 'CSV Child;Example', 0, (SELECT max(id) FROM TestEntity));"
+
+						// DependentConstructorData
+						+ " INSERT INTO TestEntity (name, parent_id)"
+						+ " VALUES ('DependentConstructorChild', (SELECT max(id) - 3 FROM TestEntity));"
+
+						// DependentResourceData
+						+ " INSERT INTO TestEntity (name, parent_id)"
+						+ " VALUES ('DependentResourceChild', (SELECT max(id) - 3 FROM TestEntity));"
+
+						// The remaining SQL
+						+ sqlSuffix);
 	}
 
 	/**
@@ -61,8 +121,8 @@ public class EntityImporterTest {
 				final List<TestEntity> entities = em.createQuery("SELECT e FROM TestEntity e", TestEntity.class)
 						.getResultList();
 
-				// TestData + SuccessorData + CsvTestData + InjectTestData
-				final int expectedEntities = 3 + 1 + 2 + 2;
+				// TestData + DependentConstructorData + DependentResourceData + CsvTestData + InjectTestData
+				final int expectedEntities = 3 + 1 + 1 + 2 + 2;
 				assertThat(entities).hasSize(expectedEntities);
 			} finally {
 				em.close();
@@ -73,37 +133,31 @@ public class EntityImporterTest {
 	}
 
 	/**
-	 * Tests the SQL generation to a file.
+	 * Tests the SQL generation to a file with {@link DefaultDataProviderFactory}.
 	 *
 	 * @throws IOException
 	 *             if the generator throws one
 	 */
 	@Test
-	public void testFile() throws IOException {
-		final Properties settings = createDefaultSettings();
+	public void testFileDefault() throws IOException {
+		testFile(TestDefaultDataProviderFactory.class, "");
 
-		final String prefix = "// This is the prefix";
-		settings.setProperty(EntityImporter.PREFIX_KEY, prefix);
-		final String postfix = "// This is the postfix";
-		settings.setProperty(EntityImporter.POSTFIX_KEY, postfix);
+	}
 
-		final EntityImporter entityImporter = new EntityImporter(settings);
-		final StringWriter sqlWriter = new StringWriter();
-		entityImporter.importData(sqlWriter);
-		final String sql = sqlWriter.toString().replaceFirst("^/\\*.*", "").trim().replaceFirst("^/\\*.*", "").trim();
-
-		// Check prefix and postfix
-		assertThat(sql).startsWith(prefix);
-		assertThat(sql).endsWith(postfix);
-
-		// Check TestData and SuccessorData
-		assertThat(sql).contains("INSERT INTO TestEntity (name) VALUES ('Root')");
-		assertThat(sql).contains(
-				"INSERT INTO TestEntity (name, parent_id) VALUES ('Successor', (SELECT max(id) - 1 FROM TestEntity))");
-
-		// Check CSVData
-		assertThat(sql).contains("INSERT INTO TestEntity (bool, name, integ, parent_id) "
-				+ "VALUES (0, 'CSV Child;Example', 0, (SELECT max(id) FROM TestEntity))");
+	/**
+	 * Tests the SQL generation to a file with {@link InjectDataProviderFactory}.
+	 *
+	 * @throws IOException
+	 *             if the generator throws one
+	 */
+	@Test
+	public void testFileWithInject() throws IOException {
+		testFile(InjectDataProviderFactory.class,
+				// InjectTestData
+				" INSERT INTO TestEntity (name, parent_id)"
+						+ " VALUES ('Injected Child', (SELECT max(id) - 4 FROM TestEntity));"
+						+ " INSERT INTO TestEntity (name, parent_id)"
+						+ " VALUES ('Injected Child 2', (SELECT max(id) - 1 FROM TestEntity));");
 	}
 
 }

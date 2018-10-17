@@ -8,10 +8,14 @@ package org.fastnate.data;
 public interface DataProviderFactory {
 
 	/**
-	 * Discovers and builds all {@link DataProvider}s that are available for the current environment.
+	 * Discovers, builds and registers all {@link DataProvider}s that are available for the current environment.
+	 *
+	 * Ensures that the order of the providers is set in accordance with their dependencies.
 	 *
 	 * @param importer
-	 *            the current importer that needs the providers, add them with
+	 *            the current importer that needs the providers, new providers are added with
+	 *            {@link EntityImporter#addDataProvider(DataProvider)} or
+	 *            {@link EntityImporter#addDataProvider(DataProvider, int)}
 	 */
 	void createDataProviders(EntityImporter importer);
 

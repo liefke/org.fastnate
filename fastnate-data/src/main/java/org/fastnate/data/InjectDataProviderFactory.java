@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 
@@ -195,7 +196,9 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 		final Dependency dependency = new Dependency(qualifier, type);
 		Injection injection = this.injections.get(dependency);
 		if (injection == null) {
-			if (type == File.class) {
+			if (type == EntityImporter.class) {
+				injection = new Injection(Integer.MIN_VALUE, this.importer);
+			} else if (type == File.class) {
 				injection = new Injection(Integer.MIN_VALUE, this.importer.getDataFolder());
 			} else if (type == Properties.class) {
 				injection = new Injection(Integer.MIN_VALUE, this.importer.getSettings());
@@ -237,7 +240,7 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 			injectFields(instanceClass.getSuperclass(), instance, parentInjection);
 
 			for (final Field field : instanceClass.getDeclaredFields()) {
-				if (field.isAnnotationPresent(Inject.class)) {
+				if (field.isAnnotationPresent(Inject.class) || field.isAnnotationPresent(Resource.class)) {
 					field.setAccessible(true);
 					try {
 						field.set(instance, findDependency(field.getAnnotatedType(), parentInjection));
@@ -256,8 +259,9 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 			injectSetters(instanceClass.getSuperclass(), injectedMethods, instance, parentInjection);
 
 			for (final Method method : instanceClass.getDeclaredMethods()) {
-				if (method.isAnnotationPresent(Inject.class) && (Modifier.isPrivate(method.getModifiers())
-						|| injectedMethods.add(method.toGenericString()))) {
+				if ((method.isAnnotationPresent(Inject.class) || method.isAnnotationPresent(Resource.class))
+						&& (Modifier.isPrivate(method.getModifiers())
+								|| injectedMethods.add(method.toGenericString()))) {
 					try {
 						method.invoke(instance, fillParameters(method, parentInjection));
 					} catch (final IllegalAccessException | InvocationTargetException e) {
@@ -268,14 +272,15 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 		}
 	}
 
-	private void invokePostInitialize(final Class<?> instanceClass, final HashSet<String> calledMethods,
+	private void invokePostInitialize(final Class<?> instanceClass, final Set<String> calledMethods,
 			final Object instance) {
 		if (instanceClass != Object.class) {
 			invokePostInitialize(instanceClass.getSuperclass(), calledMethods, instance);
 
 			for (final Method method : instanceClass.getDeclaredMethods()) {
 				if (method.isAnnotationPresent(PostConstruct.class)
-						&& (Modifier.isPrivate(method.getModifiers()) || calledMethods.add(method.toGenericString()))) {
+						&& (Modifier.isPrivate(method.getModifiers()) || calledMethods.add(method.getName()))) {
+					method.setAccessible(true);
 					try {
 						method.invoke(instance);
 					} catch (final IllegalAccessException | InvocationTargetException e) {
