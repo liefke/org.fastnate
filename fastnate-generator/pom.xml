@@ -55,6 +55,13 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<!-- As long as we don't move HibernateProvider to its own module, we need a reference to @Formula and @Any -->
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		
 		<!-- Test dependencies -->
 		<dependency>
 			<groupId>junit</groupId>
