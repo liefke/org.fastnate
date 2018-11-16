@@ -222,6 +222,9 @@ public class GeneratorContext {
 	/** Contains the extracted metadata to every known class of an {@link Entity}. */
 	private final Map<Class<?>, EntityClass<?>> descriptions = new HashMap<>();
 
+	/** The mapping from the {@link Entity#name() name of an entity} to the {@link #descriptions extracted metadata}. */
+	private final Map<String, EntityClass<?>> descriptionsByName = new HashMap<>();
+
 	/** Mapping from the names of all known database table to their description (including column information). */
 	private final Map<String, GeneratorTable> tables = new HashMap<>();
 
@@ -378,34 +381,28 @@ public class GeneratorContext {
 		// Lookup description
 		EntityClass<E> description = (EntityClass<E>) this.descriptions.get(entityClass);
 		if (description == null) {
-			if (entityClass.isAnnotationPresent(Entity.class)) {
-				// Description not build up to now
-
-				// Create the description
-				description = new EntityClass<>(this, entityClass);
-
-				// First remember the description (to prevent endless loops)
-				this.descriptions.put(entityClass, description);
-
-				// And now build the properties
-				description.build();
-
-				// And notify listeners
-				fireContextObjectAdded(ContextModelListener::foundEntityClass, description);
-			} else {
+			if (!entityClass.isAnnotationPresent(Entity.class)) {
 				// Step up to find the parent description
 				final Class<?> superClass = entityClass.getSuperclass();
 				if (superClass == null) {
 					return null;
 				}
 
-				description = (EntityClass<E>) getDescription(superClass);
-				if (description != null) {
-					// Just remember description for our subclass
-					this.descriptions.put(entityClass, description);
-				}
+				return (EntityClass<E>) getDescription(superClass);
 			}
 
+			// Create the description
+			description = new EntityClass<>(this, entityClass);
+
+			// First remember the description (to prevent endless loops)
+			this.descriptions.put(entityClass, description);
+			this.descriptionsByName.put(description.getEntityName(), description);
+
+			// And now build the properties
+			description.build();
+
+			// And notify listeners
+			fireContextObjectAdded(ContextModelListener::foundEntityClass, description);
 		}
 		return description;
 	}
