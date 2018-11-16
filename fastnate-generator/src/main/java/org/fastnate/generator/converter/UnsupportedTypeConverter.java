@@ -1,6 +1,5 @@
 package org.fastnate.generator.converter;
 
-import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.statements.ColumnExpression;
 
@@ -17,11 +16,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UnsupportedTypeConverter implements ValueConverter<Object> {
 
-	private final AttributeAccessor attribute;
+	private final String attributeName;
 
 	@Override
 	public ColumnExpression getExpression(final Object value, final GeneratorContext context) {
-		throw new IllegalArgumentException("Unsupported type for property: " + this.attribute);
+		throw new IllegalArgumentException("Unsupported type for property: " + this.attributeName);
 	}
 
 }

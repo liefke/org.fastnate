@@ -103,7 +103,8 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 						attribute.getName() + "_KEY");
 			} else {
 				// Primitive key
-				this.keyConverter = PrimitiveProperty.createConverter(attribute, this.keyClass, true);
+				this.keyConverter = sourceClass.getContext().getProvider().createConverter(attribute, this.keyClass,
+						true);
 				this.keyColumn = buildKeyColumn(getTable(), attribute.getAnnotation(MapKeyColumn.class),
 						attribute.getName() + "_KEY");
 			}

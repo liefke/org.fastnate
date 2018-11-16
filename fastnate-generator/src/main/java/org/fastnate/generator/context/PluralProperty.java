@@ -441,7 +441,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				this.valueColumn = null;
 			} else {
 				// Check for primitive value
-				this.valueConverter = PrimitiveProperty.createConverter(attribute, this.valueClass, false);
+				this.valueConverter = this.context.getProvider().createConverter(attribute, this.valueClass, false);
 				this.valueColumn = buildValueColumn(this.table, attribute, attribute.getName());
 			}
 		}

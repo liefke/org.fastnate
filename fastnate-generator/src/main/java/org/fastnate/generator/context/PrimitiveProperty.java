@@ -1,38 +1,20 @@
 package org.fastnate.generator.context;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Calendar;
 import java.util.Date;
 
-import javax.persistence.AttributeConverter;
 import javax.persistence.Basic;
 import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Lob;
-import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.lang.ClassUtils;
 import org.fastnate.generator.DefaultValue;
-import org.fastnate.generator.converter.BooleanConverter;
-import org.fastnate.generator.converter.CalendarConverter;
-import org.fastnate.generator.converter.CharConverter;
-import org.fastnate.generator.converter.CustomValueConverter;
-import org.fastnate.generator.converter.DateConverter;
-import org.fastnate.generator.converter.EnumConverter;
-import org.fastnate.generator.converter.LobConverter;
-import org.fastnate.generator.converter.NumberConverter;
-import org.fastnate.generator.converter.SerializableConverter;
-import org.fastnate.generator.converter.StringConverter;
-import org.fastnate.generator.converter.UnsupportedTypeConverter;
 import org.fastnate.generator.converter.ValueConverter;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.PrimitiveColumnExpression;
 import org.fastnate.generator.statements.TableStatement;
-import org.fastnate.util.ClassUtil;
 
 import lombok.Getter;
 
@@ -67,93 +49,6 @@ import lombok.Getter;
  */
 @Getter
 public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
-
-	/**
-	 * Creates a converter for a primitive type.
-	 *
-	 * @param <T>
-	 *            the generic type
-	 * @param <E>
-	 *            the element type
-	 * @param attribute
-	 *            the accessor for the attribute that contains the value, not nessecarily of the target type
-	 * @param targetType
-	 *            the primitive type
-	 * @param mapKey
-	 *            indicates that the converter is for the key of a map
-	 * @return the converter or {@link UnsupportedTypeConverter} if no converter is available
-	 */
-	public static <T, E extends Enum<E>> ValueConverter<T> createConverter(final AttributeAccessor attribute,
-			final Class<T> targetType, final boolean mapKey) {
-		final Convert convert = attribute.getAnnotation(Convert.class);
-		if (convert != null && !convert.disableConversion()) {
-			final Class<AttributeConverter<T, E>> converterClass = convert.converter();
-			final Class<E> databaseType = ClassUtil.getActualTypeBinding(converterClass, AttributeConverter.class, 1);
-			try {
-				return new CustomValueConverter<>(converterClass.newInstance(),
-						createDatabaseConverter(attribute, databaseType));
-			} catch (InstantiationException | IllegalAccessException e) {
-				throw new IllegalArgumentException("Could not create AttributeConverter: " + converterClass, e);
-			}
-		}
-		if (attribute.isAnnotationPresent(Lob.class)) {
-			return (ValueConverter<T>) new LobConverter();
-		}
-		if (String.class == targetType) {
-			return (ValueConverter<T>) new StringConverter(attribute, mapKey);
-		}
-		if (Date.class.isAssignableFrom(targetType)) {
-			return (ValueConverter<T>) new DateConverter(attribute, mapKey);
-		}
-		if (Calendar.class.isAssignableFrom(targetType)) {
-			return (ValueConverter<T>) new CalendarConverter(attribute, mapKey);
-		}
-		if (Enum.class.isAssignableFrom(targetType)) {
-			return (ValueConverter<T>) new EnumConverter<>(attribute, (Class<E>) targetType, mapKey);
-		}
-		return createDatabaseConverter(attribute, targetType);
-	}
-
-	/**
-	 * Creates a converter for a primitive database type.
-	 *
-	 * @param <T>
-	 *            the generic type
-	 * @param attribute
-	 *            the accessor for the attribute that contains the value, not nessecarily of the target type
-	 * @param targetType
-	 *            the primitive database type
-	 * @return the converter or {@link UnsupportedTypeConverter} if no converter is available
-	 */
-	private static <T> ValueConverter<T> createDatabaseConverter(final AttributeAccessor attribute,
-			final Class<T> targetType) {
-		final Class<T> type = ClassUtils.primitiveToWrapper(targetType);
-		if (String.class == targetType) {
-			return (ValueConverter<T>) new StringConverter();
-		}
-		if (byte[].class == targetType || char[].class == targetType) {
-			return (ValueConverter<T>) new LobConverter();
-		}
-		if (Date.class.isAssignableFrom(targetType)) {
-			return (ValueConverter<T>) new DateConverter(TemporalType.TIMESTAMP);
-		}
-		if (Calendar.class.isAssignableFrom(targetType)) {
-			return (ValueConverter<T>) new CalendarConverter(TemporalType.TIMESTAMP);
-		}
-		if (Character.class == type) {
-			return (ValueConverter<T>) new CharConverter();
-		}
-		if (Boolean.class == type) {
-			return (ValueConverter<T>) new BooleanConverter();
-		}
-		if (Number.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new NumberConverter((Class<Number>) type);
-		}
-		if (Serializable.class.isAssignableFrom(type)) {
-			return (ValueConverter<T>) new SerializableConverter();
-		}
-		return (ValueConverter<T>) new UnsupportedTypeConverter(attribute);
-	}
 
 	private static boolean isRequired(final AttributeAccessor attribute) {
 		final Basic basic = attribute.getAnnotation(Basic.class);
@@ -223,7 +118,7 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 						: columnMetadata.name(), autogenerated);
 		this.required = columnMetadata != null && !columnMetadata.nullable() || isRequired(attribute);
 
-		this.converter = createConverter(attribute, (Class<T>) attribute.getType(), false);
+		this.converter = context.getProvider().createConverter(attribute, (Class<T>) attribute.getType(), false);
 
 		this.defaultValue = getDefaultValue(attribute);
 	}
