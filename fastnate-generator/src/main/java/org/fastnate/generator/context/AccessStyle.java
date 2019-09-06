@@ -192,7 +192,7 @@ public enum AccessStyle {
 			Accessor(final Class<?> implementationClass, final Method getter) {
 				this.implementationClass = implementationClass;
 				this.method = getter;
-				this.name = Introspector.decapitalize(getter.getName().replaceAll("^get|is", ""));
+				this.name = Introspector.decapitalize(getter.getName().replaceFirst("^(get|is)", ""));
 				this.type = ClassUtil.getActualTypeBinding(implementationClass,
 						(Class<Object>) getter.getDeclaringClass(), getter.getGenericReturnType());
 			}
