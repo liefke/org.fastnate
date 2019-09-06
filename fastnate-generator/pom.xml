@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<name>Fastnate Generator</name>
@@ -26,22 +28,22 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>javax.validation</groupId>
 			<artifactId>validation-api</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -55,13 +57,14 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- As long as we don't move HibernateProvider to its own module, we need a reference to @Formula and @Any -->
+		<!-- As long as we don't move HibernateProvider to its own module, we need 
+			a reference to @Formula and @Any -->
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<!-- Test dependencies -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -149,14 +152,9 @@
 
 				<!-- MsSQL -->
 				<dependency>
-					<!-- Due to license reasons, the following driver is not part of Maven-Central. 
-						Use the one from http://clojars.org/repo/ or download it from Microsoft and 
-						call: mvn install:install-file -DgroupId=com.microsoft -DartifactId=sqljdbc4 
-						-Dversion=3.0 -Dpackaging=jar -Dfile=sqljdbc4.jar -DgeneratePom=true -->
-					<groupId>com.microsoft</groupId>
-					<artifactId>sqljdbc4</artifactId>
-					<version>3.0</version>
-					<scope>test</scope>
+					<groupId>com.microsoft.sqlserver</groupId>
+					<artifactId>mssql-jdbc</artifactId>
+					<version>7.4.1.jre11</version>
 				</dependency>
 			</dependencies>
 		</profile>
