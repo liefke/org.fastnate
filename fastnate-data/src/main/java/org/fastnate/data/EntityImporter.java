@@ -246,7 +246,9 @@ public class EntityImporter {
 			}
 			try {
 				importData(generator);
-				connection.commit();
+				if (transation) {
+					connection.commit();
+				}
 				// CHECKSTYLE OFF: IllegalCatch
 			} catch (final RuntimeException | IOException | SQLException e) {
 				// CHECKSTYLE ON
