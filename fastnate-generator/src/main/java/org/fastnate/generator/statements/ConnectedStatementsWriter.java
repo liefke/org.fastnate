@@ -215,12 +215,6 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	@Getter
 	private final Connection connection;
 
-	/** Indicates that autoCommit was enabled before. */
-	private final boolean autoCommitOldState;
-
-	/** Indicates that we have opened a transaction. */
-	private final boolean inTransaction;
-
 	/** Indicates that the database connection supports batch statements. */
 	private final boolean batchSupported;
 
@@ -262,9 +256,6 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	public ConnectedStatementsWriter(final Connection connection, final GeneratorContext context) throws SQLException {
 		this.connection = connection;
 		this.context = context;
-		this.autoCommitOldState = connection.getAutoCommit();
-		this.inTransaction = context.getDialect().isFastInTransaction();
-		connection.setAutoCommit(!this.inTransaction);
 		this.batchSupported = connection.getMetaData().supportsBatchUpdates();
 		this.logStatements = Boolean.parseBoolean(context.getSettings().getProperty(LOG_STATEMENTS_KEY, "false"));
 		this.maxBatchSize = Integer.parseInt(context.getSettings().getProperty(MAX_BATCH_SIZE_KEY, "100"));
@@ -284,26 +275,17 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
 	@Override
 	public void close() throws IOException {
-		try {
-			this.context.removeContextModelListener(this.contextListener);
-			closeBatch();
-			commit();
+		this.context.removeContextModelListener(this.contextListener);
+		closeBatch();
 
-			log.info("{} SQL statements successfully executed", this.statementsCount);
-			try {
-				this.plainStatement.close();
-				for (final PreparedInsertStatement stmt : this.preparedStatements) {
-					stmt.close();
-				}
-			} catch (final SQLException e) {
-				// Ignore - as this will only happen, if there was already an exception during update
+		log.info("{} SQL statements successfully executed", this.statementsCount);
+		try {
+			this.plainStatement.close();
+			for (final PreparedInsertStatement stmt : this.preparedStatements) {
+				stmt.close();
 			}
-		} finally {
-			try {
-				this.connection.setAutoCommit(this.autoCommitOldState);
-			} catch (final SQLException e) {
-				// Ignore
-			}
+		} catch (final SQLException e) {
+			// Ignore - as this will only happen, if there was already an exception during update
 		}
 	}
 
@@ -316,16 +298,6 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 				throw new IOException("Could not execute statements: " + e, e);
 			} finally {
 				this.batchCount = 0;
-			}
-		}
-	}
-
-	private void commit() throws IOException {
-		if (this.inTransaction) {
-			try {
-				this.connection.commit();
-			} catch (final SQLException e) {
-				throw new IOException("Could not commit transaction: " + e, e);
 			}
 		}
 	}
@@ -354,7 +326,13 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	@Override
 	public void flush() throws IOException {
 		closeBatch();
-		commit();
+		try {
+			if (!this.connection.getAutoCommit()) {
+				this.connection.commit();
+			}
+		} catch (final SQLException e) {
+			throw new IOException("Could not commit transaction: " + e, e);
+		}
 	}
 
 	@Override
