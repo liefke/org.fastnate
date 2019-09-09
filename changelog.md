@@ -52,3 +52,9 @@ Fastnate Changelog
 * #36 Support AttributeConverter
 * #37 Database independent DefaultValue annotation for temporal attributes (date, time, timestamp)
 * Accept @OneToOne and @JoinColumn(unique = true) as unique properties
+
+### 1.4.1 (2019-09-09)
+* #38 Adjust statement writers after new columns are discovered
+* #42 Don't commit open transaction
+* #45 Correct regular expression for field name extraction
+* Correct calculation of relative dates for connected statements writer
