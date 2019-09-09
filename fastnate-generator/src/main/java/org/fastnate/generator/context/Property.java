@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
+import javax.persistence.CascadeType;
+
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
@@ -21,6 +23,25 @@ import lombok.Getter;
  */
 @Getter
 public abstract class Property<E, T> {
+
+	/**
+	 * Indicates that the property is a composition according to the given cascade types.
+	 *
+	 * A composition removes the target entity, if the owning entity is removed.
+	 *
+	 * @param cascades
+	 *            the "cascade" attribute of the mapping annotation.
+	 * @return {@code true} if we are on the owning side of a composition relationship, {@code false} if we are on the
+	 *         child side or if this is an association
+	 */
+	protected static boolean isComposition(final CascadeType[] cascades) {
+		for (final CascadeType cascade : cascades) {
+			if (cascade == CascadeType.ALL || cascade == CascadeType.REMOVE) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/** Used to access the value of the property. */
 	private final AttributeAccessor attribute;
@@ -165,6 +186,15 @@ public abstract class Property<E, T> {
 	}
 
 	/**
+	 * The type of the property.
+	 *
+	 * @return the {@link AttributeAccessor#getType() type of the attribute}
+	 */
+	public Class<T> getType() {
+		return (Class<T>) this.attribute.getType();
+	}
+
+	/**
 	 * Resolves the current value for this property on the given entity.
 	 *
 	 * @param entity
@@ -200,7 +230,7 @@ public abstract class Property<E, T> {
 	 * @param value
 	 *            the new value
 	 */
-	protected void setValue(final E entity, final T value) {
+	public void setValue(final E entity, final T value) {
 		this.attribute.setValue(entity, value);
 	}
 

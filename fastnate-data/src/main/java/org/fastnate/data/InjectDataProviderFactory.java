@@ -1,6 +1,5 @@
 package org.fastnate.data;
 
-import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.AnnotatedType;
@@ -8,18 +7,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,7 +39,7 @@ import lombok.Setter;
  *
  * @author Tobias Liefke
  */
-public class InjectDataProviderFactory implements DataProviderFactory {
+public class InjectDataProviderFactory extends AbstractDataProviderFactory {
 
 	@EqualsAndHashCode
 	@RequiredArgsConstructor
@@ -85,9 +80,11 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 
 	private final Map<Dependency, Injection> injections = new HashMap<>();
 
-	private Reflections reflections;
-
+	/** The parent importer, set during {@link #createDataProviders(EntityImporter)}. */
 	private EntityImporter importer;
+
+	/** Contains the class path scanner with the data provider packages. */
+	private Reflections reflections;
 
 	private <C> Injection buildInjection(final Class<C> instanceClass) {
 		ModelException.test(!Modifier.isAbstract(instanceClass.getModifiers()),
@@ -105,10 +102,11 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 		injection = new Injection();
 		this.injections.put(dependency, injection);
 
-		// Now look for a constructor annotated with @Inject
-		final Constructor<C>[] constructors = (Constructor<C>[]) instanceClass.getDeclaredConstructors();
-		ModelException.test(constructors.length > 0, "No constructor found for {}", instanceClass);
+		// Now look for a public constructor
+		final Constructor<C>[] constructors = (Constructor<C>[]) instanceClass.getConstructors();
+		ModelException.test(constructors.length > 0, "No public constructor found for {}", instanceClass);
 
+		// And find the one that is annotated with @Inject
 		Constructor<C> potentialConstructor = null;
 		for (final Constructor<C> constructor : constructors) {
 			if (constructor.isAnnotationPresent(Inject.class)) {
@@ -129,26 +127,11 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 	@Override
 	public void createDataProviders(final EntityImporter parentImporter) {
 		this.importer = parentImporter;
-
-		// Instantiate reflections for discovering possible injections
-		final String packages = EntityImporter.class.getPackage().getName() + ";"
-				+ this.importer.getSettings().getProperty(EntityImporter.PACKAGES_KEY, "").trim();
-		this.reflections = new Reflections((Object[]) packages.split("[\\s;,:]+"));
-
-		// Find all provider classes
-		final List<Class<? extends DataProvider>> providerClasses = new ArrayList<>(
-				this.reflections.getSubTypesOf(DataProvider.class));
-
-		// Use ServiceLoader to find all providers defined in /META-INF/services/org.fastnate.data.DataProvider
-		final ServiceLoader<? extends DataProvider> serviceLoader = ServiceLoader.load(DataProvider.class);
-		serviceLoader.forEach(provider -> providerClasses.add(provider.getClass()));
-
-		// Use a fixed order to ensure always the same order of instantiation
-		Collections.sort(providerClasses, Comparator.comparing(Class::getName));
+		this.reflections = buildReflections(parentImporter);
 
 		// Create instances
-		for (final Class<? extends DataProvider> providerClass : providerClasses) {
-			if (!Modifier.isAbstract(providerClass.getModifiers())) {
+		for (final Class<? extends DataProvider> providerClass : findProviderClasses(this.reflections)) {
+			if (!Modifier.isAbstract(providerClass.getModifiers()) && providerClass.getConstructors().length > 0) {
 				buildInjection(providerClass);
 			}
 		}
@@ -165,11 +148,10 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 			injectFields(instanceClass, instance, injection);
 
 			// Call all setter
-			final HashSet<String> calledMethods = new HashSet<>();
-			injectSetters(instanceClass, calledMethods, instance, injection);
+			injectSetters(instanceClass, new HashSet<>(), instance, injection);
 
 			// Call any post initialization method
-			invokePostInitialize(instanceClass, calledMethods, instance);
+			invokePostInitialize(instanceClass, new HashSet<>(), instance);
 
 			injection.setInstance(instance);
 
@@ -190,24 +172,22 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 		final AnnotatedType[] parameterTypes = method.getAnnotatedParameterTypes();
 		final Object[] params = new Object[parameterTypes.length];
 		for (int i = 0; i < parameterTypes.length; i++) {
-			params[i] = findDependency(parameterTypes[i], injection);
+			params[i] = findDependency(method, parameterTypes[i], injection);
 		}
 		return params;
 	}
 
-	private <C> Object findDependency(final AnnotatedType annotatedType, final Injection parentInjection) {
+	private <C> Object findDependency(final Member member, final AnnotatedType annotatedType,
+			final Injection parentInjection) {
 		// Check for any qualifier annoation and build the lookup key
 		final Class<C> type = (Class<C>) annotatedType.getType();
 		final Annotation qualifier = findQualifier(annotatedType);
 		final Dependency dependency = new Dependency(qualifier, type);
 		Injection injection = this.injections.get(dependency);
 		if (injection == null) {
-			if (type == EntityImporter.class) {
-				injection = new Injection(Integer.MIN_VALUE, this.importer);
-			} else if (type == File.class) {
-				injection = new Injection(Integer.MIN_VALUE, this.importer.getDataFolder());
-			} else if (type == Properties.class) {
-				injection = new Injection(Integer.MIN_VALUE, this.importer.getSettings());
+			final C importerParamer = findImporterDependency(this.importer, type);
+			if (importerParamer != null) {
+				injection = new Injection(Integer.MIN_VALUE, importerParamer);
 			} else {
 				// Try to find the correct instance
 				final List<Class<? extends C>> possibleImplementations = this.reflections.getSubTypesOf(type).stream()
@@ -223,13 +203,15 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 					possibleImplementations.removeIf(
 							c -> !Arrays.asList(c.getAnnotationsByType(qualifier.getClass())).contains(qualifier));
 					ModelException.test(!possibleImplementations.isEmpty(),
-							"Could not find subclass of {} with qualifier {}", type, qualifier);
+							"Could not find subclass of {} with qualifier {} when initializing {}", type, qualifier,
+							member);
 					ModelException.test(possibleImplementations.size() == 1,
-							"More than one possible subclass for {} with qualifier {} found", type, qualifier);
+							"More than one possible subclass for {} with qualifier {} found when initializing {}", type,
+							qualifier, member);
 					injection = buildInjection(possibleImplementations.get(0));
 				} else {
 					throw new ModelException("More than one matching subclasses of " + type
-							+ " found, use a qualifier for disambiguation");
+							+ " found when initializing " + member + ", use a qualifier for disambiguation");
 				}
 			}
 			this.injections.put(dependency, injection);
@@ -249,7 +231,7 @@ public class InjectDataProviderFactory implements DataProviderFactory {
 				if (field.isAnnotationPresent(Inject.class) || field.isAnnotationPresent(Resource.class)) {
 					field.setAccessible(true);
 					try {
-						field.set(instance, findDependency(field.getAnnotatedType(), parentInjection));
+						field.set(instance, findDependency(field, field.getAnnotatedType(), parentInjection));
 					} catch (final IllegalAccessException e) {
 						// Can't happen, as we set the field accessible
 						throw new IllegalStateException(e);

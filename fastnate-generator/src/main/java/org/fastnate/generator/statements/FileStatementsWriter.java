@@ -61,7 +61,6 @@ public class FileStatementsWriter extends AbstractStatementsWriter {
 	 * @throws FileNotFoundException
 	 *             if the file could not be opened for writing
 	 */
-	@SuppressWarnings("resource")
 	public FileStatementsWriter(final File file, final Charset encoding) throws FileNotFoundException {
 		this(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), encoding)));
 	}

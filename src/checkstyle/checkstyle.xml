@@ -16,15 +16,7 @@ The checkstyle configuration for fastnate.org
     <module name="SuppressWarningsHolder"/>
     <module name="JavadocMethod">
       <property name="scope" value="package"/>
-      <property name="excludeScope" value="private"/>
-      <property name="allowUndeclaredRTE" value="true"/>
-      <property name="allowThrowsTagsForSubclasses" value="true"/>
       <property name="allowMissingParamTags" value="true"/>
-      <property name="suppressLoadErrors" value="true"/>
-    </module>
-    <module name="JavadocVariable">
-      <property name="excludeScope" value="private"/>
-      <property name="scope" value="package"/>
     </module>
     <module name="JavadocStyle">
       <property name="checkEmptyJavadoc" value="true"/>
@@ -41,9 +33,7 @@ The checkstyle configuration for fastnate.org
     <module name="AvoidStarImport"/>
     <module name="IllegalImport"/>
     <module name="RedundantImport"/>
-    <module name="UnusedImports">
-      <property name="processJavadoc" value="true"/>
-    </module>
+    <module name="UnusedImports"/>
     <module name="MethodLength">
       <property name="max" value="100"/>
     </module>
@@ -114,7 +104,7 @@ The checkstyle configuration for fastnate.org
       <property name="authorFormat" value="[A-Z][a-z]+ [A-Z][a-z]+"/>
     </module>
     <module name="TrailingComment">
-      <property name="legalComment" value="^$"/>
+      <property name="legalComment" value="^()|(NOSONAR.*)$"/>
     </module>
     <module name="BooleanExpressionComplexity"/>
     <module name="RegexpSinglelineJava">
@@ -128,12 +118,12 @@ The checkstyle configuration for fastnate.org
       <message key="import.control.disallowed" value="Disallowed import - {0} (see importControl.xml)"/>
     </module>
     <module name="TodoComment">
-      <property name="format" value="TODO[^\(][^\(]"/>
-      <message key="todo.match" value="mark TODO as (functional) or (technical)"/>
+      <property name="format" value="TODO(?!\s+\(?(Issue )?#\d+)"/>
+      <message key="todo.match" value="Mark TODO with matching issue"/>
     </module>
     <module name="TodoComment">
       <property name="format" value="FIXME"/>
-      <message key="todo.match" value="FIXMEs should be solved until ending of story."/>
+      <message key="todo.match" value="FIXMEs should be solved until completion of the current issue."/>
     </module>
     <module name="RegexpSinglelineJava">
       <metadata name="net.sf.eclipsecs.core.comment" value="NamedQuery reference with String"/>
@@ -148,15 +138,15 @@ The checkstyle configuration for fastnate.org
       <property name="ignoreComments" value="true"/>
     </module>
     <module name="RegexpSinglelineJava">
-      <metadata name="net.sf.eclipsecs.core.comment" value="Unnecessary &quot;null&quot; check when using instanceof"/>
-      <property name="format" value="\b(\w+)\s+!=\s+null\b.*\b\1\s+instanceof\b"/>
-      <property name="message" value="Unnecessary &quot;null&quot; check when using instanceof"/>
+      <metadata name="net.sf.eclipsecs.core.comment" value="NamedQuery usage without type"/>
+      <property name="format" value="createNamedQuery\s*\([^,)]*\)"/>
+      <property name="message" value="Use a typed NamedQuery"/>
       <property name="ignoreComments" value="true"/>
     </module>
     <module name="RegexpSinglelineJava">
-      <metadata name="net.sf.eclipsecs.core.comment" value="Unspezific Exception"/>
-      <property name="format" value="\bnew\s+RuntimeException\b"/>
-      <property name="message" value="Use a specific Exception"/>
+      <metadata name="net.sf.eclipsecs.core.comment" value="Unnecessary &quot;null&quot; check when using instanceof"/>
+      <property name="format" value="\b(\w+)\s+!=\s+null\b.*\b\1\s+instanceof\b"/>
+      <property name="message" value="Unnecessary &quot;null&quot; check when using instanceof"/>
       <property name="ignoreComments" value="true"/>
     </module>
     <module name="RegexpSinglelineJava">
@@ -171,18 +161,18 @@ The checkstyle configuration for fastnate.org
     </module>
     <module name="RegexpSinglelineJava">
       <metadata name="net.sf.eclipsecs.core.comment" value=".assertThat with equals"/>
-      <property name="format" value="\.assertThat\(.*\.equals\("/>
+      <property name="format" value="assertThat\(.*\.equals\("/>
       <property name="message" value="Invalid usage of assertThat (use isEqualTo instead of equals)"/>
       <property name="ignoreComments" value="true"/>
     </module>
     <module name="RegexpSinglelineJava">
       <metadata name="net.sf.eclipsecs.core.comment" value=".assertThat without test"/>
-      <property name="format" value="\.assertThat\([^()]*(\([^()]*(\([^()]*\)[^()]*)*\)[^()]*)*\);"/>
+      <property name="format" value="assertThat\([^()]*(\([^()]*(\([^()]*\)[^()]*)*\)[^()]*)*\);"/>
       <property name="message" value="Invalid usage of assertThat (specify condition after last bracket)"/>
       <property name="ignoreComments" value="true"/>
     </module>
     <module name="RegexpSinglelineJava">
-      <metadata name="net.sf.eclipsecs.core.comment" value="Use a Logger instead of (printstacktrace)"/>
+      <metadata name="net.sf.eclipsecs.core.comment" value="Use a Logger instead of (printStackTrace)"/>
       <property name="format" value="\bprintStackTrace\s*\(\)"/>
       <property name="message" value="Invalid usage of printStackTrace()"/>
       <property name="ignoreComments" value="true"/>
@@ -197,12 +187,6 @@ The checkstyle configuration for fastnate.org
       <metadata name="net.sf.eclipsecs.core.comment" value="Avoid commented-out lines of code"/>
       <property name="format" value="^\s*//.*\);.*$"/>
       <property name="message" value="Avoid commented-out lines of code"/>
-    </module>
-    <module name="RegexpSinglelineJava">
-      <metadata name="net.sf.eclipsecs.core.comment" value="NamedQuery without type"/>
-      <property name="format" value="createNamedQuery\s*\([^,)]*\)"/>
-      <property name="message" value="Use a typed NamedQuery"/>
-      <property name="ignoreComments" value="true"/>
     </module>
     <module name="RegexpSinglelineJava">
       <metadata name="net.sf.eclipsecs.core.comment" value="Use log.info(&quot;...{}...&quot;, x)"/>
@@ -227,11 +211,6 @@ The checkstyle configuration for fastnate.org
     <metadata name="net.sf.eclipsecs.core.comment" value="Line has trailing spaces."/>
     <property name="format" value="^[^\*]*\s+$"/>
     <property name="message" value="Line has trailing spaces."/>
-  </module>
-  <module name="RegexpMultiline">
-    <metadata name="net.sf.eclipsecs.core.comment" value="Test that no static field has a getter"/>
-    <property name="format" value="@Getter[^;{]*static(?! (final )?class)"/>
-    <property name="message" value="Don't use getter for static fields"/>
   </module>
   <module name="SuppressWarningsFilter"/>
 </module>

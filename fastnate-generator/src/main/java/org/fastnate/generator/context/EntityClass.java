@@ -2,6 +2,9 @@ package org.fastnate.generator.context;
 
 import java.io.IOException;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,6 +16,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.Access;
 import javax.persistence.AssociationOverride;
@@ -38,7 +42,6 @@ import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
-import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.context.GenerationState.PendingState;
@@ -160,15 +163,20 @@ public class EntityClass<E> {
 	private final GeneratorContext context;
 
 	/** The represented class. */
-	@NotNull
+	@Nonnull
 	private final Class<E> entityClass;
 
+	/** The JPA constructor. */
+	@Nonnull
+	@Getter(AccessLevel.NONE)
+	private final Constructor<E> entityConstructor;
+
 	/** The entity name. */
-	@NotNull
+	@Nonnull
 	private final String entityName;
 
 	/** The main table of the entity. */
-	@NotNull
+	@Nonnull
 	private GeneratorTable table;
 
 	/** The type of access that is used for the properties (field access or bean property access). */
@@ -223,12 +231,21 @@ public class EntityClass<E> {
 	@Nullable
 	private Property<? super E, ?> idProperty;
 
-	/** The properties that make up an additional unique identifier for the entity. */
+	/**
+	 * The properties that make up an additional unique identifier for the entity.
+	 *
+	 * Depending on {@link GeneratorContext#getUniquePropertyQuality()} and
+	 * {@link GeneratorContext#getMaxUniqueProperties()} this might be {@code null}, even if there is a set of
+	 * {@link #allUniqueProperties available unique properties}, if the quality is not enough.
+	 */
 	@Nullable
 	private List<SingularProperty<E, ?>> uniqueProperties;
 
 	/** Indicates the quality of {@link #uniqueProperties}. */
 	private UniquePropertyQuality uniquePropertiesQuality;
+
+	/** All available sets of properties that make up an additional unique identifier for the entities. */
+	private final List<List<SingularProperty<E, ?>>> allUniqueProperties = new ArrayList<>();
 
 	/** Mapping from the name of all persistent properties to their description. */
 	private final Map<String, Property<? super E, ?>> properties = new TreeMap<>();
@@ -266,6 +283,16 @@ public class EntityClass<E> {
 		final String name = entityClass.getAnnotation(Entity.class).name();
 		this.entityName = name.length() > 0 ? name : entityClass.getSimpleName();
 		this.entityStates = context.getStates(this);
+
+		try {
+			// Try to find the noargs constructor
+			this.entityConstructor = entityClass.getDeclaredConstructor();
+			if (!Modifier.isPublic(this.entityConstructor.getModifiers())) {
+				this.entityConstructor.setAccessible(true);
+			}
+		} catch (final NoSuchMethodException e) {
+			throw new ModelException("Could not find constructor without arguments for " + entityClass);
+		}
 	}
 
 	/**
@@ -310,7 +337,7 @@ public class EntityClass<E> {
 		}
 
 		// Inspect unique constraints
-		if (tableMetadata != null && this.uniqueProperties == null) {
+		if (tableMetadata != null) {
 			buildUniqueProperties(tableMetadata.uniqueConstraints());
 		}
 
@@ -536,33 +563,32 @@ public class EntityClass<E> {
 
 	private void buildUniqueProperties(final UniqueConstraint[] uniqueConstraints) {
 		for (final UniqueConstraint constraint : uniqueConstraints) {
-			if (constraint.columnNames().length <= this.context.getMaxUniqueProperties()) {
-				instpectUniqueConstraint(constraint);
-			}
+			inspectUniqueConstraint(constraint);
 		}
 	}
 
 	private void buildUniqueProperty(final SingularProperty<E, ?> property) {
-		if (this.context.getMaxUniqueProperties() > 0) {
-			final boolean unique;
-			final Column column = property.getAttribute().getAnnotation(Column.class);
-			if (column != null && column.unique()) {
-				unique = true;
+		final boolean unique;
+		final Column column = property.getAttribute().getAnnotation(Column.class);
+		if (column != null && column.unique()) {
+			unique = true;
+		} else {
+			final OneToOne oneToOne = property.getAttribute().getAnnotation(OneToOne.class);
+			if (oneToOne != null) {
+				unique = StringUtils.isEmpty(oneToOne.mappedBy());
 			} else {
-				final OneToOne oneToOne = property.getAttribute().getAnnotation(OneToOne.class);
-				if (oneToOne != null) {
-					unique = StringUtils.isEmpty(oneToOne.mappedBy());
-				} else {
-					final JoinColumn joinColumn = property.getAttribute().getAnnotation(JoinColumn.class);
-					unique = joinColumn != null && joinColumn.unique();
-				}
+				final JoinColumn joinColumn = property.getAttribute().getAnnotation(JoinColumn.class);
+				unique = joinColumn != null && joinColumn.unique();
 			}
-			if (unique) {
+		}
+		if (unique) {
+			final List<SingularProperty<E, ?>> uniques = Collections.singletonList((SingularProperty<E, ?>) property);
+			this.allUniqueProperties.add(uniques);
+			if (this.context.getMaxUniqueProperties() > 0) {
 				final UniquePropertyQuality propertyQuality = UniquePropertyQuality.getMatchingQuality(property);
 				if (propertyQuality != null && isBetterUniquePropertyQuality(propertyQuality)) {
 					this.uniquePropertiesQuality = propertyQuality;
-					this.uniqueProperties = Collections
-							.<SingularProperty<E, ?>> singletonList((SingularProperty<E, ?>) property);
+					this.uniqueProperties = uniques;
 				}
 			}
 		}
@@ -582,7 +608,7 @@ public class EntityClass<E> {
 		if (this.joinedParentClass == null) {
 			final GenerationState oldState;
 			if (this.idProperty instanceof GeneratedIdProperty) {
-				final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
+				final GeneratedIdProperty<E, ?> generatedIdProperty = (GeneratedIdProperty<E, ?>) this.idProperty;
 				generatedIdProperty.postInsert(entity);
 				if (generatedIdProperty.isPrimitive() && generatedIdProperty.getValue(entity).longValue() == 0) {
 					// Mark the first entity of the generation as persisted,
@@ -651,6 +677,18 @@ public class EntityClass<E> {
 		return false;
 	}
 
+	private SingularProperty<E, ?> findPropertyByColumnName(final String columnName) {
+		for (final Property<? super E, ?> property : this.properties.values()) {
+			if (property instanceof SingularProperty) {
+				final SingularProperty<E, ?> singularProperty = (SingularProperty<E, ?>) property;
+				if (columnName.equals(singularProperty.getColumn().getName())) {
+					return singularProperty;
+				}
+			}
+		}
+		return null;
+	}
+
 	private Column getColumnAnnotation(final AttributeAccessor attribute) {
 		final AttributeOverride override = this.attributeOverrides.get(attribute.getName());
 		return override != null ? override.column() : attribute.getAnnotation(Column.class);
@@ -698,7 +736,7 @@ public class EntityClass<E> {
 	}
 
 	private ColumnExpression getGeneratedIdReference(final E entity, final boolean whereExpression) {
-		final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
+		final GeneratedIdProperty<E, ?> generatedIdProperty = (GeneratedIdProperty<E, ?>) this.idProperty;
 		if (!generatedIdProperty.isReference(entity) && this.uniqueProperties != null) {
 			// Check to write "currval" of sequence if we just have written the same value
 			if (this.context.isPreferSequenceCurentValue()) {
@@ -786,27 +824,25 @@ public class EntityClass<E> {
 		return id;
 	}
 
-	private void instpectUniqueConstraint(final UniqueConstraint constraint) {
+	private void inspectUniqueConstraint(final UniqueConstraint constraint) {
 		UniquePropertyQuality currentQuality = UniquePropertyQuality.onlyRequiredPrimitives;
-		final List<SingularProperty<E, ?>> uniques = new ArrayList<>();
 		final String[] columnNames = constraint.columnNames();
+		final List<SingularProperty<E, ?>> uniques = new ArrayList<>(columnNames.length);
 		for (final String columnName : columnNames) {
-			for (final Property<? super E, ?> property : this.properties.values()) {
-				if (property instanceof SingularProperty) {
-					final SingularProperty<E, ?> singularProperty = (SingularProperty<E, ?>) property;
-					if (columnName.equals(singularProperty.getColumn().getName())) {
-						final UniquePropertyQuality quality = UniquePropertyQuality.getMatchingQuality(property);
-						if (quality != null) {
-							if (quality.ordinal() > currentQuality.ordinal()) {
-								currentQuality = quality;
-							}
-							uniques.add(singularProperty);
-						}
-					}
+			final SingularProperty<E, ?> property = findPropertyByColumnName(columnName);
+			if (property == null) {
+				return;
+			}
+			final UniquePropertyQuality quality = UniquePropertyQuality.getMatchingQuality(property);
+			if (quality != null) {
+				if (quality.ordinal() > currentQuality.ordinal()) {
+					currentQuality = quality;
 				}
+				uniques.add(property);
 			}
 		}
-		if (uniques.size() == columnNames.length && isBetterUniquePropertyQuality(currentQuality)) {
+		this.allUniqueProperties.add(uniques);
+		if (uniques.size() <= this.context.getMaxUniqueProperties() && isBetterUniquePropertyQuality(currentQuality)) {
 			this.uniqueProperties = uniques;
 			this.uniquePropertiesQuality = currentQuality;
 		}
@@ -826,7 +862,7 @@ public class EntityClass<E> {
 	 */
 	public boolean isNew(final E entity) {
 		if (this.idProperty instanceof GeneratedIdProperty) {
-			final GeneratedIdProperty<E> generatedIdProperty = (GeneratedIdProperty<E>) this.idProperty;
+			final GeneratedIdProperty<E, ?> generatedIdProperty = (GeneratedIdProperty<E, ?>) this.idProperty;
 			// If the property "seems" to be new - according to a "0" in a primitive ID - we have to check the state,
 			// as the first written ID could be "0" as well
 			if (!generatedIdProperty.isNew(entity)) {
@@ -846,7 +882,7 @@ public class EntityClass<E> {
 	 */
 	public void markExistingEntity(final E entity) {
 		if (this.idProperty instanceof GeneratedIdProperty) {
-			((GeneratedIdProperty<E>) this.idProperty).markReference(entity);
+			((GeneratedIdProperty<E, ?>) this.idProperty).markReference(entity);
 			this.entityStates.remove(new EntityId(entity));
 		} else {
 			this.entityStates.put(getStateId(entity), GenerationState.PERSISTED);
@@ -877,6 +913,19 @@ public class EntityClass<E> {
 			this.entityStates.put(id, pendingState);
 		}
 		pendingState.addPendingUpdate(entityToUpdate, propertyToUpdate, arguments);
+	}
+
+	/**
+	 * Creates a new entity of the represented {@link #getEntityClass() class}.
+	 *
+	 * @return the new entity
+	 */
+	public E newInstance() {
+		try {
+			return this.entityConstructor.newInstance();
+		} catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
+			throw new UnsupportedOperationException(e);
+		}
 	}
 
 	/**

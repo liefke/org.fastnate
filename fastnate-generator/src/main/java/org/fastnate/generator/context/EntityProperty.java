@@ -7,6 +7,7 @@ import java.util.Collections;
 import javax.annotation.Nullable;
 import javax.persistence.AssociationOverride;
 import javax.persistence.AttributeOverride;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -21,7 +22,9 @@ import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
 import org.hibernate.annotations.Any;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Describes a property of an {@link EntityClass} that references another entity.
@@ -53,6 +56,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 
 		private final String anyDefName;
 
+		private final boolean composition;
+
 		MappingInformation(final AttributeAccessor attribute) {
 			this.attribute = attribute;
 			final OneToOne oneToOne = attribute.getAnnotation(OneToOne.class);
@@ -63,6 +68,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 				this.mappedBy = oneToOne.mappedBy();
 				this.anyColumn = null;
 				this.anyDefName = null;
+				this.composition = Property.isComposition(oneToOne.cascade());
 			} else {
 				this.mappedBy = "";
 				final ManyToOne manyToOne = attribute.getAnnotation(ManyToOne.class);
@@ -72,6 +78,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 					this.optional = manyToOne.optional() && notNull == null;
 					this.anyColumn = null;
 					this.anyDefName = null;
+					this.composition = Property.isComposition(manyToOne.cascade());
 				} else {
 					final Any any = attribute.getAnnotation(Any.class);
 					ModelException.mustExist(any, "{} declares none of OneToOne, ManyToOne, or Any", attribute);
@@ -79,6 +86,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 					this.optional = any.optional() && notNull == null;
 					this.anyColumn = any.metaColumn();
 					this.anyDefName = any.metaDef();
+					this.composition = false;
 				}
 			}
 		}
@@ -115,8 +123,22 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	/** Indicates, that this property needs a value. */
 	private final boolean required;
 
-	/** Indicates if this property is defined by another property on the target type. */
+	/**
+	 * Indicates that, according to the {@link CascadeType}, we should remove the target entity when the current entity
+	 * is removed.
+	 */
+	private final boolean composition;
+
+	/**
+	 * The optional name of a property in the target type, that owns the relationship.
+	 *
+	 * @see OneToOne#mappedBy()
+	 */
 	private final String mappedBy;
+
+	/** The opposite property of a bidirectional mapping. */
+	@Setter(AccessLevel.PACKAGE)
+	private Property<T, ?> inverseProperty;
 
 	/** The name of the join column. */
 	private final GeneratorColumn column;
@@ -149,6 +171,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		final Class<T> type = (Class<T>) mapping.getValueClass();
 		this.targetClass = context.getDescription(type);
 		this.required = !mapping.isOptional();
+		this.composition = mapping.isComposition();
 		this.mappedBy = mapping.getMappedBy().length() == 0 ? null : mapping.getMappedBy();
 		final MapsId mapsId = attribute.getAnnotation(MapsId.class);
 		this.idField = mapsId != null ? mapsId.value() : null;
@@ -166,6 +189,18 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			}
 		} else {
 			this.column = null;
+
+			// Initialize inverseProperty as soon as the target class has all properties parsed
+			this.targetClass.onPropertiesAvailable(entityClass -> {
+				final Property<? super T, ?> mappedByProperty = entityClass.getProperties().get(this.mappedBy);
+				if (mappedByProperty instanceof EntityProperty) {
+					final EntityProperty<T, E> entityProperty = (EntityProperty<T, E>) mappedByProperty;
+					this.inverseProperty = entityProperty;
+					entityProperty.inverseProperty = this;
+				} else {
+					throw new ModelException("Unsupported \"mapped by\" property for " + getAttribute());
+				}
+			});
 		}
 
 		// Initialize ANY meta information

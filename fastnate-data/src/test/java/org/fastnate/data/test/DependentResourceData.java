@@ -1,6 +1,5 @@
 package org.fastnate.data.test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +9,7 @@ import javax.annotation.Resource;
 
 import org.assertj.core.api.Assertions;
 import org.fastnate.data.AbstractDataProvider;
+import org.fastnate.data.files.DataFolder;
 
 import lombok.Getter;
 
@@ -26,7 +26,7 @@ public class DependentResourceData extends AbstractDataProvider {
 	private TestData existingData;
 
 	/** The base directory for data imports. */
-	private File dataDir;
+	private DataFolder dataDir;
 
 	/** A list that contains all the created data. */
 	private final List<TestEntity> entities = new ArrayList<>();
@@ -45,7 +45,7 @@ public class DependentResourceData extends AbstractDataProvider {
 	@Override
 	public int getOrder() {
 		// We want to run after CsvTestData
-		return CsvTestData.ORDER + 1;
+		return JaxbTestData.ORDER + 1;
 	}
 
 	/**
@@ -65,7 +65,7 @@ public class DependentResourceData extends AbstractDataProvider {
 	 *            the data directory of the entity importer
 	 */
 	@Resource
-	public void setDataDir(final File dataDir) {
+	public void setDataDir(final DataFolder dataDir) {
 		this.dataDir = dataDir;
 	}
 

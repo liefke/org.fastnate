@@ -57,8 +57,8 @@ public class DateEntityTest extends AbstractEntitySqlGeneratorTest {
 
 		// Check that the default is written correctly
 		try {
-			assertThat(result.getDefaultDate2000().equals(
-					new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").parse("2000-01-01T01:02:03.456+02:00")));
+			assertThat(new Date(result.getDefaultDate2000().getTime())).isEqualTo(
+					new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").parse("2000-01-01T01:02:03.456+02:00"));
 		} catch (final ParseException e) {
 			throw new AssertionError(e);
 		}

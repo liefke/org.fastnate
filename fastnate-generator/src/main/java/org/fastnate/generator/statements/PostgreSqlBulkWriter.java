@@ -109,7 +109,6 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 	 * @throws FileNotFoundException
 	 *             if the directory is not available
 	 */
-	@SuppressWarnings("resource")
 	public PostgreSqlBulkWriter(final GeneratorContext context, final File sqlFile, final Charset encoding)
 			throws FileNotFoundException {
 		this(context, sqlFile.getAbsoluteFile().getParentFile(),
@@ -219,7 +218,6 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 	}
 
 	@Override
-	@SuppressWarnings("resource")
 	public void writeStatement(final EntityStatement stmt) throws IOException {
 		if (stmt instanceof InsertStatement) {
 			final InsertStatement insert = (InsertStatement) stmt;

@@ -68,7 +68,6 @@ public class EntitySqlGenerator implements Closeable {
 	 * @throws SQLException
 	 *             if the database is not accessible
 	 */
-	@SuppressWarnings("resource")
 	public EntitySqlGenerator(final GeneratorContext context, final Connection connection) throws SQLException {
 		this(context, new ConnectedStatementsWriter(connection, context));
 	}
@@ -81,7 +80,6 @@ public class EntitySqlGenerator implements Closeable {
 	 * @param writer
 	 *            the stream for the generated file
 	 */
-	@SuppressWarnings("resource")
 	public EntitySqlGenerator(final GeneratorContext context, final Writer writer) {
 		this(context, new FileStatementsWriter(writer));
 	}
@@ -149,8 +147,8 @@ public class EntitySqlGenerator implements Closeable {
 	 *            the id of the entity in
 	 */
 	public <E> void markExistingEntity(final E entity, final Number id) {
-		((GeneratedIdProperty<E>) this.context.getDescription(entity).getIdProperty()).markReference(entity,
-				id.longValue());
+		((GeneratedIdProperty<E, Number>) this.context.getDescription(entity).getIdProperty()).markReference(entity,
+				id);
 	}
 
 	/**

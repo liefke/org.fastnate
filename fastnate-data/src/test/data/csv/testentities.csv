@@ -1,3 +1,0 @@
-name;parentName;integ;bool
-CSV Root;;1;true
-"CSV Child;Example";CSV Root;0;false

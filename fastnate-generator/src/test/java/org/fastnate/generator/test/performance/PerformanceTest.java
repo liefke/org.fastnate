@@ -78,7 +78,6 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 
 					final File directory = new File("target", "test-sql");
 					directory.mkdirs();
-					@SuppressWarnings("resource")
 					final PostgreSqlBulkWriter writer = new PostgreSqlBulkWriter(getGenerator().getContext(), directory,
 							sql, StandardCharsets.UTF_8);
 					try (EntitySqlGenerator generator = new EntitySqlGenerator(getGenerator().getContext(), writer);

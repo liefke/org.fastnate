@@ -1,5 +1,6 @@
 package org.fastnate.examples.model;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
@@ -30,6 +31,7 @@ public class Organisation {
 	private Organisation parent;
 
 	/** The name of the organisation. */
+	@Column(unique = true)
 	private String name;
 
 	/** The URL to the website of the organisation. */

@@ -2,7 +2,6 @@ package org.fastnate.data;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,18 +9,31 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
-import org.apache.commons.io.IOUtils;
+import javax.persistence.Entity;
+
 import org.apache.commons.lang.StringUtils;
+import org.fastnate.data.files.DataFile;
+import org.fastnate.data.files.DataFolder;
+import org.fastnate.data.files.FsDataFile;
+import org.fastnate.data.files.FsDataFolder;
+import org.fastnate.data.files.VfsDataFolder;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.statements.FileStatementsWriter;
+import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.vfs.Vfs;
+import org.reflections.vfs.Vfs.DefaultUrlTypes;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +58,16 @@ public class EntityImporter {
 	 */
 	public static final String GENERATION_ABORTED_MESSAGE = "!!! GENERATION ABORTED !!!";
 
-	/** Settings key for the folder that contains any data to import. */
+	/**
+	 * Settings key for the folder that contains any data to import.
+	 *
+	 * May point to a package name, which indicates that the folder is part of the class path.
+	 *
+	 * This setting may be overriden by the optional first command line argument of the importer.
+	 *
+	 * For importing entities with generic data providers, there has to be an "entities" folder in that folder, which
+	 * contains the generic data files.
+	 */
 	public static final String DATA_FOLDER_KEY = "fastnate.data.folder";
 
 	/** Settings key for the generated SQL file. */
@@ -71,17 +92,51 @@ public class EntityImporter {
 	public static final String PACKAGES_KEY = "fastnate.data.provider.packages";
 
 	/**
+	 * Settings key for the packages to scan for entity classes on startup (separated by ';', ',', ':' or whitespaces).
+	 */
+	public static final String ENTITY_PACKAGES_KEY = "fastnate.data.entity.packages";
+
+	private static DataFolder findDataFolder(final GeneratorContext context) {
+		final String dataFolderPath = context.getSettings().getProperty(DATA_FOLDER_KEY, ".");
+		final File dataFolderDir = new File(dataFolderPath);
+		try {
+			if (dataFolderDir.isDirectory()) {
+				log.info("Using directory {} as data folder", dataFolderDir.getAbsolutePath());
+				// The data folder is a directory on the file system
+				return new FsDataFolder(dataFolderDir);
+			}
+			if (dataFolderDir.isFile()
+					&& (dataFolderDir.getName().endsWith(".jar") || dataFolderDir.getName().endsWith(".zip"))) {
+				log.info("Using ZIP file {} as data folder", dataFolderDir.getAbsolutePath());
+				// The data folder is a JAR file
+				return new VfsDataFolder(
+						Collections.singletonList(Vfs.fromURL(dataFolderDir.toURI().toURL(), DefaultUrlTypes.jarFile)));
+			}
+			if (dataFolderPath.matches("(?i)[-a-z0-9_]+(\\.[-a-z0-9_]+)*")) {
+				// The data folder is part of the class path
+				log.info("Using package \"{}\" as data folder", dataFolderPath);
+				return new VfsDataFolder(
+						ClasspathHelper.forClassLoader().stream().map(Vfs::fromURL).collect(Collectors.toList()))
+								.getPath(dataFolderPath.replace('.', '/'));
+			}
+			throw new IllegalArgumentException("Data folder not found: " + dataFolderPath);
+		} catch (final MalformedURLException e) {
+			throw new IllegalArgumentException("Can't generate URL for data folder: " + e, e);
+		}
+	}
+
+	/**
 	 * Starts the entity importer from the command line.
 	 *
 	 * Command line arguments:
 	 * <ol>
 	 * <li>(optional) the name or path of the generated file - defaults to "data.sql"</li>
-	 * <li>(optional) the path of the base folder for reading input files (only used by DataProviders) - defaults to the
-	 * current folder</li>
+	 * <li>(optional) the path / package of the base folder for reading input files (only used by DataProviders) -
+	 * defaults to the setting of {@link #DATA_FOLDER_KEY}.
 	 * </ol>
 	 *
 	 * You can set any other properties for {@link #EntityImporter(Properties)} or {@link GeneratorContext} with system
-	 * properties
+	 * properties.
 	 *
 	 * @param args
 	 *            the command line arguments (see above)
@@ -106,9 +161,7 @@ public class EntityImporter {
 		new EntityImporter(settings).importData();
 	}
 
-	private final Properties settings;
-
-	private final File dataFolder;
+	private final DataFolder dataFolder;
 
 	private final GeneratorContext context;
 
@@ -124,31 +177,24 @@ public class EntityImporter {
 	/**
 	 * Creates a new instance of an EntityImporter.
 	 *
-	 * @param settings
-	 *            the settings of this importer and the generator
-	 */
-	public EntityImporter(final Properties settings) {
-		this(settings, new File(settings.getProperty(DATA_FOLDER_KEY, ".")), new GeneratorContext(settings));
-	}
-
-	/**
-	 * Creates a new instance of an EntityImporter.
-	 *
-	 * @param settings
-	 *            contains additional settings for this importer
-	 * @param dataFolder
-	 *            the base folder for the data providers
 	 * @param context
 	 *            the current generator context
 	 */
-	public EntityImporter(final Properties settings, final File dataFolder, final GeneratorContext context) {
-		this.settings = settings;
-		this.dataFolder = dataFolder;
+	public EntityImporter(final GeneratorContext context) {
 		this.context = context;
+		// Determine data folder
+		this.dataFolder = findDataFolder(context);
+
+		// Scan for entity classes
+		final String entityPackages = getSettings().getProperty(ENTITY_PACKAGES_KEY, "").trim();
+		if (!entityPackages.isEmpty()) {
+			final Reflections reflections = new Reflections((Object[]) entityPackages.split("[\\s;,:]+"));
+			reflections.getTypesAnnotatedWith(Entity.class).forEach(context::getDescription);
+		}
 
 		log.info("Building all instances of {}", DataProvider.class.getSimpleName());
-		String providerFactoryName = settings.getProperty(FACTORY_KEY);
-		if (providerFactoryName == null) {
+		String providerFactoryName = getSettings().getProperty(FACTORY_KEY, "");
+		if (providerFactoryName.isEmpty()) {
 			try {
 				Class.forName("javax.inject.Inject");
 				providerFactoryName = "org.fastnate.data.InjectDataProviderFactory";
@@ -166,6 +212,16 @@ public class EntityImporter {
 		} catch (final InstantiationException | IllegalAccessException e) {
 			throw new IllegalArgumentException("Could not create DataProviderFactory: " + providerFactoryName, e);
 		}
+	}
+
+	/**
+	 * Creates a new instance of an EntityImporter.
+	 *
+	 * @param settings
+	 *            the settings of this importer, the data providers and the SQL generator
+	 */
+	public EntityImporter(final Properties settings) {
+		this(new GeneratorContext(settings));
 	}
 
 	/**
@@ -214,7 +270,16 @@ public class EntityImporter {
 	}
 
 	private Charset getEncoding() {
-		return Charset.forName(this.settings.getProperty(OUTPUT_ENCODING_KEY, "UTF-8"));
+		return Charset.forName(getSettings().getProperty(OUTPUT_ENCODING_KEY, "UTF-8"));
+	}
+
+	/**
+	 * The {@link GeneratorContext#getSettings() settings} of the {@link #getContext() context}.
+	 *
+	 * @return settings used by this importer
+	 */
+	public Properties getSettings() {
+		return this.context.getSettings();
 	}
 
 	/**
@@ -224,7 +289,7 @@ public class EntityImporter {
 	 *             if one of the data importers or the file writer throws one
 	 */
 	public void importData() throws IOException {
-		importData(new File(this.settings.getProperty(OUTPUT_FILE_KEY, "data.sql")));
+		importData(new File(getSettings().getProperty(OUTPUT_FILE_KEY, "data.sql")));
 	}
 
 	/**
@@ -365,23 +430,28 @@ public class EntityImporter {
 		if (!(generator.getWriter() instanceof FileStatementsWriter)) {
 			return;
 		}
-		@SuppressWarnings("resource")
 		final Writer writer = ((FileStatementsWriter) generator.getWriter()).getWriter();
-		final String propertyValue = StringUtils.trimToNull(this.settings.getProperty(property));
+		final String propertyValue = StringUtils.trimToNull(getSettings().getProperty(property));
 		if (propertyValue != null) {
 			generator.writeSectionSeparator();
 			if (propertyValue.endsWith(".sql")) {
 				final String[] fileNames = propertyValue.split("[\\n\\" + File.pathSeparatorChar + ",;]+");
 				for (final String fileName : fileNames) {
-					File sqlFile = new File(fileName);
-					if (!sqlFile.isAbsolute()) {
-						sqlFile = new File(this.dataFolder, fileName);
+					final File sqlFile = new File(fileName);
+					final DataFile sqlDataFile;
+					if (sqlFile.isAbsolute()) {
+						sqlDataFile = sqlFile.isFile() ? new FsDataFile(sqlFile) : null;
+					} else {
+						sqlDataFile = this.dataFolder.findFile(fileName);
 					}
-					if (sqlFile.isFile()) {
-						try (InputStreamReader input = new InputStreamReader(new FileInputStream(sqlFile),
-								getEncoding())) {
+					if (sqlDataFile != null) {
+						try (InputStreamReader input = new InputStreamReader(sqlDataFile.open(), getEncoding())) {
 							generator.writeComment(fileName);
-							IOUtils.copy(input, writer);
+							final int bufferSize = 1024;
+							final char[] buffer = new char[bufferSize];
+							for (int read; (read = input.read(buffer)) > 0;) {
+								writer.write(buffer, 0, read);
+							}
 							writer.write("\n");
 						}
 					} else {

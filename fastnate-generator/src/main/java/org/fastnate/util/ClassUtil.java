@@ -4,10 +4,17 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 /**
  * Helper for inspection of classes.
@@ -15,6 +22,58 @@ import java.util.NoSuchElementException;
  * @author Tobias Liefke
  */
 public final class ClassUtil {
+
+	/** Mapping from a number class to its mapping function. */
+	private static final Map<Class<? extends Number>, Function<Number, Number>> NUMBER_MAPPERS = new HashMap<>();
+
+	static {
+		// Primitive and wrapper types
+		NUMBER_MAPPERS.put(Byte.class, Number::byteValue);
+		NUMBER_MAPPERS.put(byte.class, Number::byteValue);
+		NUMBER_MAPPERS.put(Short.class, Number::shortValue);
+		NUMBER_MAPPERS.put(short.class, Number::shortValue);
+		NUMBER_MAPPERS.put(Integer.class, Number::intValue);
+		NUMBER_MAPPERS.put(int.class, Number::intValue);
+		NUMBER_MAPPERS.put(Long.class, Number::longValue);
+		NUMBER_MAPPERS.put(long.class, Number::longValue);
+		NUMBER_MAPPERS.put(Float.class, Number::floatValue);
+		NUMBER_MAPPERS.put(float.class, Number::floatValue);
+		NUMBER_MAPPERS.put(Double.class, Number::doubleValue);
+		NUMBER_MAPPERS.put(double.class, Number::doubleValue);
+
+		// Big types
+		NUMBER_MAPPERS.put(BigInteger.class,
+				n -> n instanceof BigDecimal ? ((BigDecimal) n).toBigInteger() : BigInteger.valueOf(n.longValue()));
+		NUMBER_MAPPERS.put(BigDecimal.class,
+				n -> n instanceof BigInteger ? new BigDecimal((BigInteger) n) : BigDecimal.valueOf(n.doubleValue()));
+
+		// Atomic types
+		NUMBER_MAPPERS.put(AtomicInteger.class, n -> new AtomicInteger(n.intValue()));
+		NUMBER_MAPPERS.put(AtomicLong.class, n -> new AtomicLong(n.longValue()));
+	}
+
+	/**
+	 * Tries to convert the given number to the given type.
+	 *
+	 * @param number
+	 *            the number that we have
+	 * @param targetType
+	 *            the type that we need
+	 * @return the number in the given type
+	 *
+	 * @throws IllegalArgumentException
+	 *             if the target type is not a common number type
+	 */
+	public static <N extends Number> N convertNumber(final Number number, final Class<N> targetType) {
+		if (targetType.isInstance(number) || number == null) {
+			return (N) number;
+		}
+		final Function<Number, N> mapper = (Function<Number, N>) NUMBER_MAPPERS.get(targetType);
+		if (mapper == null) {
+			throw new IllegalArgumentException("Unknown number type: " + targetType);
+		}
+		return mapper.apply(number);
+	}
 
 	private static <I> Type getActualTypeArgument(final Class<? extends I> instanceClass, final Class<I> superClass,
 			final int argumentIndex) {
@@ -27,7 +86,8 @@ public final class ClassUtil {
 		parents.addAll(Arrays.asList(instanceClass.getGenericInterfaces()));
 		for (final Type parentType : parents) {
 			final Class<?> parentClass = parentType instanceof ParameterizedType
-					? (Class<?>) ((ParameterizedType) parentType).getRawType() : (Class<?>) parentType;
+					? (Class<?>) ((ParameterizedType) parentType).getRawType()
+					: (Class<?>) parentType;
 
 			// First check if we found the super class or interface
 			if (superClass.equals(parentClass)) {
@@ -142,7 +202,7 @@ public final class ClassUtil {
 	 * Resolves the name of the method that called the caller of this method.
 	 *
 	 * Steps up until the caller belongs to the given class
-	 * 
+	 *
 	 * @param callerClass
 	 *            the class that the method belongs to
 	 *

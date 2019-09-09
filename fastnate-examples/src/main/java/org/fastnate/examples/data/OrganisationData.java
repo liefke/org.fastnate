@@ -1,15 +1,22 @@
 package org.fastnate.examples.data;
 
-import java.io.File;
+import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import org.fastnate.data.csv.AbstractCsvDataProvider;
-import org.fastnate.data.csv.CsvFormatConverter;
-import org.fastnate.data.csv.CsvMapConverter;
+import javax.annotation.Resource;
+
+import org.fastnate.data.AbstractDataProvider;
+import org.fastnate.data.csv.CsvDataImporter;
+import org.fastnate.data.files.DataFolder;
+import org.fastnate.data.properties.FormatConverter;
+import org.fastnate.data.properties.MapConverter;
 import org.fastnate.examples.model.Organisation;
+import org.fastnate.generator.context.GeneratorContext;
+import org.supercsv.prefs.CsvPreference;
 
 import lombok.Getter;
 
@@ -19,40 +26,47 @@ import lombok.Getter;
  * @author Tobias Liefke
  */
 @Getter
-public class OrganisationData extends AbstractCsvDataProvider<Organisation> {
+public class OrganisationData extends AbstractDataProvider {
 
-	private final Map<String, Organisation> byName = new HashMap<>();
+	@Resource
+	private DataFolder dataFolder;
 
-	/**
-	 * Creates a new instance of {@link OrganisationData}.
-	 *
-	 * @param importPath
-	 *            the path to the directory of organisation.csv
-	 */
-	public OrganisationData(final File importPath) {
-		super(new File(importPath, "organisations.csv"));
+	@Resource
+	private GeneratorContext context;
+
+	private final Map<String, Organisation> organisations = new LinkedHashMap<>();
+
+	@Override
+	public void buildEntities() throws IOException {
+		final CsvDataImporter<Organisation> importer = new CsvDataImporter<>(
+				this.context.getDescription(Organisation.class), CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE);
+
+		// Map the "id" and "name" column with the default mappings
+		importer.addDefaultColumnMapping("id");
+		importer.addDefaultColumnMapping("name");
 
 		// Map the "web" column to the "url" property
-		addColumnMapping("web", "url");
+		importer.addColumnMapping("web", Organisation::setUrl);
 
 		// Add a currency converter for the profit column
-		addConverter("profit", new CsvFormatConverter<Float>(NumberFormat.getCurrencyInstance(Locale.US)));
+		importer.addColumnMapping("profit", float.class,
+				new FormatConverter<>(NumberFormat.getCurrencyInstance(Locale.US)), Organisation::setProfit);
 
 		// Add a lookup for the parent column
-		addConverter("parent", CsvMapConverter.create(this.byName));
+		importer.addColumnMapping("parent", MapConverter.create(this.organisations), Organisation::setParent);
 
 		// Ignore the comment column
-		addIgnoredColumn("comment");
+		importer.addIgnoredColumn("comment");
+
+		// Store each entity in the map of organisations
+		importer.addPostProcessor(organisation -> this.organisations.put(organisation.getName(), organisation));
+
+		importer.importFile(this.dataFolder.findFile("organisations.csv"));
 	}
 
 	@Override
-	protected Organisation createEntity(final Map<String, String> row) {
-		final Organisation organisation = super.createEntity(row);
-
-		// Remember every organisation by its name
-		this.byName.put(organisation.getName(), organisation);
-
-		return organisation;
+	protected Collection<?> getEntities() {
+		return this.organisations.values();
 	}
 
 }

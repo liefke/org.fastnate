@@ -58,8 +58,9 @@
 	</prerequisites>
 
 	<modules>
-		<module>fastnate-data</module>
 		<module>fastnate-generator</module>
+		<module>fastnate-data</module>
+		<module>fastnate-csv</module>
 		<module>fastnate-maven-plugin</module>
 		<module>fastnate-maven-test</module>
 		<module>fastnate-examples</module>

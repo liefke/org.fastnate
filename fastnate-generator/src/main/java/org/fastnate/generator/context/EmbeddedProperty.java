@@ -1,12 +1,16 @@
 package org.fastnate.generator.context;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.annotation.Nonnull;
 import javax.persistence.Access;
 import javax.persistence.AssociationOverride;
 import javax.persistence.AttributeOverride;
@@ -17,6 +21,7 @@ import javax.persistence.EmbeddedId;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 
 /**
@@ -39,6 +44,10 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 
 	private final boolean id;
 
+	@Nonnull
+	@Getter(AccessLevel.NONE)
+	private final Constructor<T> constructor;
+
 	/**
 	 * Instantiates a new embedded property.
 	 *
@@ -52,9 +61,19 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 
 		this.id = attribute.isAnnotationPresent(EmbeddedId.class);
 
-		final Class<?> type = attribute.getType();
+		final Class<T> type = (Class<T>) attribute.getType();
 		if (!type.isAnnotationPresent(Embeddable.class)) {
 			throw new IllegalArgumentException(attribute + " does reference " + type + " which is not embeddable.");
+		}
+
+		try {
+			// Try to find the noargs constructor
+			this.constructor = type.getDeclaredConstructor();
+			if (!Modifier.isPublic(this.constructor.getModifiers())) {
+				this.constructor.setAccessible(true);
+			}
+		} catch (final NoSuchMethodException e) {
+			throw new ModelException("Could not find constructor without arguments for " + type);
 		}
 
 		// Determine the access style
@@ -118,6 +137,29 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Ensures that the property of the given entity is initialized.
+	 *
+	 * If the property has currently a {@code null} value, the property is assigned with a new object using the noargs
+	 * constructor.
+	 *
+	 * @param entity
+	 *            the entity to initialize
+	 * @return the instance of the embedded object
+	 */
+	public T getInitializedValue(final E entity) {
+		T value = getValue(entity);
+		if (value == null) {
+			try {
+				value = this.constructor.newInstance();
+				setValue(entity, value);
+			} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+				throw new UnsupportedOperationException(e);
+			}
+		}
+		return value;
 	}
 
 	@Override

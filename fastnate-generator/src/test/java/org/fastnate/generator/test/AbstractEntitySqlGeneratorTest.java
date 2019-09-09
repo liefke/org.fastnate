@@ -138,7 +138,6 @@ public class AbstractEntitySqlGeneratorTest {
 		if ("true".equals(context.getSettings().getProperty(USE_CONNECTION_WRITER_KEY))) {
 			try {
 				context.getSettings().setProperty(ConnectedStatementsWriter.MAX_BATCH_SIZE_KEY, "0");
-				@SuppressWarnings("resource")
 				final Connection connection = this.em.unwrap(SessionImpl.class).getJdbcConnectionAccess()
 						.obtainConnection();
 				this.generator = new EntitySqlGenerator(context, connection);
@@ -147,7 +146,6 @@ public class AbstractEntitySqlGeneratorTest {
 				throw new IllegalStateException(e);
 			}
 		} else {
-			@SuppressWarnings("resource")
 			final SqlEmWriter sqlWriter = new SqlEmWriter(this.em);
 			this.generator = new EntitySqlGenerator(context, sqlWriter);
 		}

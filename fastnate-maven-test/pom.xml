@@ -24,7 +24,13 @@
 			<artifactId>fastnate-data</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>org.fastnate</groupId>
+			<artifactId>fastnate-csv</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>

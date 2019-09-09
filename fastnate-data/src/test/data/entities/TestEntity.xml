@@ -1,0 +1,23 @@
+<TestEntities>
+	<TestEntity name="XML Sub Child 1" number="111" bool="false" />
+	<TestEntity name="XML Sub Child 3" number="113" bool="true">
+		<parent><TestEntity reference="true" name="XML Child 1" /></parent>
+	</TestEntity>
+	<TestEntity name="XML Root 1" number="1" bool="true">
+		<children>
+			<TestEntity name="XML Child 1" number="11" bool="false">
+				<children>
+					<TestEntity reference="true" name="XML Sub Child 1" />
+					<TestEntity name="XML Sub Child 2">
+						<number>112</number>
+					</TestEntity>
+					<TestEntity reference="true" name="XML Sub Child 4" />
+				</children>
+			</TestEntity>
+			<TestEntity name="XML Child 2" number="12" bool="false" />
+		</children>
+	</TestEntity>
+	<TestEntity name="XML Root 2" number="2" bool="true" />
+	<TestEntity name="XML Sub Child 4" number="114" />
+	<TestEntity name="XML Sub Child 5" number="115" parent="XML Child 1" />
+</TestEntities>

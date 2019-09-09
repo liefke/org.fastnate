@@ -1,15 +1,19 @@
 package org.fastnate.generator.context;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Access;
 import javax.persistence.AssociationOverride;
 import javax.persistence.AttributeOverride;
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -40,7 +44,7 @@ import lombok.Getter;
  * @param <E>
  *            The type of the container class
  * @param <C>
- *            The type of the collection of map
+ *            The type of the collection or map
  * @param <T>
  *            The type of the elements in the collection
  */
@@ -74,6 +78,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 		private final String anyDefName;
 
+		private final boolean composition;
+
 		EntityMappingInformation(final AttributeAccessor attribute, final AssociationOverride override,
 				final int valueArgumentIndex) {
 			this.attribute = attribute;
@@ -84,6 +90,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				this.useTargetTable = this.mappedBy != null || useTargetTable(attribute, override);
 				this.anyColumn = null;
 				this.anyDefName = null;
+				this.composition = Property.isComposition(oneToMany.cascade());
 			} else {
 				final ManyToMany manyToMany = attribute.getAnnotation(ManyToMany.class);
 				if (manyToMany != null) {
@@ -92,6 +99,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					this.useTargetTable = this.mappedBy != null;
 					this.anyColumn = null;
 					this.anyDefName = null;
+					this.composition = Property.isComposition(manyToMany.cascade());
 				} else {
 					final ManyToAny manyToAny = attribute.getAnnotation(ManyToAny.class);
 					ModelException.mustExist(manyToAny,
@@ -101,6 +109,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					this.useTargetTable = false;
 					this.anyColumn = manyToAny.metaColumn();
 					this.anyDefName = manyToAny.metaDef();
+					this.composition = false;
 				}
 			}
 		}
@@ -274,6 +283,19 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		return mapsId == null || mapsId.value().length() == 0 ? null : mapsId.value();
 	}
 
+	private static <T> Constructor<T> findValueConstructor(final Class<T> valueClass) {
+		try {
+			final Constructor<T> constructor = valueClass.getConstructor();
+			if (!constructor.isAccessible()) {
+				constructor.setAccessible(true);
+			}
+			return constructor;
+		} catch (final NoSuchMethodException e) {
+			// Ignore and just don't support calls to newElement()
+			return null;
+		}
+	}
+
 	private static String getJoinColumnName(final JoinColumn[] joinColumns) {
 		if (joinColumns != null && joinColumns.length > 0) {
 			final JoinColumn joinColumn = joinColumns[0];
@@ -336,6 +358,9 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/** Contains all properties of an embedded element collection. */
 	private List<SingularProperty<T, ?>> embeddedProperties;
 
+	/** Contains all properties of an embedded element collection by their name. */
+	private Map<String, SingularProperty<T, ?>> embeddedPropertiesByName;
+
 	/** Contains all properties of an embedded element collection which reference a required entity. */
 	private List<EntityProperty<T, ?>> requiredEmbeddedProperties;
 
@@ -348,8 +373,24 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/** The column that contains the id of the entity. */
 	private GeneratorColumn idColumn;
 
+	/**
+	 * Indicates that, according to the {@link CascadeType}, we should remove the target entities when the current
+	 * entity is removed.
+	 *
+	 * Always {@code true} for {@link ElementCollection}s.
+	 */
+	private final boolean composition;
+
 	/** Indicates that this property is defined by another property on the target type. */
 	private final String mappedBy;
+
+	/**
+	 * The opposite property of a bidirectional mapping.
+	 *
+	 * Can either be another {@link PluralProperty} (it the relationship is a {@link ManyToMany}) or an
+	 * {@link EntityProperty} (if the relationship is a {@link OneToMany}.
+	 */
+	private Property<T, ?> inverseProperty;
 
 	/** Indicates to use a column of the target table. */
 	private final boolean useTargetTable;
@@ -359,6 +400,9 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	/** The class of the value of the collection. */
 	private final Class<T> valueClass;
+
+	/** The noargs constructor for the values of the collection. */
+	private final Constructor<T> valueConstructor;
 
 	/** Indicates that entities are referenced by the collection. */
 	private final boolean entityReference;
@@ -381,11 +425,12 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            accessor to the represented attribute
 	 * @param override
 	 *            the configured assocation override
-	 * @param valueArgumentIndex
+	 * @param valueClassParamIndex
 	 *            the index of the value argument in the collection class (0 for collection, 1 for map)
 	 */
+	@SuppressWarnings("checkstyle:JavaNCSS")
 	public PluralProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
-			final AssociationOverride override, final int valueArgumentIndex) {
+			final AssociationOverride override, final int valueClassParamIndex) {
 		super(attribute);
 		this.context = sourceClass.getContext();
 		this.dialect = this.context.getDialect();
@@ -398,18 +443,18 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		this.entityReference = values == null;
 		if (values == null) {
 			// Entity mapping, either OneToMany, ManyToMany or ManyToAny
-
-			final EntityMappingInformation mappingInformation = new EntityMappingInformation(attribute, override,
-					valueArgumentIndex);
-			this.mappedBy = mappingInformation.getMappedBy();
-			this.useTargetTable = mappingInformation.isUseTargetTable();
+			final EntityMappingInformation mapping = new EntityMappingInformation(attribute, override,
+					valueClassParamIndex);
+			this.mappedBy = mapping.getMappedBy();
+			this.useTargetTable = mapping.isUseTargetTable();
+			this.composition = mapping.isComposition();
 
 			// Resolve the target entity class
-			this.valueClass = (Class<T>) mappingInformation.getValueClass();
+			this.valueClass = (Class<T>) mapping.getValueClass();
 			this.valueEntityClass = sourceClass.getContext().getDescription(this.valueClass);
 
 			// An entity mapping needs an entity class
-			ModelException.test(this.valueEntityClass != null || mappingInformation.getAnyColumn() != null,
+			ModelException.test(this.valueEntityClass != null || mapping.getAnyColumn() != null,
 					"{} has no entity as value", attribute);
 
 			// No primitive value
@@ -419,7 +464,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			if (this.mappedBy != null) {
 				// Bidirectional - use the columns of the target class
 				this.table = this.valueEntityClass.getTable();
-				initializeIdColumnForMappedBy();
+				initializeInverseProperty();
 				this.valueColumn = buildValueColumn(this.table, null, attribute,
 						this.valueEntityClass.getIdColumn(attribute).getName());
 				this.anyMapping = null;
@@ -440,13 +485,14 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				initializeIdColumnForMappingTable(sourceClass, attribute, override, joinTable, collectionTable);
 				this.valueColumn = buildValueColumn(this.table, override, attribute, attribute.getName() + '_'
 						+ (this.valueEntityClass == null ? "id" : this.valueEntityClass.getIdColumn(attribute)));
-				this.anyMapping = mappingInformation.buildAnyMapping(this.context, this.table);
+				this.anyMapping = mapping.buildAnyMapping(this.context, this.table);
 			}
 		} else {
 			// We are the owning side of the mapping
 			this.mappedBy = null;
 			this.useTargetTable = false;
 			this.anyMapping = null;
+			this.composition = true;
 
 			// Initialize the table and id column name
 			this.table = this.context.resolveTable(
@@ -455,7 +501,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute)));
 
 			// Initialize the target description and columns
-			this.valueClass = getPropertyArgument(attribute, values.targetClass(), valueArgumentIndex);
+			this.valueClass = getPropertyArgument(attribute, values.targetClass(), valueClassParamIndex);
 			this.valueEntityClass = null;
 			if (this.valueClass.isAnnotationPresent(Embeddable.class)) {
 				buildEmbeddedProperties(this.valueClass);
@@ -467,6 +513,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				this.valueColumn = buildValueColumn(this.table, null, attribute, attribute.getName());
 			}
 		}
+
+		this.valueConstructor = findValueConstructor(this.valueClass);
 	}
 
 	@Override
@@ -492,6 +540,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			}
 
 			this.embeddedProperties = new ArrayList<>();
+			this.embeddedPropertiesByName = new HashMap<>();
 			this.requiredEmbeddedProperties = new ArrayList<>();
 			final Map<String, AttributeOverride> attributeOverrides = EntityClass
 					.getAttributeOverrides(getAttribute().getElement());
@@ -506,6 +555,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				final SingularProperty<T, ?> property = buildProperty(attribute, columnMetadata, assocOverride);
 				if (property != null) {
 					this.embeddedProperties.add(property);
+					this.embeddedPropertiesByName.put(property.getName(), property);
+
 					if (property.isRequired() && property instanceof EntityProperty) {
 						this.requiredEmbeddedProperties.add((EntityProperty<T, ?>) property);
 					}
@@ -695,19 +746,6 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 */
 	protected abstract GeneratorColumn getKeyColumn();
 
-	private void initializeIdColumnForMappedBy() {
-		this.valueEntityClass.onPropertiesAvailable(entityClass -> {
-			final Property<? super T, ?> mappedByProperty = entityClass.getProperties().get(this.mappedBy);
-			if (mappedByProperty instanceof EntityProperty) {
-				this.idColumn = ((EntityProperty<?, ?>) mappedByProperty).getColumn();
-			} else if (mappedByProperty instanceof PluralProperty) {
-				this.idColumn = ((PluralProperty<?, ?, ?>) mappedByProperty).getValueColumn();
-			} else {
-				throw new ModelException("Unsupported \"mapped by\" property for " + getAttribute().getElement());
-			}
-		});
-	}
-
 	private void initializeIdColumnForMappingTable(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
 			final AssociationOverride override, final JoinTable joinTable, final CollectionTable collectionTable) {
 		// Name of the ID column could be derived from a "mapped by" property in the target class
@@ -728,6 +766,23 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		}
 	}
 
+	private void initializeInverseProperty() {
+		this.valueEntityClass.onPropertiesAvailable(entityClass -> {
+			this.inverseProperty = (Property<T, ?>) entityClass.getProperties().get(this.mappedBy);
+			if (this.inverseProperty instanceof EntityProperty) {
+				final EntityProperty<T, E> entityProperty = (EntityProperty<T, E>) this.inverseProperty;
+				this.idColumn = entityProperty.getColumn();
+				entityProperty.setInverseProperty(this);
+			} else if (this.inverseProperty instanceof PluralProperty) {
+				final PluralProperty<T, ?, E> pluralProperty = (PluralProperty<T, ?, E>) this.inverseProperty;
+				this.idColumn = pluralProperty.getValueColumn();
+				pluralProperty.inverseProperty = this;
+			} else {
+				throw new ModelException("Unsupported \"mapped by\" property for " + getAttribute());
+			}
+		});
+	}
+
 	/**
 	 * Indicates that this propery is a {@link ElementCollection} that references {@link Embeddable}s.
 	 *
@@ -745,6 +800,22 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	@Override
 	public boolean isTableColumn() {
 		return false;
+	}
+
+	/**
+	 * Tries to create a new instance of an element using the parameter-less constructor.
+	 *
+	 * @return the new element
+	 */
+	public T newElement() {
+		if (this.valueConstructor == null) {
+			throw new UnsupportedOperationException("The element class has no parameter-less constructor");
+		}
+		try {
+			return this.valueConstructor.newInstance();
+		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+			throw new UnsupportedOperationException("Could not create new element", e);
+		}
 	}
 
 }

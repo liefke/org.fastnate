@@ -8,13 +8,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -22,7 +20,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import org.fastnate.generator.context.ModelException;
-import org.reflections.Reflections;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,7 +53,7 @@ import lombok.Setter;
  *
  * @author Tobias Liefke
  */
-public class DefaultDataProviderFactory implements DataProviderFactory {
+public class DefaultDataProviderFactory extends AbstractDataProviderFactory {
 
 	@Getter
 	@Setter
@@ -77,28 +74,6 @@ public class DefaultDataProviderFactory implements DataProviderFactory {
 			}
 		}
 
-	}
-
-	private static <E> E findDependency(final EntityImporter importer, final Class<E> parameterType,
-			final MaxOrder maxOrder) {
-		if (parameterType == EntityImporter.class) {
-			return (E) importer;
-		}
-		if (parameterType == File.class) {
-			return (E) importer.getDataFolder();
-		}
-		if (parameterType == Properties.class) {
-			return (E) importer.getSettings();
-		}
-		if (DataProvider.class.isAssignableFrom(parameterType)) {
-			final DataProvider provider = importer.findDataProvider((Class<? extends DataProvider>) parameterType);
-			if (provider != null) {
-				maxOrder.add(provider);
-				return (E) provider;
-			}
-		}
-		// This is not a supported dependency
-		return null;
 	}
 
 	/**
@@ -179,7 +154,7 @@ public class DefaultDataProviderFactory implements DataProviderFactory {
 	@Override
 	public void createDataProviders(final EntityImporter importer) {
 		// Find providers
-		final List<Class<? extends DataProvider>> providerClasses = findProviderClasses(importer);
+		final List<Class<? extends DataProvider>> providerClasses = findProviderClasses(buildReflections(importer));
 
 		// Create instances, depending on other needed providers
 		while (!providerClasses.isEmpty()) {
@@ -188,7 +163,8 @@ public class DefaultDataProviderFactory implements DataProviderFactory {
 			for (final Iterator<Class<? extends DataProvider>> iterator = providerClasses.iterator(); iterator
 					.hasNext();) {
 				final Class<? extends DataProvider> providerClass = iterator.next();
-				if (Modifier.isAbstract(providerClass.getModifiers()) || addProvider(importer, providerClass) != null) {
+				if (Modifier.isAbstract(providerClass.getModifiers()) || providerClass.getConstructors().length == 0
+						|| addProvider(importer, providerClass) != null) {
 					iterator.remove();
 				}
 			}
@@ -200,29 +176,20 @@ public class DefaultDataProviderFactory implements DataProviderFactory {
 		}
 	}
 
-	/**
-	 * Finds all provider classes from the class path, that implement {@link DataProvider}.
-	 *
-	 * @param importer
-	 *            the current importer that contains the optional settings
-	 * @return all found classes
-	 */
-	protected List<Class<? extends DataProvider>> findProviderClasses(final EntityImporter importer) {
-		final String packages = EntityImporter.class.getPackage().getName() + ";"
-				+ importer.getSettings().getProperty(EntityImporter.PACKAGES_KEY, "").trim();
-
-		// Use reflections to find all providers from a specific package
-		final Reflections reflections = new Reflections((Object[]) packages.split("[\\s;,:]+"));
-		final List<Class<? extends DataProvider>> providerClasses = new ArrayList<>(
-				reflections.getSubTypesOf(DataProvider.class));
-
-		// Use ServiceLoader to find all providers defined in /META-INF/services/org.fastnate.data.DataProvider
-		final ServiceLoader<? extends DataProvider> serviceLoader = ServiceLoader.load(DataProvider.class);
-		serviceLoader.forEach(provider -> providerClasses.add(provider.getClass()));
-
-		// Use a fixed order to ensure always the same order of instantiation
-		Collections.sort(providerClasses, Comparator.comparing(Class::getName));
-		return providerClasses;
+	private <E> E findDependency(final EntityImporter importer, final Class<E> parameterType, final MaxOrder maxOrder) {
+		final E dependency = findImporterDependency(importer, parameterType);
+		if (dependency != null) {
+			return dependency;
+		}
+		if (DataProvider.class.isAssignableFrom(parameterType)) {
+			final DataProvider provider = importer.findDataProvider((Class<? extends DataProvider>) parameterType);
+			if (provider != null) {
+				maxOrder.add(provider);
+				return (E) provider;
+			}
+		}
+		// This is not a supported dependency
+		return null;
 	}
 
 	private boolean findResourceFields(final EntityImporter importer, final Class<?> instanceClass,

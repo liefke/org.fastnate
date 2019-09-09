@@ -19,6 +19,7 @@ import org.fastnate.data.test.TestEntity;
 import org.fastnate.generator.context.GeneratorContext;
 import org.hibernate.internal.SessionImpl;
 import org.junit.Test;
+import org.reflections.Reflections;
 
 /**
  * Tests the {@link EntityImporter}.
@@ -31,8 +32,8 @@ public class EntityImporterTest {
 	public static final class TestDefaultDataProviderFactory extends DefaultDataProviderFactory {
 
 		@Override
-		protected List<Class<? extends DataProvider>> findProviderClasses(final EntityImporter importer) {
-			final List<Class<? extends DataProvider>> providerClasses = super.findProviderClasses(importer);
+		protected List<Class<? extends DataProvider>> findProviderClasses(final Reflections reflections) {
+			final List<Class<? extends DataProvider>> providerClasses = super.findProviderClasses(reflections);
 			providerClasses.remove(InjectTestData.class);
 			return providerClasses;
 		}
@@ -71,31 +72,47 @@ public class EntityImporterTest {
 
 		final String content = sql.substring(prefix.length(), sql.length() - postfix.length()).trim();
 
-		assertThat(content).isEqualTo(
+		assertThat(content).isEqualTo(""
+				// XML Generic import
+				+ "INSERT INTO TestEntity (bool, name, integ) VALUES (1, 'XML Root 1', 1);"
+				+ " INSERT INTO TestEntity (bool, name, integ, parent_id)"
+				+ " VALUES (0, 'XML Child 2', 12, (SELECT max(id) FROM TestEntity));"
+				+ " INSERT INTO TestEntity (bool, name, integ, parent_id)"
+				+ " VALUES (0, 'XML Child 1', 11, (SELECT max(id) - 1 FROM TestEntity));"
+				+ " INSERT INTO TestEntity (bool, name, integ, parent_id)"
+				+ " VALUES (0, 'XML Sub Child 1', 111, (SELECT max(id) FROM TestEntity));"
+				+ " INSERT INTO TestEntity (name, integ, parent_id)"
+				+ " VALUES ('XML Sub Child 2', 112, (SELECT max(id) - 1 FROM TestEntity));"
+				+ " INSERT INTO TestEntity (name, integ, parent_id)"
+				+ " VALUES ('XML Sub Child 4', 114, (SELECT max(id) - 2 FROM TestEntity));"
+				+ " INSERT INTO TestEntity (bool, name, integ, parent_id)"
+				+ " VALUES (1, 'XML Sub Child 3', 113, (SELECT max(id) - 3 FROM TestEntity));"
+				+ " INSERT INTO TestEntity (name, integ, parent_id)"
+				+ " VALUES ('XML Sub Child 5', 115, (SELECT max(id) - 4 FROM TestEntity));"
+				+ " INSERT INTO TestEntity (bool, name, integ) VALUES (1, 'XML Root 2', 2);"
+
 				// TestData
-				"INSERT INTO TestEntity (name) VALUES ('Root');"
-						+ " INSERT INTO TestEntity (name, parent_id) VALUES ('Child1', (SELECT max(id) FROM TestEntity));"
-						+ " INSERT INTO TestEntity (name, parent_id) VALUES ('Child2', (SELECT max(id) - 1 FROM TestEntity));"
+				+ " INSERT INTO TestEntity (name) VALUES ('Root');"
+				+ " INSERT INTO TestEntity (name, parent_id) VALUES ('Child1', (SELECT max(id) FROM TestEntity));"
+				+ " INSERT INTO TestEntity (name, parent_id) VALUES ('Child2', (SELECT max(id) - 1 FROM TestEntity));"
 
-						// CSVData
-						+ " INSERT INTO TestEntity (bool, name, integ) VALUES (1, 'CSV Root', 1);"
-						+ " INSERT INTO TestEntity (bool, name, integ, parent_id)"
-						+ " VALUES (0, 'CSV Child;Example', 0, (SELECT max(id) FROM TestEntity));"
+				// JaxbTestEntity
+				+ " INSERT INTO JaxbTestEntity (content, name) VALUES ('The example content', 'JAXB Test');"
 
-						// DependentConstructorData
-						+ " INSERT INTO TestEntity (name, parent_id)"
-						+ " VALUES ('DependentConstructorChild', (SELECT max(id) - 3 FROM TestEntity));"
+				// DependentConstructorData
+				+ " INSERT INTO TestEntity (name, parent_id)"
+				+ " VALUES ('DependentConstructorChild', (SELECT max(id) - 1 FROM TestEntity));"
 
-						// DependentResourceData
-						+ " INSERT INTO TestEntity (name, parent_id)"
-						+ " VALUES ('DependentResourceChild', (SELECT max(id) - 3 FROM TestEntity));"
+				// DependentResourceData
+				+ " INSERT INTO TestEntity (name, parent_id)"
+				+ " VALUES ('DependentResourceChild', (SELECT max(id) - 1 FROM TestEntity));"
 
-						// The remaining SQL
-						+ sqlSuffix);
+				// The remaining SQL
+				+ sqlSuffix);
 	}
 
 	/**
-	 * Tests the SQL generation using the Entity Importer.
+	 * Tests the import of entities when using a {@link EntityImporter#importData(Connection) database connection}.
 	 *
 	 * @throws IOException
 	 *             if the generator throws one
@@ -121,8 +138,8 @@ public class EntityImporterTest {
 				final List<TestEntity> entities = em.createQuery("SELECT e FROM TestEntity e", TestEntity.class)
 						.getResultList();
 
-				// TestData + DependentConstructorData + DependentResourceData + CsvTestData + InjectTestData
-				final int expectedEntities = 3 + 1 + 1 + 2 + 2;
+				// TextEntity.xml + TestData + DependentConstructorData + DependentResourceData + InjectTestData
+				final int expectedEntities = 9 + 3 + 1 + 1 + 2;
 				assertThat(entities).hasSize(expectedEntities);
 			} finally {
 				em.close();
@@ -141,7 +158,6 @@ public class EntityImporterTest {
 	@Test
 	public void testFileDefault() throws IOException {
 		testFile(TestDefaultDataProviderFactory.class, "");
-
 	}
 
 	/**
@@ -155,7 +171,7 @@ public class EntityImporterTest {
 		testFile(InjectDataProviderFactory.class,
 				// InjectTestData
 				" INSERT INTO TestEntity (name, parent_id)"
-						+ " VALUES ('Injected Child', (SELECT max(id) - 4 FROM TestEntity));"
+						+ " VALUES ('Injected Child', (SELECT max(id) - 2 FROM TestEntity));"
 						+ " INSERT INTO TestEntity (name, parent_id)"
 						+ " VALUES ('Injected Child 2', (SELECT max(id) - 1 FROM TestEntity));");
 	}

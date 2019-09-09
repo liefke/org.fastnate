@@ -25,7 +25,7 @@ public class DependentConstructorData extends AbstractDataProvider {
 
 	/** An additionally injected resource. */
 	@Resource
-	private CsvTestData csvTestData;
+	private JaxbTestData csvTestData;
 
 	/** A list that contains all the created data. */
 	private final List<TestEntity> entities = new ArrayList<>();
@@ -40,7 +40,7 @@ public class DependentConstructorData extends AbstractDataProvider {
 	@Override
 	public int getOrder() {
 		// Even if we return _1_ here, we will be added after CsvTestData, because we depend on it
-		return CsvTestData.ORDER - 1;
+		return JaxbTestData.ORDER - 1;
 	}
 
 }
