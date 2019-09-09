@@ -244,10 +244,20 @@ public class EntityImporter {
 			if (transation) {
 				connection.setAutoCommit(false);
 			}
-			importData(generator);
-			if (transation) {
+			try {
+				importData(generator);
 				connection.commit();
-				connection.setAutoCommit(true);
+				// CHECKSTYLE OFF: IllegalCatch
+			} catch (final RuntimeException | IOException | SQLException e) {
+				// CHECKSTYLE ON
+				if (transation) {
+					connection.rollback();
+				}
+				throw e;
+			} finally {
+				if (transation) {
+					connection.setAutoCommit(true);
+				}
 			}
 		} catch (final IOException e) {
 			if (e.getCause() instanceof SQLException) {
