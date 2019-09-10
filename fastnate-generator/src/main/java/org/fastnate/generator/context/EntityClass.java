@@ -433,7 +433,7 @@ public class EntityClass<E> {
 
 		// We scan only classes that we are about to write
 		// So we don't know, that there is a subclass entity - until we find one
-		// This could be to late for InheritanceType.SINGLE_TABLE - the defaault type
+		// This could be to late for InheritanceType.SINGLE_TABLE - the default type
 		// That's why we build a discriminator, if one of the inheritance annotations exists
 		if (this.inheritanceType == null && (this.entityClass.isAnnotationPresent(DiscriminatorColumn.class)
 				|| this.entityClass.isAnnotationPresent(DiscriminatorValue.class))) {
@@ -609,7 +609,7 @@ public class EntityClass<E> {
 			} else {
 				this.parentEntityClass = inspectedClass;
 				final EntityClass<? super E> parentDescription = this.context.getDescription(inspectedClass);
-				this.accessStyle = parentDescription.getAccessStyle();
+				this.accessStyle = parentDescription.accessStyle;
 				if (parentDescription.inheritanceType == null) {
 					parentDescription.inheritanceType = InheritanceType.SINGLE_TABLE;
 					parentDescription.buildDiscriminator();
@@ -620,11 +620,11 @@ public class EntityClass<E> {
 				} else if (parentDescription.inheritanceType != InheritanceType.TABLE_PER_CLASS) {
 					this.hierarchyRoot = parentDescription.hierarchyRoot;
 				}
-				if (parentDescription.getInheritanceType() == InheritanceType.JOINED) {
+				if (parentDescription.inheritanceType == InheritanceType.JOINED) {
 					this.joinedParentClass = parentDescription;
 					buildPrimaryKeyJoinColumn();
 				} else {
-					if (parentDescription.getInheritanceType() == InheritanceType.SINGLE_TABLE) {
+					if (parentDescription.inheritanceType == InheritanceType.SINGLE_TABLE) {
 						this.table = parentDescription.table;
 					}
 					this.joinedParentClass = parentDescription.joinedParentClass;
@@ -744,6 +744,14 @@ public class EntityClass<E> {
 	 *             if the id property is not singular and no MapsId is given
 	 */
 	GeneratorColumn getIdColumn(final AttributeAccessor attribute) {
+		// Maybe we are still building the hierarchy
+		Class<? super E> parentClass = this.parentEntityClass;
+		while (this.idProperty == null && parentClass != null) {
+			final EntityClass<? super E> parentDescription = this.context.getDescription(parentClass);
+			this.idProperty = parentDescription.idProperty;
+			parentClass = parentDescription.parentEntityClass;
+		}
+
 		if (this.idProperty instanceof SingularProperty) {
 			return ((SingularProperty<?, ?>) this.idProperty).getColumn();
 		}
@@ -757,13 +765,6 @@ public class EntityClass<E> {
 				}
 			}
 			throw new ModelException(attribute + " misses MapId for a singular property in " + this.entityClass);
-		}
-		if (this.idProperty == null && this.parentEntityClass != null) {
-			// It seems we are still building the hierarchy
-			this.idProperty = this.context.getDescription(this.parentEntityClass).getIdProperty();
-			if (this.idProperty != null) {
-				return getIdColumn(attribute);
-			}
 		}
 
 		throw new ModelException(attribute + " does not reference an ID column in " + this.entityClass);
