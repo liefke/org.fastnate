@@ -435,8 +435,8 @@ public class EntityClass<E> {
 		// So we don't know, that there is a subclass entity - until we find one
 		// This could be to late for InheritanceType.SINGLE_TABLE - the defaault type
 		// That's why we build a discriminator, if one of the inheritance annotations exists
-		if (this.inheritanceType == null && this.entityClass.isAnnotationPresent(DiscriminatorColumn.class)
-				|| this.entityClass.isAnnotationPresent(DiscriminatorValue.class)) {
+		if (this.inheritanceType == null && (this.entityClass.isAnnotationPresent(DiscriminatorColumn.class)
+				|| this.entityClass.isAnnotationPresent(DiscriminatorValue.class))) {
 			this.inheritanceType = InheritanceType.SINGLE_TABLE;
 		}
 
