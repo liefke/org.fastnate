@@ -41,6 +41,11 @@
 			<artifactId>hibernate-core</artifactId>
 			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+		</dependency>
 
 		<!-- This is just the JPA standalone API (without Hibernate) -->
 		<dependency>
