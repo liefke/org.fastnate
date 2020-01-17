@@ -146,7 +146,7 @@ public class EntityImporter {
 		this.dataFolder = dataFolder;
 		this.context = context;
 
-		log.info("Building all instances of " + DataProvider.class.getSimpleName());
+		log.info("Building all instances of {}", DataProvider.class.getSimpleName());
 		String providerFactoryName = settings.getProperty(FACTORY_KEY);
 		if (providerFactoryName == null) {
 			try {

@@ -95,7 +95,7 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 								sql.getBuffer().setLength(0);
 								return result;
 							} catch (final IOException e) {
-								throw new RuntimeException(e);
+								throw new IllegalStateException(e);
 							}
 						}, statements -> {
 							try {
@@ -159,7 +159,7 @@ public class PerformanceTest extends AbstractEntitySqlGeneratorTest {
 						writer.getStatements().clear();
 						return result;
 					} catch (final IOException e) {
-						throw new RuntimeException(e);
+						throw new IllegalStateException(e);
 					}
 				}, statements -> {
 					try {

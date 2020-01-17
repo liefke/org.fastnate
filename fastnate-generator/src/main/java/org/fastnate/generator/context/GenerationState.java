@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
  *
  * @author Tobias Liefke
  */
-// CHECKSTYLE OFF: FinalClass
 public class GenerationState {
 
 	/**
