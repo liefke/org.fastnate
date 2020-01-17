@@ -87,7 +87,7 @@ public class EntityClass<E> {
 	}
 
 	/**
-	 * Funds all association overrides that are attached to the given field or class.
+	 * Finds all association overrides that are attached to the given field or class.
 	 *
 	 * @param fieldOrClass
 	 *            the annotated element
@@ -451,7 +451,6 @@ public class EntityClass<E> {
 		// Add the attribute and association overrides of this class
 		this.attributeOverrides.putAll(getAttributeOverrides(inspectedClass));
 		this.associationOverrides.putAll(getAccociationOverrides(inspectedClass));
-
 	}
 
 	private void buildPrimaryKeyJoinColumn() {
@@ -502,7 +501,6 @@ public class EntityClass<E> {
 				}
 			}
 		}
-
 	}
 
 	/**

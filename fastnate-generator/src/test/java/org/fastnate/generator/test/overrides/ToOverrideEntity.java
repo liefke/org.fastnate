@@ -1,11 +1,15 @@
 package org.fastnate.generator.test.overrides;
 
+import java.util.List;
+
 import javax.persistence.AttributeOverride;
 import javax.persistence.Column;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 
 import org.fastnate.generator.test.BaseTestEntity;
+import org.fastnate.generator.test.SimpleTestEntity;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -26,5 +30,8 @@ public class ToOverrideEntity extends BaseTestEntity {
 
 	@ManyToOne
 	private OverrideEntity otherEntity;
+
+	@ManyToMany
+	private List<SimpleTestEntity> simpleEntities;
 
 }

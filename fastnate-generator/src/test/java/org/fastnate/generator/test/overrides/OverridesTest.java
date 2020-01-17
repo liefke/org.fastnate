@@ -2,6 +2,8 @@ package org.fastnate.generator.test.overrides;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Arrays;
+
 import javax.persistence.AssociationOverride;
 import javax.persistence.AttributeOverride;
 
@@ -32,6 +34,8 @@ public class OverridesTest extends AbstractEntitySqlGeneratorTest {
 		otherEntity.setSimpleProperty("Test association override");
 		entity.setOtherEntity(otherEntity);
 
+		entity.setSimpleEntities(Arrays.asList(new SimpleTestEntity("simple1"), new SimpleTestEntity("simple2")));
+
 		entity.setEmbedded(new TestEmbeddedProperties("Test embedded attribute override",
 				new SimpleTestEntity("Test embedded association override")));
 
@@ -47,6 +51,9 @@ public class OverridesTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getEmbedded().getDescription()).isEqualTo(entity.getEmbedded().getDescription());
 		assertThat(result.getEmbedded().getOtherNode().getName())
 				.isEqualTo(entity.getEmbedded().getOtherNode().getName());
+
+		assertThat(result.getSimpleEntities()).hasSize(2);
+		assertThat(result.getSimpleEntities().get(0).getName()).isEqualTo(entity.getSimpleEntities().get(0).getName());
 	}
 
 }

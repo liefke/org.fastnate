@@ -20,6 +20,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.MapsId;
 import javax.persistence.OneToMany;
 
+import org.apache.commons.lang.StringUtils;
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.converter.ValueConverter;
 import org.fastnate.generator.dialect.GeneratorDialect;
@@ -59,7 +60,6 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			final JoinTable joinTable = override != null && override.joinTable() != null ? override.joinTable()
 					: attribute.getAnnotation(JoinTable.class);
 			return joinColumn != null && joinTable == null;
-
 		}
 
 		private final AttributeAccessor attribute;
@@ -147,10 +147,14 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 */
 	private static String buildIdColumn(final AttributeAccessor attribute, final AssociationOverride override,
 			final JoinColumn[] joinColumns, final String defaultIdColumn) {
-		if (override != null && override.joinColumns().length > 0) {
-			final JoinColumn joinColumn = override.joinColumns()[0];
-			if (joinColumn.name().length() > 0) {
-				return joinColumn.name();
+		if (override != null) {
+			String joinCloumnName = getJoinColumnName(override.joinColumns());
+			if (joinCloumnName != null) {
+				return joinCloumnName;
+			}
+			joinCloumnName = getJoinColumnName(override.joinTable().joinColumns());
+			if (joinCloumnName != null) {
+				return joinCloumnName;
 			}
 		}
 
@@ -159,10 +163,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			return joinColumn.name();
 		}
 
-		if (joinColumns != null && joinColumns.length > 0 && joinColumns[0].name().length() > 0) {
-			return joinColumns[0].name();
-		}
-		return defaultIdColumn;
+		return StringUtils.defaultString(getJoinColumnName(joinColumns), defaultIdColumn);
 	}
 
 	/**
@@ -236,19 +237,31 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *
 	 * @param table
 	 *            the collection table
+	 * @param override
+	 *            contains optional override options
 	 * @param attribute
 	 *            the inspected attribute
 	 * @param defaultColumnName
 	 *            the default column name
 	 * @return the column definition
 	 */
-	protected static GeneratorColumn buildValueColumn(final GeneratorTable table, final AttributeAccessor attribute,
-			final String defaultColumnName) {
-		final JoinTable tableMetadata = attribute.getAnnotation(JoinTable.class);
-		if (tableMetadata != null && tableMetadata.inverseJoinColumns().length > 0
-				&& tableMetadata.inverseJoinColumns()[0].name().length() > 0) {
-			return table.resolveColumn(tableMetadata.inverseJoinColumns()[0].name());
+	protected static GeneratorColumn buildValueColumn(final GeneratorTable table, final AssociationOverride override,
+			final AttributeAccessor attribute, final String defaultColumnName) {
+		if (override != null) {
+			final String joinColumnName = getJoinColumnName(override.joinTable().inverseJoinColumns());
+			if (joinColumnName != null) {
+				return table.resolveColumn(joinColumnName);
+			}
 		}
+
+		final JoinTable tableMetadata = attribute.getAnnotation(JoinTable.class);
+		if (tableMetadata != null) {
+			final String joinColumnName = getJoinColumnName(tableMetadata.inverseJoinColumns());
+			if (joinColumnName != null) {
+				return table.resolveColumn(joinColumnName);
+			}
+		}
+
 		final Column columnMetadata = attribute.getAnnotation(Column.class);
 		if (columnMetadata != null && columnMetadata.name().length() > 0) {
 			return table.resolveColumn(columnMetadata.name());
@@ -259,6 +272,16 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	private static String findMappedId(final AttributeAccessor attribute) {
 		final MapsId mapsId = attribute.getAnnotation(MapsId.class);
 		return mapsId == null || mapsId.value().length() == 0 ? null : mapsId.value();
+	}
+
+	private static String getJoinColumnName(final JoinColumn[] joinColumns) {
+		if (joinColumns != null && joinColumns.length > 0) {
+			final JoinColumn joinColumn = joinColumns[0];
+			if (joinColumn.name().length() > 0) {
+				return joinColumn.name();
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -289,7 +312,6 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				attribute);
 		return ClassUtil.getActualTypeBinding(attribute.getImplementationClass(),
 				(Class<Object>) attribute.getDeclaringClass(), parameterArgTypes[argumentIndex]);
-
 	}
 
 	/**
@@ -398,7 +420,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				// Bidirectional - use the columns of the target class
 				this.table = this.valueEntityClass.getTable();
 				initializeIdColumnForMappedBy();
-				this.valueColumn = buildValueColumn(this.table, attribute,
+				this.valueColumn = buildValueColumn(this.table, null, attribute,
 						this.valueEntityClass.getIdColumn(attribute).getName());
 				this.anyMapping = null;
 			} else if (this.useTargetTable) {
@@ -406,7 +428,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				this.table = this.valueEntityClass.getTable();
 				this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, override, null, null,
 						attribute.getName() + '_' + sourceClass.getIdColumn(attribute)));
-				this.valueColumn = buildValueColumn(this.table, attribute,
+				this.valueColumn = buildValueColumn(this.table, null, attribute,
 						this.valueEntityClass.getIdColumn(attribute).getName());
 				this.anyMapping = null;
 			} else {
@@ -416,7 +438,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 						buildTableName(attribute, override, joinTable, collectionTable, sourceClass.getTable().getName()
 								+ '_' + (this.valueEntityClass == null ? "table" : this.valueEntityClass.getTable())));
 				initializeIdColumnForMappingTable(sourceClass, attribute, override, joinTable, collectionTable);
-				this.valueColumn = buildValueColumn(this.table, attribute, attribute.getName() + '_'
+				this.valueColumn = buildValueColumn(this.table, override, attribute, attribute.getName() + '_'
 						+ (this.valueEntityClass == null ? "id" : this.valueEntityClass.getIdColumn(attribute)));
 				this.anyMapping = mappingInformation.buildAnyMapping(this.context, this.table);
 			}
@@ -442,10 +464,9 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			} else {
 				// Check for primitive value
 				this.valueConverter = this.context.getProvider().createConverter(attribute, this.valueClass, false);
-				this.valueColumn = buildValueColumn(this.table, attribute, attribute.getName());
+				this.valueColumn = buildValueColumn(this.table, null, attribute, attribute.getName());
 			}
 		}
-
 	}
 
 	@Override
@@ -695,10 +716,13 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			this.idColumn = this.table.resolveColumn(idColumnName);
 		} else {
 			this.valueEntityClass.onPropertiesAvailable(entityClass -> {
-				final String entityName = entityClass.getAllProperties().stream()
-						.filter(p -> p instanceof PluralProperty
-								&& getName().equals(((PluralProperty<?, ?, ?>) p).getMappedBy()))
-						.map(Property::getName).findFirst().orElseGet(sourceClass::getEntityName);
+				final String entityName = entityClass.getAllProperties().stream().filter(p -> {
+					if (p instanceof PluralProperty) {
+						final PluralProperty<?, ?, ?> other = (PluralProperty<?, ?, ?>) p;
+						return other.getValueEntityClass() == sourceClass && getName().equals(other.getMappedBy());
+					}
+					return false;
+				}).map(Property::getName).findFirst().orElseGet(sourceClass::getEntityName);
 				this.idColumn = this.table.resolveColumn(entityName + '_' + sourceClass.getIdColumn(getAttribute()));
 			});
 		}
