@@ -681,7 +681,7 @@ public class EntityClass<E> {
 		for (final Property<? super E, ?> property : this.properties.values()) {
 			if (property instanceof SingularProperty) {
 				final SingularProperty<E, ?> singularProperty = (SingularProperty<E, ?>) property;
-				if (columnName.equals(singularProperty.getColumn().getName())) {
+				if (singularProperty.getColumn() != null && columnName.equals(singularProperty.getColumn().getName())) {
 					return singularProperty;
 				}
 			}
