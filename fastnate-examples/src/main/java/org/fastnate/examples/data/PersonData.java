@@ -7,6 +7,8 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import org.fastnate.data.AbstractDataProvider;
+import org.fastnate.data.EntityRegistration;
+import org.fastnate.examples.model.Organisation;
 import org.fastnate.examples.model.Person;
 
 import lombok.Getter;
@@ -21,6 +23,10 @@ public class PersonData extends AbstractDataProvider {
 	/** Contains the organisations imported from organisations.csv. */
 	@Resource
 	private OrganisationData organisationData;
+
+	/** Contains any entities imported by the generic importers. */
+	@Resource
+	private EntityRegistration entityRegistration;
 
 	@Getter
 	private final List<Person> entities = new ArrayList<>();
@@ -37,5 +43,9 @@ public class PersonData extends AbstractDataProvider {
 
 		final Person john = new Person("John", "Doe");
 		john.setSupervisor(nate);
+
+		// Add organisation "Microsoft" to john, as soon as it was imported from the XML file
+		this.entityRegistration.invokeOnEntity(Organisation.class, "Microsoft Corporation",
+				john.getPreviousOrganisations()::add);
 	}
 }
