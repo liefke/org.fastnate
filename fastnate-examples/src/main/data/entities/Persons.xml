@@ -1,0 +1,48 @@
+<!-- 
+This is an example for the generic XML import.
+
+Every XML file in (data folder)/entities is read. 
+
+If the file name matches an entity name and the entity class is annotated with "@XmlRootElement" JAXB is used to read the file.
+
+Otherwise the file is read with a generic approach, which tries to support all JPA properties in entity classes:
+* The name and attributes of the root element are ignored, it is just used as a container element
+* Each child element of the root element has to be the name of an entity.
+* Each singular property may either be an attribute or a child element with text content.
+* Each plural property is an XML element with a child element for each entry.
+* Date and time properties are either in the formats as defined in ISO 8601 (yyyy-mm-dd)
+  or in the most common formats dd.mm.yyyy resp. mm/dd/yyyy (see DateConverter)
+* For boolean properties every "true", "1", "on", "x", y*, s*, o* or j* evaluates to true
+  everything else evaluates to false (see BooleanConverter)
+* If the property contains an entity:
+** new entities may be "inlined", with the same rules as the ones from the root entities
+** existing entities may be referenced by their unique value either by
+*** defining the property in an attribute
+*** or setting the attribute "reference" to "true" in the property element
+-->
+<Persons>
+	<!-- An example for defining properties in attributes: -->
+	<Person firstName="Jude" lastName="Smith" organisation="Alphabet Inc." active="true" entryDate="2013-01-31">
+		<!-- An entity property -->
+		<supervisor>
+			<Person firstName="Mark" lastName="Unknown" organisation="Alphabet Inc." active="yes">
+				<!-- A data property as element -->
+				<entryDate>
+					15.12.99 <!-- Evaluates to 1999-12-15 -->
+				</entryDate>
+			</Person>
+		</supervisor>
+		<!-- A collection property of entities -->
+		<previousOrganisations>
+			<!--  Reference to an entity defined in organisations.csv -->
+			<Organisation reference="true" name="Google Inc." />
+			<Organisation id="100" name="Microsoft Corporation">
+				<url>https://www.microsoft.com</url>
+				<children>
+					<Organisation reference="true" name="GitHub Inc." />
+				</children>
+			</Organisation>
+		</previousOrganisations>
+	</Person>
+	<Person firstName="Bill" lastName="Gates" organisation="Microsoft Corporation" active="false" entryDate="04.04.1975" />
+</Persons>

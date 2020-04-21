@@ -1,23 +1,30 @@
 package org.fastnate.examples.model;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
-import lombok.AccessLevel;
+import org.fastnate.examples.data.PersonData;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * A simple example of an entity for instances that are created with Java code.
+ * A simple example of an entity for instances that are created with Java code or imported from files.
+ *
+ * See {@link PersonData} and "src/manin/data" for more.
  *
  * @author Tobias Liefke
  */
@@ -44,15 +51,22 @@ public class Person {
 	@ManyToOne
 	private Organisation organisation;
 
+	/** The previous organisations of the person. */
+	@ManyToMany
+	private final Collection<Organisation> previousOrganisations = new HashSet<>();
+
 	/** The immediate superior of this person. */
 	@ManyToOne
-	@Setter(AccessLevel.NONE)
 	private Person supervisor;
 
 	/** All persons that have this person as supervisor. */
 	@OneToMany(mappedBy = "supervisor")
-	@Setter(AccessLevel.NONE)
 	private final Collection<Person> subordinates = new HashSet<>();
+
+	@Temporal(TemporalType.DATE)
+	private Date entryDate;
+
+	private boolean active;
 
 	/**
 	 * Creates a new person with his / her first and last name.

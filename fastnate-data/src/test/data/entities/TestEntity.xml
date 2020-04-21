@@ -7,9 +7,18 @@
 		<children>
 			<TestEntity name="XML Child 1" number="11" bool="false">
 				<children>
+					<!-- Test different type of children -->
 					<TestEntity reference="true" name="XML Sub Child 1" />
-					<TestEntity name="XML Sub Child 2">
-						<number>112</number>
+					<TestEntity>
+						<name>
+							XML Sub Child 2
+						</name>
+						<bool>
+							fa<!-- Even support commens in between -->lse
+						</bool>
+						<number>
+							112
+						</number>
 					</TestEntity>
 					<TestEntity reference="true" name="XML Sub Child 4" />
 				</children>

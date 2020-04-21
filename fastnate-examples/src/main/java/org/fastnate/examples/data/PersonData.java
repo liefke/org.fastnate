@@ -7,7 +7,6 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import org.fastnate.data.AbstractDataProvider;
-import org.fastnate.data.EntityRegistration;
 import org.fastnate.examples.model.Person;
 
 import lombok.Getter;
@@ -18,10 +17,6 @@ import lombok.Getter;
  * @author Tobias Liefke
  */
 public class PersonData extends AbstractDataProvider {
-
-	/** The entities that were found by the generic importers. */
-	@Resource
-	private EntityRegistration entityRegistration;
 
 	/** Contains the organisations imported from organisations.csv. */
 	@Resource
@@ -36,6 +31,7 @@ public class PersonData extends AbstractDataProvider {
 	@Override
 	public void buildEntities() throws IOException {
 		final Person nate = new Person("Nate", "Smith");
+		nate.setActive(true);
 		nate.setOrganisation(this.organisationData.getOrganisations().get("Fastnate"));
 		this.entities.add(nate);
 

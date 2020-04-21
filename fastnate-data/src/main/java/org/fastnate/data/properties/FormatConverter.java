@@ -53,10 +53,11 @@ public class FormatConverter<T> implements PropertyConverter<T> {
 			}
 			return null;
 		}
+		final String trimmedValue = value.trim();
 		ParseException firstError = null;
 		for (final Format format : this.formats) {
 			try {
-				final Object result = format.parseObject(value);
+				final Object result = format.parseObject(trimmedValue);
 				if (result instanceof Number) {
 					// NumberFormat returns a Long or Double, even if we need an Int or Float
 					return (T) ClassUtil.convertNumber((Number) result, (Class<? extends Number>) targetType);
@@ -68,7 +69,7 @@ public class FormatConverter<T> implements PropertyConverter<T> {
 				}
 			}
 		}
-		throw new IllegalArgumentException(value, firstError);
+		throw new IllegalArgumentException(trimmedValue, firstError);
 	}
 
 }

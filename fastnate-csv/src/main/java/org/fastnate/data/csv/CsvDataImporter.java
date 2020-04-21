@@ -44,11 +44,17 @@ import org.supercsv.comment.CommentMatches;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
- * An importer that reads entities from a CSV files.
+ * An importer that reads entities of a specific class from a CSV file.
+ *
+ * One can either {@link #addColumnMapping(String, BiConsumer) add his own column mapping} or use the
+ * {@link #mapProperties() default properties mapping}.
+ *
+ * Column names are handled case insensitive.
  *
  * @author Tobias Liefke
  *
@@ -130,6 +136,15 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 		return values.size() > 1 || values.size() == 1 && StringUtils.isNotBlank(values.get(0));
 	}
 
+	private static void lowerCaseHeader(final String[] columns) {
+		for (int i = 0; i < columns.length; i++) {
+			final String column = columns[i];
+			if (column != null) {
+				columns[i] = column.toLowerCase();
+			}
+		}
+	}
+
 	private static <T, V> Consumer<V> wrapInverseMapping(final BiConsumer<T, V> inverseMapping, final T entity) {
 		return value -> inverseMapping.accept(entity, value);
 	}
@@ -160,6 +175,7 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	 * Mapping from the name of a column to the function that converts and sets that property for the entity of the
 	 * current row.
 	 */
+	@Getter(AccessLevel.NONE)
 	private final Map<String, BiConsumer<E, String>> columnMapping = new HashMap<>();
 
 	/** Indicates to ignore any column that is not found in the CSV file. */
@@ -169,9 +185,11 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	private boolean ignoreUnknownColumns;
 
 	/** The columns that are known, but ignored. Only interesting if {@link #ignoreUnknownColumns} is {@code false}. */
+	@Getter(AccessLevel.NONE)
 	private final Set<String> ignoredColumns = new HashSet<>();
 
 	/** List of functions that are called after the import of each entity. */
+	@Getter(AccessLevel.NONE)
 	private final List<BiConsumer<DataRow, E>> postProcessors = new ArrayList<>();
 
 	/**
@@ -241,7 +259,7 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	 *            converts and sets the value for this column
 	 */
 	public void addColumnMapping(final String column, final BiConsumer<E, String> propertyMapping) {
-		this.columnMapping.put(column, propertyMapping);
+		this.columnMapping.put(column.toLowerCase(), propertyMapping);
 	}
 
 	/**
@@ -261,7 +279,7 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	 */
 	public <T> void addColumnMapping(final String column, final Class<T> propertyClass,
 			final PropertyConverter<T> converter, final BiConsumer<E, T> propertyMapping) {
-		this.columnMapping.put(column, (entity, columnValue) -> {
+		this.columnMapping.put(column.toLowerCase(), (entity, columnValue) -> {
 			propertyMapping.accept(entity, converter.convert(propertyClass, columnValue));
 		});
 	}
@@ -281,7 +299,7 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	 */
 	public <T> void addColumnMapping(final String column, final Function<String, T> converter,
 			final BiConsumer<E, T> propertyMapping) {
-		this.columnMapping.put(column, (entity, columnValue) -> {
+		this.columnMapping.put(column.toLowerCase(), (entity, columnValue) -> {
 			propertyMapping.accept(entity, converter.apply(columnValue));
 		});
 	}
@@ -305,7 +323,7 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	 *            the name of the property
 	 */
 	public void addDefaultColumnMapping(final String columnName, final String propertyName) {
-		final Property<? super E, ?> property = this.entityClass.getProperties().get(columnName);
+		final Property<? super E, ?> property = this.entityClass.getProperties().get(propertyName);
 		if (property == null) {
 			throw new IllegalArgumentException("Can't find property \"" + propertyName + '"');
 		}
@@ -313,7 +331,7 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 		if (mapping == null) {
 			throw new IllegalArgumentException("Can't handle property \"" + propertyName + '"');
 		}
-		this.columnMapping.put(columnName, mapping);
+		this.columnMapping.put(columnName.toLowerCase(), mapping);
 	}
 
 	/**
@@ -325,7 +343,7 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	 *            the name of the column that is ignored
 	 */
 	public void addIgnoredColumn(final String column) {
-		this.ignoredColumns.add(column);
+		this.ignoredColumns.add(column.toLowerCase());
 	}
 
 	/**
@@ -344,7 +362,7 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	 * @param entity
 	 *            the entity to modify
 	 * @param column
-	 *            the name of the current column
+	 *            the name of the current column (in lower case, as the mapping is stored in lower case, too)
 	 * @param value
 	 *            the value of the column
 	 * @return {@code true} if an appropriate property was found, {@code false} if a matching property was not found and
@@ -594,6 +612,7 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 		try (CsvListReader csvList = openCsvListReader(file)) {
 			final String[] header = csvList.getHeader(true);
 			if (header != null && header.length > 0) {
+				lowerCaseHeader(header);
 				if (!this.ignoreMissingColumns) {
 					// Check that all known columns are available
 					checkForMissingColumns(file, header);
@@ -638,11 +657,11 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	 * @return {@code true} if the column is not imported
 	 */
 	public boolean isIgnoredColumn(final String column) {
-		return this.ignoredColumns.contains(column);
+		return this.ignoredColumns.contains(column.toLowerCase());
 	}
 
 	/**
-	 * Maps the names of the properties to the CSV columns.
+	 * Maps the name of each property of the {@link #getEntityClass() entity class} to the CSV columns.
 	 *
 	 * Useful if the CSV file is a property export.
 	 */
@@ -652,11 +671,13 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 				// We assume that each property of the embedded object has its own column
 				final EmbeddedProperty<? super E, Object> embeddedProperty = (EmbeddedProperty<? super E, Object>) property;
 				for (final Property<Object, ?> childProperty : embeddedProperty.getEmbeddedProperties().values()) {
-					this.columnMapping.computeIfAbsent(embeddedProperty.getName() + '.' + property.getName(),
+					this.columnMapping.computeIfAbsent(
+							embeddedProperty.getName().toLowerCase() + '.' + property.getName().toLowerCase(),
 							propertyName -> buildEmbeddedMapping(embeddedProperty, childProperty));
 				}
 			} else if (!(property instanceof GeneratedIdProperty)) {
-				this.columnMapping.computeIfAbsent(property.getName(), propertyName -> buildMapping(property));
+				this.columnMapping.computeIfAbsent(property.getName().toLowerCase(),
+						propertyName -> buildMapping(property));
 			}
 		}
 	}
@@ -672,11 +693,9 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 				final SingularProperty<? super E, ?> singularProperty = (SingularProperty<? super E, ?>) property;
 				if (singularProperty.isTableColumn()) {
 					final GeneratorColumn column = singularProperty.getColumn();
-					if (column != null && !this.columnMapping.containsKey(column.getName())) {
-						final BiConsumer<E, String> mapping = buildMapping(singularProperty);
-						if (mapping != null) {
-							this.columnMapping.put(column.getName(), mapping);
-						}
+					if (column != null) {
+						this.columnMapping.computeIfAbsent(column.getName().toLowerCase(),
+								columnName -> buildMapping(singularProperty));
 					}
 				}
 			}
@@ -723,6 +742,29 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 				fileStream.close();
 			}
 		}
+	}
+
+	/**
+	 * Removes the mapping of the given column.
+	 *
+	 * @param column
+	 *            the column to remove
+	 * @return the previous mapping or {@code null} if none was registered
+	 */
+	public BiConsumer<E, String> removeColumnMapping(final String column) {
+		return this.columnMapping.remove(column.toLowerCase());
+	}
+
+	/**
+	 * Removes an ignored column.
+	 *
+	 * @param column
+	 *            the name of the column that is ignored
+	 *
+	 * @see #addIgnoredColumn(String)
+	 */
+	public void removeIgnoredColumn(final String column) {
+		this.ignoredColumns.remove(column.toLowerCase());
 	}
 
 }

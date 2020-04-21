@@ -111,7 +111,7 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>${project.groupId}</groupId>
+				<groupId>org.fastnate</groupId>
 				<artifactId>fastnate-maven-plugin</artifactId>
 				<version>${project.version}</version>
 				<executions>

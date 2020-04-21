@@ -18,6 +18,7 @@ import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
@@ -93,7 +94,7 @@ public class XmlDataImporter extends PropertyDataImporter {
 	}
 
 	private static void checkEndElement(final XMLEvent element, final String expectedName) throws XMLStreamException {
-		check(element.isEndElement(), element, "Exptected end of \"{}\"", expectedName);
+		check(element.isEndElement(), element, "Exptected end of \"{}\", found \"{}\"", expectedName, element);
 		final String elementName = element.asEndElement().getName().getLocalPart();
 		check(expectedName.equals(elementName), element, "Expected end of \"{}\" instead of \"{}\"", expectedName,
 				elementName);
@@ -130,20 +131,43 @@ public class XmlDataImporter extends PropertyDataImporter {
 			throws XMLStreamException {
 		final StringBuilder result = new StringBuilder();
 		XMLEvent event = reader.nextEvent();
-		while (event.isCharacters()) {
-			result.append(event.asCharacters().getData());
+		while (event != null) {
+			switch (event.getEventType()) {
+				case XMLStreamConstants.COMMENT:
+					// Just skip comments
+					break;
+				case XMLStreamConstants.CHARACTERS:
+				case XMLStreamConstants.CDATA:
+					if (!event.asCharacters().isIgnorableWhiteSpace()) {
+						result.append(event.asCharacters().getData());
+					}
+					break;
+				default:
+					checkEndElement(event, endElement);
+					return result.toString().trim();
+			}
 			event = reader.nextEvent();
 		}
-		checkEndElement(event, endElement);
-		return result.toString();
+		throw new XMLStreamException("Unexpected end of document");
 	}
 
 	private static XMLEvent skipWhitespaces(final XMLEventReader reader) throws XMLStreamException {
 		XMLEvent nextEvent = reader.peek();
-		while (nextEvent.isCharacters()) {
-			if (nextEvent.asCharacters().isWhiteSpace()) {
-				reader.nextEvent();
+		while (nextEvent != null) {
+			switch (nextEvent.getEventType()) {
+				case XMLStreamConstants.COMMENT:
+					// Just skip comments
+					break;
+				case XMLStreamConstants.CHARACTERS:
+				case XMLStreamConstants.CDATA:
+					if (nextEvent.asCharacters().isWhiteSpace()) {
+						break;
+					}
+					// Fall through - everything else ends the "skip"
+				default:
+					return nextEvent;
 			}
+			reader.nextEvent();
 			nextEvent = reader.peek();
 		}
 		return nextEvent;
@@ -316,7 +340,7 @@ public class XmlDataImporter extends PropertyDataImporter {
 				reader.next();
 			}
 			if (!reader.hasNext()) {
-				throw new XMLStreamException("Unexpected end of file");
+				throw new XMLStreamException("Unexpected end of document");
 			}
 
 			final StartElement containerElement = nextEvent(reader).asStartElement();

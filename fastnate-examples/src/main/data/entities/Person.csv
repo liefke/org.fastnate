@@ -1,0 +1,28 @@
+#
+# This is an example file for the generic CSV import.
+# 
+# The default column delimiter is ",".
+# You can change this by setting the property "fastnate.csv.delimiter.column".
+# 
+# Comment lines start with "#" or "/*".
+# 
+# Column names are mapped case insensitive to the properties of the entity, 
+# which is identified by the name of the file or directory (in this case "Person").
+#
+# Properties that reference entities are looked up by their unique value.
+#
+# Plural properties are split at ",".
+# You can change this by setting the property "fastnate.csv.delimiter.collection"
+#
+# Date and time properties are either in the formats as defined in ISO 8601 (yyyy-mm-dd)
+# or in the most common formats dd.mm.yyyy resp. mm/dd/yyyy (see DateConverter)
+# 
+# For boolean properties every true, 1, on, x, y*, s*, o* or j* evaluates to true
+# everything else evaluates to false (see BooleanConverter)
+# 
+# The referenced organisations are defined in organisations.csv
+#
+Firstname,Lastname,Organisation,PreviousOrganisations,EntryDate,Active
+Jane,Miller,Fastnate.org,"Alphabet Inc.,Google Inc.",2010-11-20,yes
+Kane,Muller,GitHub Inc.,,15/02/90,x
+Shane,Moller,Microsoft Corporation,,20.12.2001,1

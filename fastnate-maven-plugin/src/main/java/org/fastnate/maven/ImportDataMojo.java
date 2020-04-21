@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -235,6 +234,35 @@ public class ImportDataMojo extends AbstractMojo {
 		return false;
 	}
 
+	private boolean detectRelevantChagesUsingDetector() {
+		if (this.changeDetector != null) {
+			final List<String> sourceRoots = this.project.getCompileSourceRoots();
+			for (final String sourceRoot : sourceRoots) {
+				final Scanner sourceFolderScanner = this.context.newScanner(new File(sourceRoot));
+				sourceFolderScanner.scan();
+				final String[] includedFiles = sourceFolderScanner.getIncludedFiles();
+				if (includedFiles.length > 0) {
+					try {
+						final Class<?> detectorClass = Thread.currentThread().getContextClassLoader()
+								.loadClass(this.changeDetector);
+						final Object detector = detectorClass.newInstance();
+						final Method isDataFile = detectorClass.getMethod("isDataFile", File.class);
+						for (final String file : includedFiles) {
+							if ((Boolean) isDataFile.invoke(detector, new File(file))) {
+								getLog().debug("detectChanges(): change detector fired for " + file);
+								return true;
+							}
+						}
+					} catch (final ReflectiveOperationException e) {
+						getLog().error("Could not execute DataChangeDetector: " + this.changeDetector, e);
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 	private boolean detectRelevantClassFileChanges() {
 		final File outputDirectory = new File(this.project.getBuild().getOutputDirectory());
 		final Scanner scanner = this.context.newScanner(outputDirectory);
@@ -284,7 +312,19 @@ public class ImportDataMojo extends AbstractMojo {
 	}
 
 	private boolean detectRelevantFileChanges() {
-		if (ArrayUtils.isNotEmpty(this.relevantFiles)) {
+		if (detectRelevantSourceFileChanges()) {
+			return true;
+		}
+
+		if (detectRelevantClassFileChanges()) {
+			return true;
+		}
+
+		return detectRelevantChagesUsingDetector();
+	}
+
+	private boolean detectRelevantSourceFileChanges() {
+		if (this.relevantFiles != null && this.relevantFiles.length > 0) {
 			// Use src directory, due to Eclipse Bug 508238
 			final Scanner scanner = this.context.newScanner(new File(this.project.getBasedir(), "src"));
 			scanner.setIncludes(this.relevantFiles);
@@ -294,36 +334,6 @@ public class ImportDataMojo extends AbstractMojo {
 				return true;
 			}
 		}
-
-		if (detectRelevantClassFileChanges()) {
-			return true;
-		}
-
-		if (this.changeDetector != null) {
-			final List<String> sourceRoots = this.project.getCompileSourceRoots();
-			for (final String sourceRoot : sourceRoots) {
-				final Scanner sourceFolderScanner = this.context.newScanner(new File(sourceRoot));
-				sourceFolderScanner.scan();
-				final String[] includedFiles = sourceFolderScanner.getIncludedFiles();
-				if (includedFiles.length > 0) {
-					try {
-						final Class<?> detectorClass = Thread.currentThread().getContextClassLoader()
-								.loadClass(this.changeDetector);
-						final Object detector = detectorClass.newInstance();
-						final Method isDataFile = detectorClass.getMethod("isDataFile", File.class);
-						for (final String file : includedFiles) {
-							if ((Boolean) isDataFile.invoke(detector, new File(file))) {
-								getLog().debug("detectChanges(): change detector fired for " + file);
-								return true;
-							}
-						}
-					} catch (final ReflectiveOperationException e) {
-						getLog().error("Could not execute DataChangeDetector: " + this.changeDetector, e);
-					}
-				}
-			}
-		}
-
 		return false;
 	}
 
