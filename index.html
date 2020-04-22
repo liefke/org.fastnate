@@ -239,10 +239,13 @@
 			<li class="list-group-item"><a href="https://github.com/liefke/org.fastnate/wiki/FirstSteps">First
 					steps</a></li>
 			<li class="list-group-item"><a href="https://github.com/liefke/org.fastnate/wiki/HOWTO">How-Tos</a>:<ul>
-					<li><a href="https://github.com/liefke/org.fastnate/wiki/HOWTO#how-to-import-data-with-a-dataprovider">How to import data with a DataProvider</a></li>
-					<li><a href="https://github.com/liefke/org.fastnate/wiki/HOWTO#how-to-import-data-from-csv-files">How to import data from CSV files</a></li>
+					<li><a href="https://github.com/liefke/org.fastnate/wiki/HOWTO#how-to-import-data-without-writing-any-line-of-code">How to import data without writing any line of code</a></li>
+					<li><a href="https://github.com/liefke/org.fastnate/wiki/HOWTO#how-to-create-a-customized-import-of-entities">How to create a customized import of entities</a></li>
+					<li><a href="https://github.com/liefke/org.fastnate/wiki/HOWTO#how-to-import-data-from-custom-csv-files">How to import data from custom CSV files</a></li>
+					<li><a href="https://github.com/liefke/org.fastnate/wiki/HOWTO#how-to-use-fastnate-after-going-to-production-mode">How to use Fastnate after going to production mode</a></li>
 				</ul></li>
 			<li class="list-group-item"><a href="https://github.com/liefke/org.fastnate/wiki/FAQ">FAQ</a>:<ul>
+					<li><a href="https://github.com/liefke/org.fastnate/wiki/FAQ#how-can-i-integrate-fastnate-into-my-own-project">How can I integrate Fastnate into my own project?</a></li>
 					<li><a href="https://github.com/liefke/org.fastnate/wiki/FAQ#what-types-of-databases-are-supported">What types of databases are supported?</a></li>
 					<li><a href="https://github.com/liefke/org.fastnate/wiki/FAQ#which-jpa-implementations-are-supported">Which JPA implementations are supported?</a></li>
 					<li><a href="https://github.com/liefke/org.fastnate/wiki/FAQ#which-jpa-features-are-supported">Which JPA features are supported?</a></li>
@@ -316,7 +319,8 @@
 						&lt;goal>import-data&lt;/goal>
 					&lt;/goals>
 					&lt;configuration>
-						&lt;packages>...my data provider package...&lt;/packages>
+						&lt;packages>... your root package ...&lt;/packages>
+						&lt;dataFolder>... your data folder, if you import data from files ...&lt;/dataFolder>
 					&lt;/configuration>
 				&lt;/execution>
 			&lt;/executions>
@@ -329,55 +333,43 @@
 			<dd>
 				<p>You can generate the SQL file from the command line:</p>
 				<div class="highlight">
-					<pre>java -cp ...;fastnate-data.jar;fastnate-generator.jar -Dfastnate.data.provider.packages=...my data provider package... org.fastnate.data.EntityImporter [SQL file]</pre>
+					<pre>java -cp ...;fastnate-data.jar;fastnate-generator.jar -Dfastnate.data.provider.packages=your.root.package org.fastnate.data.EntityImporter [SQL file]</pre>
 				</div>
-				<p>If you don't specify any SQL file, the default is used: <em>data.sql</em></p>
+				<p>
+					If you don't specify any SQL file, the default is used: <em>data.sql</em>
+				</p>
 			</dd>
 			<dt>Application startup</dt>
 			<dd>
 				<p>
 					You can import your data on application startup, for example directly after a clean database is created by
-					Hibernate. For that you need to define a <em>SessionFactoryObserver</em>:
-				</p>
-				<div class="highlight">
-					<pre>public class DatabaseStartupImport implements SessionFactoryObserver {
-
-	public void sessionFactoryCreated(final SessionFactory factory) {
-		// Only import, if we have just created an empty database:
-		final SchemaAutoTooling autoTooling = factory.getSessionFactoryOptions().getSchemaAutoTooling();
-		if (autoTooling == SchemaAutoTooling.CREATE || autoTooling == SchemaAutoTooling.CREATE_DROP) {
-			// Find a connection:
-			final SessionFactoryImplementor sessionFactoryImplementor = (SessionFactoryImplementor) factory;
-			try (Connection connection = sessionFactoryImplementor.getServiceRegistry()
-					.getService(ConnectionProvider.class).getConnection()) {
-				// Import data
-				final Properties settings = new Properties();
-				settings.setProperty(EntityImporter.PACKAGES_KEY, "... my data provider package ...");
-				new EntityImporter(settings).importData(connection);
-			} catch (final SQLException | IOException e) {
-				throw new IllegalStateException("Could not import SQL data: " + e, e);
-			}
-		}
-	}
-}</pre>
-				</div>
-				<p>
-					To tell Hibernate to use that observer you need to define a <em>hibernate.ejb.session_factory_observer</em>
-					in your persistence.xml:
+					Hibernate. This is usually much faster than the plain SQL import (see the performance chart above). Tho
+					configure that you need to define a <em>SessionFactoryObserver</em> in your persistence.xml:
 				</p>
 				<div class="highlight">
 					<pre>&lt;persistence ...>
 	&lt;persistence-unit ...>
 		&lt;properties>
-			&lt;property name="hibernate.ejb.session_factory_observer" value="...mypackage...DatabaseStartupImport" />
-			
-			&lt;!-- Tell Hibernate to recreate the schema on every startup. You can define that as a system property, too: -->
+			&lt;!-- Tell Hibernate to recreate the schema on every startup. You could even define that as a system property, to decide depending on the environment. -->
 			&lt;property name="hibernate.hbm2ddl.auto" value="CREATE" />
+
+			&lt;!-- Tell Hibernate to use our SessionFactoryObserver -->
+			&lt;property name="hibernate.ejb.session_factory_observer" value="org.fastnate.data.DatabaseStartupImport" />
 			
+			&lt;!-- Add any fastnate specific properties here -->
+			&lt;property name="fastnate.data.provider.packages" value="... your root package ..." />
+			&lt;property name="fastnate.data.folder" value="... your data folder, if you import data from files ..." />
 		&lt;/properties>
 	&lt;/persistence-unit>
 &lt;/persistence></pre>
 				</div>
+				<p>
+					Fastnate will only run, if <em>hibernate.hbm2ddl.auto</em> is set to <em>CREATE</em> or <em>CREATE-DROP</em>.
+					If you would like to use another strategy (or if you are still using Fastnate pre 1.5.0), create your own <em>SessionFactoryObserver</em>
+					and use <a
+						href="https://github.com/liefke/org.fastnate/blob/master/fastnate-data/src/main/java/org/fastnate/data/DatabaseStartupImport.java">DatabaseStartupImport</a>
+					as blueprint.
+				</p>
 			</dd>
 		</dl>
 
