@@ -2,13 +2,12 @@ package org.fastnate.data.xml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.persistence.Embeddable;
@@ -319,63 +318,6 @@ public class XmlDataImporter extends PropertyDataImporter {
 	}
 
 	/**
-	 * Imports all entites found in the given XML file.
-	 *
-	 * The root element in the XML is ignored (it's only used as a container).
-	 *
-	 * @param file
-	 *            the file
-	 * @return the imported entities
-	 * @throws IOException
-	 *             if there was a problem when accessing the file
-	 * @throws DataImportException
-	 *             if the XML or its contents was invalid
-	 */
-	@SuppressWarnings("IllegalCatch")
-	public Set<Object> importEntities(final DataFile file) throws IOException, DataImportException {
-		try (InputStream input = file.open()) {
-
-			final XMLEventReader reader = XMLInputFactory.newFactory().createXMLEventReader(input);
-			while (reader.hasNext() && !reader.peek().isStartElement()) {
-				reader.next();
-			}
-			if (!reader.hasNext()) {
-				throw new XMLStreamException("Unexpected end of document");
-			}
-
-			final StartElement containerElement = nextEvent(reader).asStartElement();
-
-			final Set<Object> entities = new LinkedHashSet<>();
-			try {
-				while (nextEventIsStartElement(reader)) {
-					final StartElement element = reader.nextEvent().asStartElement();
-					final String entityName = element.getName().getLocalPart();
-					final EntityClass<Object> classDescription = checkExists(
-							(EntityClass<Object>) this.context.getDescriptionsByName().get(entityName), element,
-							"Unsupported element: {}", entityName);
-					importEntity(reader, element, classDescription, false, entities::add);
-				}
-			} catch (final RuntimeException e) {
-				final XMLEvent nextEvent = reader.peek();
-				throw wrapRuntimeException(e, file, nextEvent);
-			}
-
-			checkEndElement(reader.nextEvent(), containerElement.getName().getLocalPart());
-
-			final XMLEvent endElement = nextEvent(reader);
-			check(endElement.isEndDocument(), endElement, "Expected end of file, found: {}", endElement);
-
-			reader.close();
-
-			return entities;
-		} catch (final FactoryConfigurationError e) {
-			throw new IllegalStateException(e);
-		} catch (final XMLStreamException e) {
-			throw wrapStreamException(e, file);
-		}
-	}
-
-	/**
 	 * Imports an entity and invokes a function as soon the entity is imported.
 	 *
 	 * If the entity is only a {@code reference}, the given handler is invoked as soon the entity is
@@ -462,6 +404,63 @@ public class XmlDataImporter extends PropertyDataImporter {
 		importEntity(reader, entityElement, childClassDescription, isEntityReference(entityElement), onImport);
 
 		checkEndElement(nextEvent(reader), property.getName());
+	}
+
+	/**
+	 * Imports all entites found in the given XML file.
+	 *
+	 * The root element in the XML is ignored (it's only used as a container).
+	 *
+	 * @param file
+	 *            the file
+	 * @return the imported entities
+	 * @throws IOException
+	 *             if there was a problem when accessing the file
+	 * @throws DataImportException
+	 *             if the XML or its contents was invalid
+	 */
+	@SuppressWarnings("IllegalCatch")
+	public List<Object> importFile(final DataFile file) throws IOException, DataImportException {
+		try (InputStream input = file.open()) {
+
+			final XMLEventReader reader = XMLInputFactory.newFactory().createXMLEventReader(input);
+			while (reader.hasNext() && !reader.peek().isStartElement()) {
+				reader.next();
+			}
+			if (!reader.hasNext()) {
+				throw new XMLStreamException("Unexpected end of document");
+			}
+
+			final StartElement containerElement = nextEvent(reader).asStartElement();
+
+			final List<Object> entities = new ArrayList<>();
+			try {
+				while (nextEventIsStartElement(reader)) {
+					final StartElement element = reader.nextEvent().asStartElement();
+					final String entityName = element.getName().getLocalPart();
+					final EntityClass<Object> classDescription = checkExists(
+							(EntityClass<Object>) this.context.getDescriptionsByName().get(entityName), element,
+							"Unsupported element: {}", entityName);
+					importEntity(reader, element, classDescription, false, entities::add);
+				}
+			} catch (final RuntimeException e) {
+				final XMLEvent nextEvent = reader.peek();
+				throw wrapRuntimeException(e, file, nextEvent);
+			}
+
+			checkEndElement(reader.nextEvent(), containerElement.getName().getLocalPart());
+
+			final XMLEvent endElement = nextEvent(reader);
+			check(endElement.isEndDocument(), endElement, "Expected end of file, found: {}", endElement);
+
+			reader.close();
+
+			return entities;
+		} catch (final FactoryConfigurationError e) {
+			throw new IllegalStateException(e);
+		} catch (final XMLStreamException e) {
+			throw wrapStreamException(e, file);
+		}
 	}
 
 	/**

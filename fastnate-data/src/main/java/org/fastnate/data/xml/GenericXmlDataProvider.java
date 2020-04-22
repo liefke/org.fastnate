@@ -30,7 +30,7 @@ public class GenericXmlDataProvider extends GenericDataProvider {
 			return Collections.singleton(new JaxbImporter<>(entityClass.getEntityClass()).importFile(importFile));
 		}
 
-		return new XmlDataImporter(getContext(), getEntityRegistration()).importEntities(importFile);
+		return new XmlDataImporter(getContext(), getEntityRegistration()).importFile(importFile);
 	}
 
 	@Override
