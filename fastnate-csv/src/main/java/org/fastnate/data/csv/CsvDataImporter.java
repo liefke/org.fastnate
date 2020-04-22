@@ -195,6 +195,25 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 	/**
 	 * Creates a new instance of {@link CsvDataImporter} for a specific type.
 	 *
+	 * Will use its own {@link GeneratorContext context} and {@link EntityRegistration}, so use only as standalone
+	 * importer.
+	 *
+	 * @param entityClass
+	 *            the type of the created entities
+	 */
+	public CsvDataImporter(final Class<E> entityClass) {
+		this(new GeneratorContext().getDescription(entityClass));
+	}
+
+	/**
+	 * Creates a new instance of {@link CsvDataImporter} for a specific type.
+	 *
+	 * Will use its own {@link EntityRegistration}, so use only, if you don't need to exchange entity references between
+	 * different importers.
+	 *
+	 * Will use the default {@link CsvPreference CSV settings}, by taking the properties from the context of the entity
+	 * class into account.
+	 *
 	 * @param entityClass
 	 *            the description of the type of the created entities.
 	 */
@@ -204,6 +223,9 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 
 	/**
 	 * Creates a new instance of {@link CsvDataImporter}.
+	 *
+	 * Will use its own {@link EntityRegistration}, so use only, if you don't need to exchange entity references between
+	 * different importers.
 	 *
 	 * @param entityClass
 	 *            the description of the type of the created entities.
