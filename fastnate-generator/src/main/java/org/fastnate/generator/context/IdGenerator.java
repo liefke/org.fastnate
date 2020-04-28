@@ -2,6 +2,7 @@ package org.fastnate.generator.context;
 
 import java.io.IOException;
 
+import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
 
@@ -115,7 +116,7 @@ public abstract class IdGenerator {
 	 *            in this situation
 	 * @return the expression for selecting the ID
 	 */
-	public abstract String getExpression(GeneratorTable table, GeneratorColumn column, Number id,
+	public abstract ColumnExpression getExpression(GeneratorTable table, GeneratorColumn column, Number id,
 			boolean whereExpression);
 
 	/**

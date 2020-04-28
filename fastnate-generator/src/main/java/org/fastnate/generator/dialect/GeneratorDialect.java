@@ -353,7 +353,7 @@ public abstract class GeneratorDialect {
 	 *
 	 * @return {@code true} if sequences are emulated with tables, {@code false} if sequences are supported
 	 */
-	protected boolean isEmulatingSequences() {
+	public boolean isEmulatingSequences() {
 		return false;
 	}
 
@@ -443,7 +443,7 @@ public abstract class GeneratorDialect {
 		final String concatOperator = getConcatOperator();
 		for (int i = 0; i < value.length(); i++) {
 			final char c = value.charAt(i);
-			if (c < ' ' && c != '\t') {
+			if (c < ' ') {
 				// Unprintable character, especially newlines
 				if (i > 0) {
 					finishPart(result, value, start, i, isOpen, true, concatOperator);

@@ -95,7 +95,7 @@ public abstract class TemporalConverter<T> implements ValueConverter<T> {
 	 * @return the SQL expression
 	 */
 	public ColumnExpression getExpression(final Date value, final GeneratorContext context) {
-		return new PrimitiveColumnExpression<>(context.getDialect().convertToDatabaseDate(value, this.type),
+		return new PrimitiveColumnExpression<>(value, context.getDialect().convertToDatabaseDate(value, this.type),
 				v -> context.getDialect().convertTemporalValue(value, this.type));
 	}
 

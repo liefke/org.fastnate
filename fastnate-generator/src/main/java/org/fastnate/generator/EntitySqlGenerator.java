@@ -35,6 +35,7 @@ import lombok.RequiredArgsConstructor;
  *
  * @author Tobias Liefke
  */
+@Getter
 @RequiredArgsConstructor
 public class EntitySqlGenerator implements Closeable {
 
@@ -51,11 +52,9 @@ public class EntitySqlGenerator implements Closeable {
 	}
 
 	/** Used to keep the state of indices and to store any configuration. */
-	@Getter
 	private final GeneratorContext context;
 
 	/** The target of any generated SQL statement, e.g. a file or database. */
-	@Getter
 	private final StatementsWriter writer;
 
 	/**

@@ -28,8 +28,8 @@ public class RecursiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		write(root);
 
 		final String query = "SELECT e FROM TestRecursiveEntity e WHERE e.name = :name";
-		final TestRecursiveEntity writtenChild = getEm().createQuery(query, TestRecursiveEntity.class)
-				.setParameter("name", child.getName()).getSingleResult();
+		final TestRecursiveEntity writtenChild = findSingleResult(query, TestRecursiveEntity.class, "name",
+				child.getName());
 		assertThat(writtenChild.getChildren()).isEmpty();
 		final TestRecursiveEntity writtenRoot = writtenChild.getParent();
 		assertThat(writtenRoot.getName()).isEqualTo(root.getName());
@@ -40,8 +40,8 @@ public class RecursiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		final TestRecursiveEntity child2 = new TestRecursiveEntity(root2, "Test Recursion Child2");
 		write(child2);
 
-		final TestRecursiveEntity writtenRoot2 = getEm().createQuery(query, TestRecursiveEntity.class)
-				.setParameter("name", root2.getName()).getSingleResult();
+		final TestRecursiveEntity writtenRoot2 = findSingleResult(query, TestRecursiveEntity.class, "name",
+				root2.getName());
 		assertThat(writtenRoot2.getParent()).isNull();
 		assertThat(writtenRoot2.getChildren()).hasSize(1);
 		final TestRecursiveEntity writtenChild2 = writtenRoot2.getChildren().iterator().next();

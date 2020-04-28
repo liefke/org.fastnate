@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.sql.Connection;
@@ -29,7 +30,9 @@ import org.fastnate.data.files.FsDataFolder;
 import org.fastnate.data.files.VfsDataFolder;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.statements.ConnectedStatementsWriter;
 import org.fastnate.generator.statements.FileStatementsWriter;
+import org.fastnate.generator.statements.StatementsWriter;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.vfs.Vfs;
@@ -71,10 +74,10 @@ public class EntityImporter {
 	public static final String DATA_FOLDER_KEY = "fastnate.data.folder";
 
 	/** Settings key for the generated SQL file. */
-	public static final String OUTPUT_FILE_KEY = "fastnate.data.sql.output.file";
+	public static final String OUTPUT_FILE_KEY = FileStatementsWriter.OUTPUT_FILE_KEY;
 
 	/** Settings key for the encoding of the generated SQL file. */
-	public static final String OUTPUT_ENCODING_KEY = "fastnate.data.sql.output.encoding";
+	public static final String OUTPUT_ENCODING_KEY = FileStatementsWriter.OUTPUT_ENCODING_KEY;
 
 	/** Settings key for a part to write into the output file before the generated content. */
 	public static final String PREFIX_KEY = "fastnate.data.sql.prefix";
@@ -95,6 +98,20 @@ public class EntityImporter {
 	 * Settings key for the packages to scan for entity classes on startup (separated by ';', ',', ':' or whitespaces).
 	 */
 	public static final String ENTITY_PACKAGES_KEY = "fastnate.data.entity.packages";
+
+	/**
+	 * Settings key that indicates the type of the used {@link StatementsWriter}.
+	 *
+	 * Allowed values of the setting:
+	 * <ul>
+	 * <li>FileStatementsWriter (default)</li>
+	 * <li>PostgreSqlBulkWriter</li>
+	 * <li>ConnectedStatementsWriter</li>
+	 * <li>LiquibaseStatementsWriter</li>
+	 * <li>any fully qualified class which has a constructor that accepts a {@link GeneratorContext}</li>
+	 * </ul>
+	 */
+	public static final String STATEMENTS_WRITER_KEY = "fastnate.data.statements.writer";
 
 	private static DataFolder findDataFolder(final GeneratorContext context) {
 		final String dataFolderPath = context.getSettings().getProperty(DATA_FOLDER_KEY, ".");
@@ -283,13 +300,44 @@ public class EntityImporter {
 	}
 
 	/**
-	 * Imports the data and creates the default SQL file.
+	 * Imports the data and creates the SQL.
+	 *
+	 * Depending on the setting {@link #STATEMENTS_WRITER_KEY}, this will either create a file or execute the SQL
+	 * against a connection.
 	 *
 	 * @throws IOException
 	 *             if one of the data importers or the file writer throws one
 	 */
 	public void importData() throws IOException {
-		importData(new File(getSettings().getProperty(OUTPUT_FILE_KEY, "data.sql")));
+		String statementsWriter = getSettings().getProperty(STATEMENTS_WRITER_KEY,
+				FileStatementsWriter.class.getSimpleName());
+		if (statementsWriter.indexOf('.') < 0) {
+			statementsWriter = "org.fastnate.generator.statements." + statementsWriter;
+		}
+		try {
+			log.info("Using {} as statements writer", statementsWriter);
+
+			final Class<StatementsWriter> statementsWriterClass = (Class<StatementsWriter>) Class
+					.forName(statementsWriter);
+			final StatementsWriter writer = statementsWriterClass.getConstructor(GeneratorContext.class)
+					.newInstance(this.context);
+			try (EntitySqlGenerator generator = new EntitySqlGenerator(this.context, writer)) {
+				if (writer instanceof ConnectedStatementsWriter) {
+					importData(generator, ((ConnectedStatementsWriter) writer).getConnection());
+				} else {
+					importData(generator);
+				}
+			}
+		} catch (final SQLException e) {
+			throw new IOException(e);
+		} catch (final ClassNotFoundException e) {
+			throw new IllegalArgumentException("Unknown statements writer: " + statementsWriter, e);
+		} catch (final NoSuchMethodException e) {
+			throw new IllegalArgumentException(
+					"Statements writer needs a (GeneratorContext) constructor: " + statementsWriter, e);
+		} catch (InstantiationException | IllegalAccessException | InvocationTargetException | SecurityException e) {
+			throw new IllegalArgumentException("Could not build statements writer: " + statementsWriter, e);
+		}
 	}
 
 	/**
@@ -305,27 +353,7 @@ public class EntityImporter {
 	 */
 	public void importData(final Connection connection) throws IOException, SQLException {
 		try (EntitySqlGenerator generator = new EntitySqlGenerator(this.context, connection)) {
-			final boolean transation = connection.getAutoCommit() && this.context.getDialect().isFastInTransaction();
-			if (transation) {
-				connection.setAutoCommit(false);
-			}
-			try {
-				importData(generator);
-				if (transation) {
-					connection.commit();
-				}
-				// CHECKSTYLE OFF: IllegalCatch
-			} catch (final RuntimeException | IOException | SQLException e) {
-				// CHECKSTYLE ON
-				if (transation) {
-					connection.rollback();
-				}
-				throw e;
-			} finally {
-				if (transation) {
-					connection.setAutoCommit(true);
-				}
-			}
+			importData(generator, connection);
 		} catch (final IOException e) {
 			if (e.getCause() instanceof SQLException) {
 				throw (SQLException) e.getCause();
@@ -380,6 +408,31 @@ public class EntityImporter {
 		}
 	}
 
+	private void importData(final EntitySqlGenerator generator, final Connection connection)
+			throws SQLException, IOException {
+		final boolean transation = connection.getAutoCommit() && this.context.getDialect().isFastInTransaction();
+		if (transation) {
+			connection.setAutoCommit(false);
+		}
+		try {
+			importData(generator);
+			if (transation) {
+				connection.commit();
+			}
+			// CHECKSTYLE OFF: IllegalCatch
+		} catch (final RuntimeException | IOException | SQLException e) {
+			// CHECKSTYLE ON
+			if (transation) {
+				connection.rollback();
+			}
+			throw e;
+		} finally {
+			if (transation) {
+				connection.setAutoCommit(true);
+			}
+		}
+	}
+
 	/**
 	 * Imports the data and creates the given SQL file.
 	 *
@@ -389,10 +442,6 @@ public class EntityImporter {
 	 *             if one of the data importers or the file writer throws one
 	 */
 	public void importData(final File targetFile) throws IOException {
-		final File directory = targetFile.getParentFile();
-		if (directory != null && !directory.exists()) {
-			directory.mkdirs();
-		}
 		try (BufferedWriter writer = new BufferedWriter(
 				new OutputStreamWriter(new FileOutputStream(targetFile), getEncoding()))) {
 			importData(writer);

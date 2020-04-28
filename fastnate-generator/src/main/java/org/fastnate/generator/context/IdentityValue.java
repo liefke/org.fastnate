@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import javax.persistence.GenerationType;
 
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.PlainColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
 
@@ -52,11 +54,11 @@ public class IdentityValue extends IdGenerator {
 	}
 
 	@Override
-	public String getExpression(final GeneratorTable entityTable, final GeneratorColumn targetColumn,
+	public ColumnExpression getExpression(final GeneratorTable entityTable, final GeneratorColumn targetColumn,
 			final Number targetId, final boolean whereExpression) {
 		final long diff = this.currentValue - targetId.longValue();
-		return "(SELECT max(" + this.column.getName() + ")" + (diff == 0 ? "" : " - " + diff) + " FROM "
-				+ this.table.getName() + ")";
+		return new PlainColumnExpression("(SELECT max(" + this.column.getName() + ")" + (diff == 0 ? "" : " - " + diff)
+				+ " FROM " + this.table.getName() + ")");
 	}
 
 	@Override

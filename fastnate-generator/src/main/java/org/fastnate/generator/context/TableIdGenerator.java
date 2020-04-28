@@ -176,11 +176,12 @@ public class TableIdGenerator extends IdGenerator {
 	}
 
 	@Override
-	public String getExpression(final GeneratorTable table, final GeneratorColumn column, final Number targetId,
-			final boolean whereExpression) {
+	public ColumnExpression getExpression(final GeneratorTable table, final GeneratorColumn column,
+			final Number targetId, final boolean whereExpression) {
 		final long diff = getValueColumnValue() - targetId.longValue();
-		return "(SELECT " + this.valueColumn.getName() + (diff == 0 ? "" : " - " + diff) + " FROM "
-				+ this.generatorTable.getName() + " WHERE " + this.pkColumn + " = " + this.pkColumnValue + ')';
+		return new PlainColumnExpression(
+				"(SELECT " + this.valueColumn.getName() + (diff == 0 ? "" : " - " + diff) + " FROM "
+						+ this.generatorTable.getName() + " WHERE " + this.pkColumn + " = " + this.pkColumnValue + ')');
 	}
 
 	private long getValueColumnValue() {

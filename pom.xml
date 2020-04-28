@@ -205,6 +205,13 @@
 				<artifactId>spring-data-jpa</artifactId>
 				<version>1.11.4.RELEASE</version>
 			</dependency>
+			
+			<dependency>
+				<groupId>org.liquibase</groupId>
+				<artifactId>liquibase-core</artifactId>
+				<version>3.8.9</version>
+			</dependency>
+			
 		</dependencies>
 	</dependencyManagement>
 

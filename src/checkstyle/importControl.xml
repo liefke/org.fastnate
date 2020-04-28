@@ -11,8 +11,9 @@
 	<allow pkg="net" />
 	<allow pkg="org" />
 
-	<!-- allow Lombok, although they do not use any root package -->
+	<!-- allow Lombok and Liquibase, although they do not use any root package -->
 	<allow pkg="lombok" />
+	<allow pkg="liquibase" />
 
 	<!-- for logging use @Slf4j -->
 	<disallow class="org.apache.log4j.spi.LoggerFactory" />

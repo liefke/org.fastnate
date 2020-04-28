@@ -30,6 +30,7 @@ public class VersionTest extends AbstractEntitySqlGeneratorTest {
 		entity.setContent("before");
 		write(entity);
 
+		getGenerator().flush();
 		getEm().getTransaction().begin();
 		final VersionTestEntity result = findSingleResult(VersionTestEntity.class);
 		assertThat(result.getVer()).isEqualTo(0);

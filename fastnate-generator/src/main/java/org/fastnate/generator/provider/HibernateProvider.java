@@ -19,6 +19,16 @@ import org.hibernate.cfg.AvailableSettings;
  */
 public class HibernateProvider implements JpaProvider {
 
+	private static void copySetting(final Properties settings, final String hibernateProperty,
+			final String fastnateProperty) {
+		if (!settings.containsKey(fastnateProperty)) {
+			final String setting = settings.getProperty(hibernateProperty);
+			if (setting != null) {
+				settings.setProperty(fastnateProperty, setting);
+			}
+		}
+	}
+
 	private static Class<? extends GeneratorDialect> getGeneratorDialectFromConnectionDriver(
 			final Properties settings) {
 		final String connectionDriver = settings.getProperty(AvailableSettings.DRIVER);
@@ -129,11 +139,12 @@ public class HibernateProvider implements JpaProvider {
 			}
 		}
 
-		if (!settings.containsKey(ConnectedStatementsWriter.LOG_STATEMENTS_KEY)
-				&& settings.containsKey(AvailableSettings.SHOW_SQL)) {
-			settings.setProperty(ConnectedStatementsWriter.LOG_STATEMENTS_KEY,
-					settings.getProperty(AvailableSettings.SHOW_SQL));
-		}
+		copySetting(settings, AvailableSettings.SHOW_SQL, ConnectedStatementsWriter.LOG_STATEMENTS_KEY);
+
+		copySetting(settings, AvailableSettings.DRIVER, ConnectedStatementsWriter.DATABASE_DRIVER_KEY);
+		copySetting(settings, AvailableSettings.URL, ConnectedStatementsWriter.DATABASE_URL_KEY);
+		copySetting(settings, AvailableSettings.USER, ConnectedStatementsWriter.DATABASE_USER_KEY);
+		copySetting(settings, AvailableSettings.PASS, ConnectedStatementsWriter.DATABASE_PASSWORD_KEY);
 	}
 
 	@Override

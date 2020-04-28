@@ -86,6 +86,21 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 	 *
 	 * @param context
 	 *            the current generation context
+	 * @throws FileNotFoundException
+	 *             if the directory is not available
+	 */
+	public PostgreSqlBulkWriter(final GeneratorContext context) throws FileNotFoundException {
+		this(context, new File(context.getSettings().getProperty(OUTPUT_FILE_KEY, "data.sql")),
+				Charset.forName(context.getSettings().getProperty(OUTPUT_ENCODING_KEY, "UTF-8")));
+	}
+
+	/**
+	 * Creates a new instance for a SQL file with UTF-8 encoding.
+	 *
+	 * All bulk files will end up in the same directory as the given file.
+	 *
+	 * @param context
+	 *            the current generation context
 	 * @param sqlFile
 	 *            the file that is feeded with all plain statements
 	 * @throws FileNotFoundException
@@ -111,7 +126,7 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 	 */
 	public PostgreSqlBulkWriter(final GeneratorContext context, final File sqlFile, final Charset encoding)
 			throws FileNotFoundException {
-		this(context, sqlFile.getAbsoluteFile().getParentFile(),
+		this(context, ensureDirectoryExists(sqlFile).getAbsoluteFile().getParentFile(),
 				new BufferedWriter(new OutputStreamWriter(new FileOutputStream(sqlFile), encoding)), encoding);
 		this.generatedFiles.add(sqlFile);
 	}

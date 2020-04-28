@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.dialect.GeneratorDialect;
 
 import lombok.Getter;
@@ -25,6 +26,32 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class FileStatementsWriter extends AbstractStatementsWriter {
+
+	/**
+	 * {@link GeneratorContext#getSettings() Settings key} for the generated SQL file, if not given in the constructor.
+	 */
+	public static final String OUTPUT_FILE_KEY = "fastnate.data.sql.output.file";
+
+	/**
+	 * {@link GeneratorContext#getSettings() Settings key} for the encoding of the generated SQL file, if not given in
+	 * the constructor.
+	 */
+	public static final String OUTPUT_ENCODING_KEY = "fastnate.data.sql.output.encoding";
+
+	/**
+	 * Ensures, that the parent directory of the given output file exists.
+	 * 
+	 * @param outputFile
+	 *            the output file
+	 * @return the output file (for chaining)
+	 */
+	protected static File ensureDirectoryExists(final File outputFile) {
+		final File parentFile = outputFile.getAbsoluteFile().getParentFile();
+		if (parentFile != null) {
+			parentFile.mkdirs();
+		}
+		return outputFile;
+	}
 
 	/** Used to write the SQL statements. */
 	@Getter
@@ -62,7 +89,23 @@ public class FileStatementsWriter extends AbstractStatementsWriter {
 	 *             if the file could not be opened for writing
 	 */
 	public FileStatementsWriter(final File file, final Charset encoding) throws FileNotFoundException {
-		this(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), encoding)));
+		this(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(ensureDirectoryExists(file)), encoding)));
+	}
+
+	/**
+	 * Creates a new instance of {@link FileStatementsWriter}.
+	 *
+	 * The target file and its encoding are taken from the settings {@link #OUTPUT_FILE_KEY} and
+	 * {@link #OUTPUT_ENCODING_KEY}.
+	 *
+	 * @param context
+	 *            the context of the generation (for lookup of the properties)
+	 * @throws FileNotFoundException
+	 *             if the file path is not available for writing
+	 */
+	public FileStatementsWriter(final GeneratorContext context) throws FileNotFoundException {
+		this(new File(context.getSettings().getProperty(OUTPUT_FILE_KEY, "data.sql")),
+				Charset.forName(context.getSettings().getProperty(OUTPUT_ENCODING_KEY, "UTF-8")));
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package org.fastnate.generator.statements;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -70,7 +71,7 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 		public void foundGenerator(final IdGenerator generator) {
 			// Initialize generator, if necessary
 			if (!this.context.isWriteRelativeIds()) {
-				String sql = generator.getExpression(null, null, generator.getCurrentValue(), false);
+				String sql = generator.getExpression(null, null, generator.getCurrentValue(), false).toSql();
 				if (sql.matches("(SELECT\\W.*)")) {
 					sql = sql.substring(1, sql.length() - 1);
 				} else {
@@ -193,6 +194,18 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
 	}
 
+	/** Name of the setting that contains the connection driver class, if the writer create the a connection himself. */
+	public static final String DATABASE_DRIVER_KEY = "fastnate.generator.connection.driver";
+
+	/** Name of the setting that contains the connection URL, if the writer create the a connection himself. */
+	public static final String DATABASE_URL_KEY = "fastnate.generator.connection.url";
+
+	/** Name of the setting that contains the connection user, if the writer create the a connection himself. */
+	public static final String DATABASE_USER_KEY = "fastnate.generator.connection.user";
+
+	/** Name of the setting that contains the connection password, if the writer create the a connection himself. */
+	public static final String DATABASE_PASSWORD_KEY = "fastnate.generator.connection.password";
+
 	/**
 	 * Name of the setting which controls the maximum size of generated batches. If set to something below 2, no batches
 	 * are used.
@@ -205,6 +218,30 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	/** The count of milliseconds to wait, until a log message with the current count of statements is written. */
 	private static final long MILLISECONDS_BETWEEN_LOG_MESSAGES = 60 * 1000;
 
+	private static Connection buildConnection(final GeneratorContext context) throws SQLException {
+		final String url = context.getSettings().getProperty(DATABASE_URL_KEY,
+				context.getSettings().getProperty("javax.persistence.jdbc.url", null));
+		if (url == null) {
+			throw new IllegalArgumentException("Can't find " + DATABASE_URL_KEY + " in the settings");
+		}
+
+		final String driver = context.getSettings().getProperty(DATABASE_DRIVER_KEY,
+				context.getSettings().getProperty("javax.persistence.jdbc.driver", null));
+		if (driver != null) {
+			try {
+				Class.forName(driver);
+			} catch (final ClassNotFoundException e) {
+				throw new IllegalArgumentException("Could not find driver class: " + driver, e);
+			}
+		}
+
+		final String user = context.getSettings().getProperty(DATABASE_USER_KEY,
+				context.getSettings().getProperty("javax.persistence.jdbc.user", null));
+		final String password = context.getSettings().getProperty(DATABASE_PASSWORD_KEY,
+				context.getSettings().getProperty("javax.persistence.jdbc.password", null));
+		return DriverManager.getConnection(url, user, password);
+	}
+
 	/** The generator context that is attached to this writer. */
 	private final GeneratorContext context;
 
@@ -214,6 +251,9 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	/** The database connection that was used when creating this generator. */
 	@Getter
 	private final Connection connection;
+
+	/** Indicates that we should close the connection at the end. */
+	private final boolean closeConnection;
 
 	/** Indicates that the database connection supports batch statements. */
 	private final boolean batchSupported;
@@ -243,8 +283,22 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	@Getter
 	private long statementsCount;
 
+	private ConnectedStatementsWriter(final Connection connection, final boolean closeConnection,
+			final GeneratorContext context) throws SQLException {
+		this.connection = connection;
+		this.closeConnection = closeConnection;
+		this.context = context;
+		this.batchSupported = connection.getMetaData().supportsBatchUpdates();
+		this.logStatements = Boolean.parseBoolean(context.getSettings().getProperty(LOG_STATEMENTS_KEY, "false"));
+		this.maxBatchSize = Integer.parseInt(context.getSettings().getProperty(MAX_BATCH_SIZE_KEY, "100"));
+		this.plainStatement = connection.createStatement();
+		this.contextListener = new ContextListener(context, this.plainStatement, this.preparedStatements,
+				this.availablePreparedStatements);
+		context.addContextModelListener(this.contextListener);
+	}
+
 	/**
-	 * Creates a new StatementWriter that writes to a database connection.
+	 * Creates a new StatementsWriter that writes to a database connection.
 	 *
 	 * @param connection
 	 *            the database connection
@@ -254,15 +308,21 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	 *             if the connection is invalid
 	 */
 	public ConnectedStatementsWriter(final Connection connection, final GeneratorContext context) throws SQLException {
-		this.connection = connection;
-		this.context = context;
-		this.batchSupported = connection.getMetaData().supportsBatchUpdates();
-		this.logStatements = Boolean.parseBoolean(context.getSettings().getProperty(LOG_STATEMENTS_KEY, "false"));
-		this.maxBatchSize = Integer.parseInt(context.getSettings().getProperty(MAX_BATCH_SIZE_KEY, "100"));
-		this.plainStatement = connection.createStatement();
-		this.contextListener = new ContextListener(context, this.plainStatement, this.preparedStatements,
-				this.availablePreparedStatements);
-		context.addContextModelListener(this.contextListener);
+		this(connection, false, context);
+	}
+
+	/**
+	 * Creates a new StatementsWriter that writes to a database connection.
+	 *
+	 * The database connection is created from the properties in the context.
+	 *
+	 * @param context
+	 *            contains the properties and indices for initialization
+	 * @throws SQLException
+	 *             if the connection is invalid
+	 */
+	public ConnectedStatementsWriter(final GeneratorContext context) throws SQLException {
+		this(buildConnection(context), true, context);
 	}
 
 	private void checkUpdate(final int updatedRows, final String sql) {
@@ -283,6 +343,9 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 			this.plainStatement.close();
 			for (final PreparedInsertStatement stmt : this.preparedStatements) {
 				stmt.close();
+			}
+			if (this.closeConnection) {
+				this.connection.close();
 			}
 		} catch (final SQLException e) {
 			// Ignore - as this will only happen, if there was already an exception during update

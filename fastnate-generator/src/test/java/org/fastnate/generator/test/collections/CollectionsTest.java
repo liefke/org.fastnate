@@ -72,9 +72,9 @@ public class CollectionsTest extends AbstractEntitySqlGeneratorTest {
 		testEntity2.getConvertedStrings().add("abcdef");
 		write(testEntity2);
 
-		final CollectionsTestEntity result = getEm().createQuery(
+		final CollectionsTestEntity result = findSingleResult(
 				"SELECT e FROM CTE e WHERE concat(',', e.convertedStrings, ',') LIKE concat('%,', :item, ',%')",
-				CollectionsTestEntity.class).setParameter("item", "de").getSingleResult();
+				CollectionsTestEntity.class, "item", "de");
 
 		assertThat(result.getConvertedStrings()).containsExactlyElementsOf(testEntity.getConvertedStrings());
 	}

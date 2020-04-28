@@ -59,7 +59,7 @@ public class MsSqlDialect extends GeneratorDialect {
 	}
 
 	@Override
-	protected boolean isEmulatingSequences() {
+	public boolean isEmulatingSequences() {
 		return true;
 	}
 

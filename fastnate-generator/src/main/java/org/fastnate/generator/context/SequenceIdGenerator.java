@@ -5,6 +5,9 @@ import java.io.IOException;
 import javax.persistence.SequenceGenerator;
 
 import org.fastnate.generator.dialect.GeneratorDialect;
+import org.fastnate.generator.statements.ColumnExpression;
+import org.fastnate.generator.statements.CurrentSequenceValueExpression;
+import org.fastnate.generator.statements.NextSequenceValueExpression;
 import org.fastnate.generator.statements.PlainColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
@@ -57,23 +60,20 @@ public class SequenceIdGenerator extends IdGenerator {
 
 	@Override
 	public void addNextValue(final TableStatement statement, final GeneratorColumn column, final Number value) {
-		String expression;
+		final ColumnExpression expression;
 		if (this.dialect.isNextSequenceValueInInsertSupported() && this.currentSequenceValue <= value.longValue()) {
 			if (this.currentSequenceValue < this.initialValue) {
 				this.currentSequenceValue = this.initialValue;
 			} else {
 				this.currentSequenceValue += this.allocationSize;
 			}
-			expression = this.dialect.buildNextSequenceValue(this.sequenceName, this.allocationSize);
+			expression = new NextSequenceValueExpression(this.dialect, this.sequenceName, this.allocationSize,
+					this.currentSequenceValue - value.longValue());
 		} else {
-			expression = this.dialect.buildCurrentSequenceValue(this.sequenceName, this.allocationSize);
+			expression = new CurrentSequenceValueExpression(this.dialect, this.sequenceName, this.allocationSize,
+					this.currentSequenceValue - value.longValue());
 		}
-
-		final long diff = this.currentSequenceValue - value.longValue();
-		if (diff != 0) {
-			expression = '(' + expression + " - " + diff + ')';
-		}
-		statement.setColumnValue(column, new PlainColumnExpression(expression));
+		statement.setColumnValue(column, expression);
 	}
 
 	@Override
@@ -112,20 +112,16 @@ public class SequenceIdGenerator extends IdGenerator {
 	}
 
 	@Override
-	public String getExpression(final GeneratorTable entityTable, final GeneratorColumn column, final Number targetId,
-			final boolean whereExpression) {
+	public ColumnExpression getExpression(final GeneratorTable entityTable, final GeneratorColumn column,
+			final Number targetId, final boolean whereExpression) {
 		if (!whereExpression || this.dialect.isSequenceInWhereSupported()) {
-			final String reference = this.dialect.buildCurrentSequenceValue(this.sequenceName, this.allocationSize);
-			final long diff = this.currentSequenceValue - targetId.longValue();
-			if (diff == 0) {
-				return reference;
-			}
-			return "(" + reference + " - " + diff + ")";
+			return new CurrentSequenceValueExpression(this.dialect, this.sequenceName, this.allocationSize,
+					this.currentSequenceValue - targetId.longValue());
 		}
 
 		final long diff = this.nextValue - 1 - targetId.longValue();
-		return "(SELECT max(" + column.getName() + ')' + (diff == 0 ? "" : " - " + diff) + " FROM "
-				+ entityTable.getName() + ')';
+		return new PlainColumnExpression("(SELECT max(" + column.getName() + ')' + (diff == 0 ? "" : " - " + diff)
+				+ " FROM " + entityTable.getName() + ')');
 	}
 
 	@Override

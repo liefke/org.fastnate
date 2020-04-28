@@ -7,7 +7,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 import org.fastnate.generator.statements.ColumnExpression;
-import org.fastnate.generator.statements.PlainColumnExpression;
 import org.fastnate.generator.statements.PrimitiveColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
@@ -125,8 +124,7 @@ public class GeneratedIdProperty<E, T extends Number> extends PrimitiveProperty<
 			return PrimitiveColumnExpression.create(targetId, getDialect());
 		}
 
-		return new PlainColumnExpression(
-				this.generator.getExpression(getTable(), getColumn(), targetId, whereExpression));
+		return this.generator.getExpression(getTable(), getColumn(), targetId, whereExpression);
 	}
 
 	/**

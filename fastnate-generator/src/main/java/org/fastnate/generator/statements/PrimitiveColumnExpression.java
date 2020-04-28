@@ -32,7 +32,7 @@ public class PrimitiveColumnExpression<T> implements ColumnExpression {
 	 */
 	public static final <N extends Number> PrimitiveColumnExpression<N> create(final N value,
 			final GeneratorDialect dialect) {
-		return new PrimitiveColumnExpression<>(value, dialect::convertNumberValue);
+		return new PrimitiveColumnExpression<>(value, value, dialect::convertNumberValue);
 	}
 
 	/**
@@ -45,14 +45,29 @@ public class PrimitiveColumnExpression<T> implements ColumnExpression {
 	 * @return the new expression
 	 */
 	public static final PrimitiveColumnExpression<String> create(final String value, final GeneratorDialect dialect) {
-		return new PrimitiveColumnExpression<>(value, dialect::quoteString);
+		return new PrimitiveColumnExpression<>(value, value, dialect::quoteString);
 	}
 
-	/** The primitive value (which may be used in an prepared statement). */
+	/** The original primitive value. */
 	private final T value;
 
-	/** Converts the primitive value to a SQL string. */
+	/** The primitive database value (which may be used in an prepared statement). */
+	private final T databaseValue;
+
+	/** Converts the primitive value to an SQL string. */
 	private final Function<T, String> converter;
+
+	/**
+	 * Creates a new instance of an expression where the original value is the database value.
+	 *
+	 * @param value
+	 *            the primitive value
+	 * @param converter
+	 *            converts the primitive value to an SQL string
+	 */
+	public PrimitiveColumnExpression(final T value, final Function<T, String> converter) {
+		this(value, value, converter);
+	}
 
 	@Override
 	public String toSql() {
