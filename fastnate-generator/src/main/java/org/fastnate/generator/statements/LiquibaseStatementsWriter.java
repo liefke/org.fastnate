@@ -363,6 +363,12 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 	}
 
 	private void writeTableStatement(final AbstractTableStatement insert) throws XMLStreamException {
+		if (insert.getTable().getCatalog() != null) {
+			this.writer.writeAttribute("catalogName", insert.getTable().getCatalog());
+		}
+		if (insert.getTable().getSchema() != null) {
+			this.writer.writeAttribute("schemaName", insert.getTable().getSchema());
+		}
 		this.writer.writeAttribute("tableName", insert.getTable().getName());
 		for (final Entry<GeneratorColumn, ColumnExpression> entry : insert.getValues().entrySet()) {
 			this.writer.writeCharacters("\n\t\t\t");

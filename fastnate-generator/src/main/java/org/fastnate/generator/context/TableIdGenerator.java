@@ -71,8 +71,8 @@ public class TableIdGenerator extends IdGenerator {
 		this.nextValue = this.initialValue = generator.initialValue();
 		this.maxAllocatedValue = this.initialValue - 1;
 		final JpaProvider provider = context.getProvider();
-		this.generatorTable = context
-				.resolveTable(StringUtils.defaultIfEmpty(generator.table(), provider.getDefaultGeneratorTable()));
+		this.generatorTable = context.resolveTable(generator.catalog(), generator.schema(),
+				StringUtils.defaultIfEmpty(generator.table(), provider.getDefaultGeneratorTable()));
 		this.valueColumn = this.generatorTable.resolveColumn(StringUtils.defaultIfEmpty(generator.valueColumnName(),
 				provider.getDefaultGeneratorTableValueColumnName()));
 		this.pkColumn = this.generatorTable.resolveColumn(
@@ -179,9 +179,9 @@ public class TableIdGenerator extends IdGenerator {
 	public ColumnExpression getExpression(final GeneratorTable table, final GeneratorColumn column,
 			final Number targetId, final boolean whereExpression) {
 		final long diff = getValueColumnValue() - targetId.longValue();
-		return new PlainColumnExpression(
-				"(SELECT " + this.valueColumn.getName() + (diff == 0 ? "" : " - " + diff) + " FROM "
-						+ this.generatorTable.getName() + " WHERE " + this.pkColumn + " = " + this.pkColumnValue + ')');
+		return new PlainColumnExpression("(SELECT " + this.valueColumn.getName() + (diff == 0 ? "" : " - " + diff)
+				+ " FROM " + this.generatorTable.getQualifiedName() + " WHERE " + this.pkColumn + " = "
+				+ this.pkColumnValue + ')');
 	}
 
 	private long getValueColumnValue() {

@@ -188,7 +188,7 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 		Writer bulkWriter = this.bulkWriters.get(generatorTable);
 		if (bulkWriter == null) {
 			final Integer number = this.fileNumbers.get(generatorTable);
-			String fileName = generatorTable.getName();
+			String fileName = generatorTable.getQualifiedName();
 			if (number == null) {
 				this.fileNumbers.put(generatorTable, 2);
 			} else {
@@ -196,7 +196,7 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 				this.fileNumbers.put(generatorTable, number + 1);
 			}
 			final File file = new File(this.directory, fileName + ".blk");
-			write("COPY " + generatorTable.getName() + " ("
+			write("COPY " + generatorTable.getQualifiedName() + " ("
 					+ generatorTable.getColumns().keySet().stream().collect(Collectors.joining(", ")) + ") FROM "
 					+ dialect.quoteString(file.getAbsolutePath()) + " WITH ENCODING "
 					+ dialect.quoteString(this.encoding.name().toLowerCase()) + getStatementSeparator());

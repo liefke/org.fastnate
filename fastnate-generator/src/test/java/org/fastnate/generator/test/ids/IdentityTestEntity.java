@@ -21,6 +21,7 @@ import lombok.Setter;
 public class IdentityTestEntity extends IdTestEntity<IdentityTestEntity> {
 
 	@Id
+	// Comment out for Oracle tests:
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

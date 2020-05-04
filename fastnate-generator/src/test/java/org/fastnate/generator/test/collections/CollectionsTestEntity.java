@@ -34,7 +34,7 @@ import lombok.Setter;
  * @author Tobias Liefke
  */
 @Entity(name = "CTE")
-@Table(name = "CollectionsTest")
+@Table(name = "CollTest")
 @Getter
 @Setter
 public class CollectionsTestEntity extends BaseTestEntity {

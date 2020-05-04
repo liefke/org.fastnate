@@ -24,7 +24,8 @@ public class PostgresDialect extends GeneratorDialect {
 	@Override
 	public void adjustNextIdentityValue(final StatementsWriter writer, final GeneratorTable table,
 			final GeneratorColumn columnName, final long nextValue) throws IOException {
-		writer.writePlainStatement(this, "ALTER SEQUENCE " + table.getName() + "_id_seq RESTART WITH " + nextValue);
+		writer.writePlainStatement(this,
+				"ALTER SEQUENCE " + table.getQualifiedName() + "_id_seq RESTART WITH " + nextValue);
 	}
 
 	@Override
@@ -44,7 +45,7 @@ public class PostgresDialect extends GeneratorDialect {
 
 	@Override
 	public void truncateTable(final StatementsWriter writer, final GeneratorTable table) throws IOException {
-		writer.writePlainStatement(this, "TRUNCATE TABLE " + table.getName() + " CASCADE");
+		writer.writePlainStatement(this, "TRUNCATE TABLE " + table.getQualifiedName() + " CASCADE");
 	}
 
 }

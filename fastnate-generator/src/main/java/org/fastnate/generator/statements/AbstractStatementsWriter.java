@@ -108,7 +108,7 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 
 		/**
 		 * Adds columns to an SQL expression.
-		 * 
+		 *
 		 * @param result
 		 *            the string builder
 		 * @param columns
@@ -129,7 +129,7 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 
 		@Override
 		public String toSql() {
-			final StringBuilder result = new StringBuilder("INSERT INTO ").append(getTable().getName());
+			final StringBuilder result = new StringBuilder("INSERT INTO ").append(getTable().getQualifiedName());
 			if (getValues().isEmpty()) {
 				// Can happen if we have an generated identity column and only null values
 				result.append(' ').append(getDialect().getEmptyValuesExpression());
@@ -138,7 +138,7 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 				if (!getDialect().isSelectFromSameTableInInsertSupported() && isPlainExpressionAvailable()) {
 					// Create MySQL compatible INSERTs
 					final Pattern subselectPattern = Pattern.compile(
-							"\\(SELECT\\s+(.*)\\s+FROM\\s+" + getTable().getName() + "\\s*\\)",
+							"\\(SELECT\\s+(.*)\\s+FROM\\s+" + getTable().getQualifiedName() + "\\s*\\)",
 							Pattern.CASE_INSENSITIVE);
 					if (getValues().values().stream().anyMatch(e -> !(e instanceof PrimitiveColumnExpression)
 							&& subselectPattern.matcher(e.toSql()).matches())) {
@@ -153,7 +153,7 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 								rewrite.add(sql);
 							}
 						}
-						addColumns(result, rewrite).append(" FROM ").append(getTable().getName());
+						addColumns(result, rewrite).append(" FROM ").append(getTable().getQualifiedName());
 						return result.toString();
 					}
 				}
@@ -227,7 +227,8 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 
 		@Override
 		public String toSql() {
-			final StringBuilder result = new StringBuilder("UPDATE ").append(getTable().getName()).append(" SET ");
+			final StringBuilder result = new StringBuilder("UPDATE ").append(getTable().getQualifiedName())
+					.append(" SET ");
 			for (final Iterator<Map.Entry<GeneratorColumn, ColumnExpression>> entries = getValues().entrySet()
 					.iterator(); entries.hasNext();) {
 				final Entry<GeneratorColumn, ColumnExpression> entry = entries.next();

@@ -476,6 +476,6 @@ public abstract class GeneratorDialect {
 	 *             if the writer throws one
 	 */
 	public void truncateTable(final StatementsWriter writer, final GeneratorTable table) throws IOException {
-		writer.writePlainStatement(this, "TRUNCATE TABLE " + table.getName());
+		writer.writePlainStatement(this, "TRUNCATE TABLE " + table.getQualifiedName());
 	}
 }

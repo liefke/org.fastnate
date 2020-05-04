@@ -58,7 +58,7 @@ public class IdentityValue extends IdGenerator {
 			final Number targetId, final boolean whereExpression) {
 		final long diff = this.currentValue - targetId.longValue();
 		return new PlainColumnExpression("(SELECT max(" + this.column.getName() + ")" + (diff == 0 ? "" : " - " + diff)
-				+ " FROM " + this.table.getName() + ")");
+				+ " FROM " + this.table.getQualifiedName() + ")");
 	}
 
 	@Override

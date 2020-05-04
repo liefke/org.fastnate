@@ -18,8 +18,17 @@ public class GeneratorTable {
 	/** The index of this table in the list of all available tables. */
 	private final int index;
 
+	/** The optional name of the catalog that contains this table, {@code null} if the default catalog is used. */
+	private final String catalog;
+
+	/** The optional name of the schema that contains this table, {@code null} if the default schema is used. */
+	private final String schema;
+
 	/** The name of this table. */
 	private final String name;
+
+	/** The fully qualified name of this table, including any optional catalog and schema name. */
+	private final String qualifiedName;
 
 	/** The current generator context. */
 	private final GeneratorContext context;
@@ -60,7 +69,7 @@ public class GeneratorTable {
 
 	@Override
 	public String toString() {
-		return this.name;
+		return this.qualifiedName;
 	}
 
 }

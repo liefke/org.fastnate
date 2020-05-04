@@ -120,7 +120,8 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 				throws SQLException {
 			super(dialect, table);
 
-			final StringBuilder sqlBuilder = new StringBuilder("INSERT INTO ").append(getTable().getName()).append(' ');
+			final StringBuilder sqlBuilder = new StringBuilder("INSERT INTO ").append(getTable().getQualifiedName())
+					.append(' ');
 			final Collection<GeneratorColumn> columns = table.getColumns().values();
 			this.columnCount = columns.size();
 			this.parameterIndices = new int[this.columnCount];
@@ -378,7 +379,7 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 				this.preparedStatements
 						.add(insertStatement = new PreparedInsertStatement(dialect, this.connection, table));
 			} catch (final SQLException e) {
-				throw new IllegalStateException("Can't generate prepared statement for " + table.getName(), e);
+				throw new IllegalStateException("Can't generate prepared statement for " + table.getQualifiedName(), e);
 			}
 		} else {
 			insertStatement = availableStatements.remove(availableStatements.size() - 1);

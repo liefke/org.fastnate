@@ -2,6 +2,7 @@ package org.fastnate.generator.context;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.net.URL;
 import java.util.AbstractMap.SimpleEntry;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -80,7 +82,7 @@ public class GeneratorContext {
 			if (this.table == null) {
 				return this.id;
 			}
-			return this.id + '.' + this.table.getName();
+			return this.id + '.' + this.table.getQualifiedName();
 		}
 
 	}
@@ -538,19 +540,78 @@ public class GeneratorContext {
 	}
 
 	/**
+	 * Finds resp. builds the metadata to the given table from the given (optional) annotation.
+	 *
+	 * @param annotation
+	 *            the optional annotation that contains any metadata to the table
+	 * @param catalogName
+	 *            finds the optional name of the catalog that contains the table
+	 * @param schemaName
+	 *            finds the optional name of the schema that contains the table
+	 * @param tableName
+	 *            finds the name of the table
+	 * @param defaultTableName
+	 *            the name of the talbe, if the annotation is {@code null} or contains no value for the table name
+	 * @return the metadata for the given table
+	 */
+	public <A extends Annotation> GeneratorTable resolveTable(final A annotation, final Function<A, String> catalogName,
+			final Function<A, String> schemaName, final Function<A, String> tableName, final String defaultTableName) {
+		final String catalog;
+		final String schema;
+		String table;
+		if (annotation == null) {
+			catalog = null;
+			schema = null;
+			table = defaultTableName;
+		} else {
+			catalog = catalogName.apply(annotation);
+			schema = schemaName.apply(annotation);
+			table = tableName.apply(annotation);
+			if (table.length() == 0) {
+				table = defaultTableName;
+			}
+		}
+		return resolveTable(catalog, schema, table);
+	}
+
+	/**
 	 * Finds resp. builds the metadata to the given table.
+	 *
+	 * @param catalogName
+	 *            the optional name of the catalog that contains the table
+	 * @param schemaName
+	 *            the optional name of the schema that contains the table
 	 *
 	 * @param tableName
 	 *            the name of the table from the database
 	 * @return the metadata for the given table
 	 */
-	public GeneratorTable resolveTable(final String tableName) {
-		final GeneratorTable table = this.tables.get(tableName);
+	public GeneratorTable resolveTable(final String catalogName, final String schemaName, final String tableName) {
+		final String catalog;
+		final String schema;
+		final String qualified;
+		if (catalogName == null || catalogName.length() == 0) {
+			catalog = null;
+			if (schemaName == null || schemaName.length() == 0) {
+				schema = null;
+				qualified = tableName;
+			} else {
+				schema = schemaName;
+				qualified = schemaName + '.' + tableName;
+			}
+		} else {
+			schema = schemaName;
+			ModelException.test(schema != null && schema.length() > 0,
+					"Catalog name '{}' found for table '{}' but schema name is missing.", catalogName, tableName);
+			catalog = catalogName;
+			qualified = catalog + '.' + schema + '.' + tableName;
+		}
+		final GeneratorTable table = this.tables.get(qualified);
 		if (table != null) {
 			return table;
 		}
-		return addContextObject(this.tables, ContextModelListener::foundTable, tableName,
-				new GeneratorTable(this.tables.size(), tableName, this));
+		return addContextObject(this.tables, ContextModelListener::foundTable, qualified,
+				new GeneratorTable(this.tables.size(), catalog, schema, tableName, qualified, this));
 	}
 
 	/**

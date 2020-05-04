@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.persistence.Access;
 import javax.persistence.AssociationOverride;
@@ -141,19 +142,6 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				defaultIdColumn);
 	}
 
-	/**
-	 * Builds the name of the column that contains the ID of the entity for the given attribute.
-	 *
-	 * @param attribute
-	 *            the inspected attribute
-	 * @param override
-	 *            contains optional override options
-	 * @param joinColumns
-	 *            the default join columns
-	 * @param defaultIdColumn
-	 *            the default name for the column, if {@code joinColumn} is empty or {@code null}
-	 * @return the column name
-	 */
 	private static String buildIdColumn(final AttributeAccessor attribute, final AssociationOverride override,
 			final JoinColumn[] joinColumns, final String defaultIdColumn) {
 		if (override != null) {
@@ -175,70 +163,10 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		return StringUtils.defaultString(getJoinColumnName(joinColumns), defaultIdColumn);
 	}
 
-	/**
-	 * Builds the name of the column that contains the ID of the entity for the given attribute.
-	 *
-	 * @param attribute
-	 *            the inspected attribute
-	 * @param override
-	 *            contains optional override options
-	 * @param joinTable
-	 *            the optional join table date
-	 * @param tableMetadata
-	 *            the optional
-	 * @param defaultIdColumn
-	 *            the default name for the column, if {@code joinColumn} is empty or {@code null}
-	 * @return the column name
-	 */
-	protected static String buildIdColumn(final AttributeAccessor attribute, final AssociationOverride override,
+	private static String buildIdColumn(final AttributeAccessor attribute, final AssociationOverride override,
 			final JoinTable joinTable, final CollectionTable tableMetadata, final String defaultIdColumn) {
 		return buildIdColumn(attribute, override, joinTable != null ? joinTable.joinColumns()
 				: tableMetadata != null ? tableMetadata.joinColumns() : null, defaultIdColumn);
-	}
-
-	/**
-	 * Builds the name of the table of the association for the given field.
-	 *
-	 * @param attribute
-	 *            the inspected field
-	 * @param override
-	 *            contains optional override options
-	 * @param joinTable
-	 *            the optional join table
-	 * @param collectionTable
-	 *            the optional metadata of the table
-	 * @param defaultTableName
-	 *            the default name for the table
-	 * @return the table name
-	 */
-	protected static String buildTableName(final AttributeAccessor attribute, final AssociationOverride override,
-			final JoinTable joinTable, final CollectionTable collectionTable, final String defaultTableName) {
-		if (override != null) {
-			final JoinTable joinTableOverride = override.joinTable();
-			if (joinTableOverride != null && joinTableOverride.name().length() > 0) {
-				return joinTableOverride.name();
-			}
-		}
-		if (joinTable != null && joinTable.name().length() > 0) {
-			return joinTable.name();
-		}
-		if (collectionTable != null && collectionTable.name().length() > 0) {
-			return collectionTable.name();
-		}
-		return defaultTableName;
-	}
-
-	/**
-	 * Builds the name of the table of the association for the given field.
-	 *
-	 * @param tableMetadata
-	 *            the current metadata of the field
-	 * @param defaultTableName
-	 *            the default name for the table
-	 * @return the column name
-	 */
-	protected static String buildTableName(final CollectionTable tableMetadata, final String defaultTableName) {
-		return tableMetadata != null && tableMetadata.name().length() != 0 ? tableMetadata.name() : defaultTableName;
 	}
 
 	/**
@@ -347,6 +275,45 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		return attribute.isAnnotationPresent(OneToMany.class) || attribute.isAnnotationPresent(ManyToMany.class)
 				|| attribute.isAnnotationPresent(ElementCollection.class)
 				|| attribute.isAnnotationPresent(ManyToAny.class);
+	}
+
+	private static String resolveAnnotationAttribute(final AssociationOverride override, final JoinTable joinTable,
+			final CollectionTable collectionTable, final Function<JoinTable, String> joinTableAttribute,
+			final Function<CollectionTable, String> collectionTableAttribute, final String defaultAttribute) {
+		if (override != null) {
+			final JoinTable joinTableOverride = override.joinTable();
+			if (joinTableOverride != null) {
+				final String value = joinTableAttribute.apply(joinTableOverride);
+				if (value.length() > 0) {
+					return value;
+				}
+			}
+		}
+		if (joinTable != null) {
+			final String value = joinTableAttribute.apply(joinTable);
+			if (value.length() > 0) {
+				return value;
+			}
+		}
+		if (collectionTable != null) {
+			final String value = collectionTableAttribute.apply(collectionTable);
+			if (value.length() > 0) {
+				return value;
+			}
+		}
+		return defaultAttribute;
+	}
+
+	private static GeneratorTable resolveTable(final GeneratorContext context, final AssociationOverride override,
+			final JoinTable joinTable, final CollectionTable collectionTable, final GeneratorTable sourceEntityTable,
+			final String targetEntityTable) {
+		return context.resolveTable(
+				resolveAnnotationAttribute(override, joinTable, collectionTable, JoinTable::catalog,
+						CollectionTable::catalog, sourceEntityTable.getCatalog()),
+				resolveAnnotationAttribute(override, joinTable, collectionTable, JoinTable::schema,
+						CollectionTable::schema, sourceEntityTable.getSchema()),
+				resolveAnnotationAttribute(override, joinTable, collectionTable, JoinTable::name, CollectionTable::name,
+						sourceEntityTable.getName() + '_' + targetEntityTable));
 	}
 
 	/** The current context. */
@@ -479,9 +446,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			} else {
 				// We need a mapping table
 				final JoinTable joinTable = attribute.getAnnotation(JoinTable.class);
-				this.table = this.context.resolveTable(
-						buildTableName(attribute, override, joinTable, collectionTable, sourceClass.getTable().getName()
-								+ '_' + (this.valueEntityClass == null ? "table" : this.valueEntityClass.getTable())));
+				this.table = resolveTable(this.context, override, joinTable, collectionTable, sourceClass.getTable(),
+						this.valueEntityClass == null ? "table" : this.valueEntityClass.getTable().getName());
 				initializeIdColumnForMappingTable(sourceClass, attribute, override, joinTable, collectionTable);
 				this.valueColumn = buildValueColumn(this.table, override, attribute, attribute.getName() + '_'
 						+ (this.valueEntityClass == null ? "id" : this.valueEntityClass.getIdColumn(attribute)));
@@ -495,8 +461,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			this.composition = true;
 
 			// Initialize the table and id column name
-			this.table = this.context.resolveTable(
-					buildTableName(collectionTable, sourceClass.getEntityName() + '_' + attribute.getName()));
+			this.table = this.context.resolveTable(collectionTable, CollectionTable::catalog, CollectionTable::schema,
+					CollectionTable::name, sourceClass.getEntityName() + '_' + attribute.getName());
 			this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, override, collectionTable,
 					sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute)));
 
