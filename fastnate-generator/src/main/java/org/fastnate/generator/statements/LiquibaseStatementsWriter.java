@@ -83,8 +83,8 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 	public LiquibaseStatementsWriter(final GeneratorContext context) throws XMLStreamException, FileNotFoundException {
 		this(new BufferedOutputStream(
 				new FileOutputStream(context.getSettings().getProperty(OUTPUT_FILE_KEY, "changelog.xml"))),
-				// 1.0 was not able to write "valueDate" so we use 1.1 as default liquibase version
-				context.getSettings().getProperty(VERSION_KEY, "1.1"));
+				// "1.9" was not able to write "valueComputed", so we use "2.0" as default
+				context.getSettings().getProperty(VERSION_KEY, "2.0"));
 	}
 
 	/**
