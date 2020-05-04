@@ -249,13 +249,18 @@ public class PostgreSqlBulkWriter extends FileStatementsWriter {
 						}
 						final PrimitiveColumnExpression<?> expression = (PrimitiveColumnExpression<?>) insert
 								.getValues().get(column);
-						if (expression == null || expression.getValue() == null) {
+						if (expression == null) {
 							bulkWriter.write("\\N");
-						} else if (expression.getValue() instanceof String) {
-							bulkWriter.write(((String) expression.getValue()).replace("\\", "\\\\").replace("\n", "\\n")
-									.replace("\r", "\\r").replace("\t", "\\t"));
 						} else {
-							bulkWriter.write(expression.getValue().toString());
+							final Object value = expression.getDatabaseValue();
+							if (value == null) {
+								bulkWriter.write("\\N");
+							} else if (value instanceof String) {
+								bulkWriter.write(((String) value).replace("\\", "\\\\").replace("\n", "\\n")
+										.replace("\r", "\\r").replace("\t", "\\t"));
+							} else {
+								bulkWriter.write(value.toString());
+							}
 						}
 					}
 				}

@@ -184,7 +184,8 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 					if (parameterIndex <= 0) {
 						throw new IllegalArgumentException("Can't set auto generated column " + column.getName());
 					}
-					this.statement.setObject(parameterIndex, ((PrimitiveColumnExpression<?>) expression).getValue());
+					this.statement.setObject(parameterIndex,
+							((PrimitiveColumnExpression<?>) expression).getDatabaseValue());
 				} catch (final SQLException e) {
 					throw new IllegalArgumentException("Can't set " + column + " to " + expression + " in " + this.sql,
 							e);
