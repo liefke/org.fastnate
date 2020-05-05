@@ -17,6 +17,7 @@ import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.fastnate.generator.RelativeDate;
 import org.fastnate.generator.RelativeDate.Precision;
+import org.fastnate.generator.RelativeDate.ReferenceDate;
 import org.fastnate.generator.context.GeneratorColumn;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.dialect.GeneratorDialect;
@@ -53,6 +54,9 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 
 	/** The receiver of our XML elements. */
 	private final XMLStreamWriter writer;
+
+	/** Indicates if our liquibase version supports relative dates. */
+	private final boolean relativeDatesSupported;
 
 	/** The outputstream to close, if this writer is closed. */
 	@Getter(AccessLevel.NONE)
@@ -127,6 +131,7 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 		writer.writeNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
 		writer.writeAttribute("http://www.w3.org/2001/XMLSchema-instance", "schemaLocation",
 				namespace + " http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-" + version + ".xsd");
+		this.relativeDatesSupported = !version.matches("[1-3]\\..*");
 	}
 
 	/**
@@ -231,12 +236,22 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 
 	private void writeDateExpression(final ColumnExpression expression, final Date value, final Date databaseValue)
 			throws XMLStreamException {
-		if (value == RelativeDate.NOW) {
-			this.writer.writeAttribute("valueDate", "now");
-		} else if (value == RelativeDate.TODAY) {
-			this.writer.writeAttribute("valueDate", "today");
-		} else if (value instanceof RelativeDate) {
-			writeRelativeDateExpression(expression, value);
+		if (value instanceof RelativeDate || value instanceof ReferenceDate) {
+			if (this.relativeDatesSupported) {
+				if (value == RelativeDate.NOW) {
+					this.writer.writeAttribute("valueDate", "now");
+					return;
+				}
+				if (value == RelativeDate.TODAY) {
+					this.writer.writeAttribute("valueDate", "today");
+					return;
+				}
+				if (value instanceof RelativeDate) {
+					writeRelativeDateExpression(expression, value);
+					return;
+				}
+			}
+			this.writer.writeAttribute("valueComputed", expression.toSql());
 		} else if (databaseValue instanceof java.sql.Time) {
 			this.writer.writeAttribute("valueDate", DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(databaseValue));
 		} else if (databaseValue instanceof java.sql.Date) {
