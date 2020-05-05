@@ -8,13 +8,14 @@ import java.util.Set;
 import javax.persistence.CollectionTable;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-
-import org.fastnate.generator.test.BaseTestEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -29,21 +30,26 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(catalog = "test", schema = "MySchema", name = "SchemaTest")
+@Table(catalog = "fastnate", schema = "MySchema", name = "SchemaTest")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SchemaTestEntity extends BaseTestEntity {
+public class SchemaTestEntity {
+
+	@Id
+	@GeneratedValue(generator = "SchemaTestSequence")
+	@SequenceGenerator(name = "SchemaTestSequence", schema = "MySchema", sequenceName = "STSeq")
+	private Long id;
 
 	@NotNull
 	@Size(min = 1)
 	private String name;
 
 	@OneToMany
-	@JoinTable(catalog = "test", schema = "SetSchema")
-	private Set<SchemaTestEntity> entities = new HashSet<>();
+	@JoinTable(catalog = "fastnate", schema = "ListSchema")
+	private List<SchemaTestEntity> entities = new ArrayList<>();
 
 	@ElementCollection
-	@CollectionTable(catalog = "test", schema = "ListSchema")
-	private List<String> strings = new ArrayList<>();
+	@CollectionTable(catalog = "fastnate", schema = "SetSchema")
+	private Set<String> strings = new HashSet<>();
 
 	/**
 	 * Creates a new instance of {@link SchemaTestEntity}.

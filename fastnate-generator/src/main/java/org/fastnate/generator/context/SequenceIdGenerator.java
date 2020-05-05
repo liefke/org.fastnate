@@ -12,6 +12,7 @@ import org.fastnate.generator.statements.PlainColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 
 /**
@@ -19,23 +20,37 @@ import lombok.Getter;
  *
  * @author Tobias Liefke
  */
+@Getter
 public class SequenceIdGenerator extends IdGenerator {
 
+	/** The current database dialect. */
 	private final GeneratorDialect dialect;
 
-	@Getter
+	/** The (optional) catalog that contains the schema of the sequence. */
+	private final String catalog;
+
+	/** The (optional) schema that contains the sequence. */
+	private final String schema;
+
+	/** The name of the sequence. */
 	private final String sequenceName;
 
+	/** The fully qualfied name of the sequence, including the optional catalog and schema name. */
+	private final String qualifiedName;
+
+	/** Indicates that the sequence is used when referencing existing IDs, instead of absolute IDs. */
 	private final boolean relativeIds;
 
-	@Getter
+	/** The amount to increment by when allocating sequence numbers from the sequence. */
 	private final int allocationSize;
 
-	@Getter
+	/** The value from which the sequence object is to start generating. */
 	private long initialValue;
 
+	@Getter(AccessLevel.NONE)
 	private long nextValue;
 
+	@Getter(AccessLevel.NONE)
 	private long currentSequenceValue;
 
 	/**
@@ -51,11 +66,25 @@ public class SequenceIdGenerator extends IdGenerator {
 	public SequenceIdGenerator(final SequenceGenerator generator, final GeneratorDialect dialect,
 			final boolean relativeIds) {
 		this.dialect = dialect;
+		this.catalog = generator.catalog().length() == 0 ? null : generator.catalog();
+		this.schema = generator.schema().length() == 0 ? null : generator.schema();
+		this.sequenceName = generator.sequenceName();
+		if (this.catalog == null) {
+			if (this.schema == null) {
+				this.qualifiedName = this.sequenceName;
+			} else {
+				this.qualifiedName = this.schema + '.' + this.sequenceName;
+			}
+		} else {
+			ModelException.test(this.schema != null,
+					"Catalog name '{}' found for sequence '{}' but schema name is missing.", this.catalog,
+					this.sequenceName);
+			this.qualifiedName = this.catalog + '.' + this.schema + '.' + this.sequenceName;
+		}
 		this.relativeIds = relativeIds;
 		this.allocationSize = generator.allocationSize();
 		this.nextValue = this.initialValue = generator.initialValue();
 		this.currentSequenceValue = this.initialValue - 1;
-		this.sequenceName = generator.sequenceName();
 	}
 
 	@Override
@@ -67,11 +96,9 @@ public class SequenceIdGenerator extends IdGenerator {
 			} else {
 				this.currentSequenceValue += this.allocationSize;
 			}
-			expression = new NextSequenceValueExpression(this.dialect, this.sequenceName, this.allocationSize,
-					this.currentSequenceValue - value.longValue());
+			expression = new NextSequenceValueExpression(this, this.currentSequenceValue - value.longValue());
 		} else {
-			expression = new CurrentSequenceValueExpression(this.dialect, this.sequenceName, this.allocationSize,
-					this.currentSequenceValue - value.longValue());
+			expression = new CurrentSequenceValueExpression(this, this.currentSequenceValue - value.longValue());
 		}
 		statement.setColumnValue(column, expression);
 	}
@@ -82,7 +109,7 @@ public class SequenceIdGenerator extends IdGenerator {
 			if (this.currentSequenceValue >= this.nextValue || this.currentSequenceValue < this.initialValue) {
 				final long currentValue = this.currentSequenceValue;
 				this.currentSequenceValue = this.nextValue - 1;
-				this.dialect.adjustNextSequenceValue(writer, this.sequenceName, currentValue,
+				this.dialect.adjustNextSequenceValue(writer, this.qualifiedName, currentValue,
 						this.currentSequenceValue + this.allocationSize, this.allocationSize);
 			}
 		}
@@ -102,7 +129,7 @@ public class SequenceIdGenerator extends IdGenerator {
 				this.currentSequenceValue += this.allocationSize;
 			}
 			writer.writePlainStatement(this.dialect,
-					this.dialect.buildNextSequenceValue(this.sequenceName, this.allocationSize));
+					this.dialect.buildNextSequenceValue(this.qualifiedName, this.allocationSize));
 		}
 	}
 
@@ -115,8 +142,7 @@ public class SequenceIdGenerator extends IdGenerator {
 	public ColumnExpression getExpression(final GeneratorTable entityTable, final GeneratorColumn column,
 			final Number targetId, final boolean whereExpression) {
 		if (!whereExpression || this.dialect.isSequenceInWhereSupported()) {
-			return new CurrentSequenceValueExpression(this.dialect, this.sequenceName, this.allocationSize,
-					this.currentSequenceValue - targetId.longValue());
+			return new CurrentSequenceValueExpression(this, this.currentSequenceValue - targetId.longValue());
 		}
 
 		final long diff = this.nextValue - 1 - targetId.longValue();

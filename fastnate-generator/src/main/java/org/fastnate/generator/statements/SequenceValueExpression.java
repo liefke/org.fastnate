@@ -1,6 +1,6 @@
 package org.fastnate.generator.statements;
 
-import org.fastnate.generator.dialect.GeneratorDialect;
+import org.fastnate.generator.context.SequenceIdGenerator;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,17 +14,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public abstract class SequenceValueExpression implements ColumnExpression {
 
-	/** The dialect of the current database. */
-	private final GeneratorDialect dialect;
-
-	/** The name of the sequence. */
-	private final String sequenceName;
-
-	/**
-	 * The expected incrementSize, as given in the schema - used by some dialects to ensure that exactly that inrement
-	 * is used.
-	 */
-	private final int incrementSize;
+	/** The written sequence. */
+	private final SequenceIdGenerator sequence;
 
 	/** The difference of the referenced ID to the sequence value. */
 	private final long difference;

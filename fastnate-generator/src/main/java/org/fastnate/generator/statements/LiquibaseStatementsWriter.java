@@ -120,7 +120,7 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 		writer.writeCharacters("\n");
 		writer.writeStartElement("databaseChangeLog");
 		String namespace = "http://www.liquibase.org/xml/ns/dbchangelog";
-		if (version.matches("1\\.\\d")) {
+		if (version.matches("1\\..*")) {
 			namespace += "/" + version;
 		}
 		writer.writeDefaultNamespace(namespace);
@@ -207,27 +207,12 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 
 	private void writeColumnExpression(final ColumnExpression expression) throws XMLStreamException {
 		if (expression instanceof PrimitiveColumnExpression) {
-			final Object value = ((PrimitiveColumnExpression<?>) expression).getValue();
-			if (value == null) {
-				return;
-			} else if (value instanceof String) {
-				writeString(expression, (String) value);
-				return;
-			}
-			if (value instanceof Number) {
-				this.writer.writeAttribute("valueNumeric", value.toString());
-				return;
-			}
-			if (value instanceof Boolean) {
-				this.writer.writeAttribute("valueNumeric", Boolean.TRUE.equals(value) ? "1" : "0");
-				return;
-			}
-			if (value instanceof Date) {
-				writeDateExpression(expression, (Date) value,
-						((PrimitiveColumnExpression<Date>) expression).getDatabaseValue());
-			}
+			writePrimitiveExpression((PrimitiveColumnExpression<?>) expression);
+		} else if (expression instanceof SequenceValueExpression) {
+			writeSequenceExpression((SequenceValueExpression) expression);
+		} else {
+			this.writer.writeAttribute("valueComputed", expression.toSql());
 		}
-		this.writer.writeAttribute("valueComputed", expression.toSql());
 	}
 
 	@Override
@@ -276,6 +261,24 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 		}
 	}
 
+	private void writePrimitiveExpression(final PrimitiveColumnExpression<?> expression) throws XMLStreamException {
+		final Object value = expression.getValue();
+		if (value != null) {
+			if (value instanceof String) {
+				writeString(expression, (String) value);
+			} else if (value instanceof Number) {
+				this.writer.writeAttribute("valueNumeric", value.toString());
+			} else if (value instanceof Boolean) {
+				this.writer.writeAttribute("valueNumeric", Boolean.TRUE.equals(value) ? "1" : "0");
+			} else if (value instanceof Date) {
+				writeDateExpression(expression, (Date) value,
+						((PrimitiveColumnExpression<Date>) expression).getDatabaseValue());
+			} else {
+				this.writer.writeAttribute("valueComputed", expression.toSql());
+			}
+		}
+	}
+
 	private void writeRelativeDateExpression(final ColumnExpression expression, final Date value)
 			throws XMLStreamException {
 		final RelativeDate date = (RelativeDate) value;
@@ -302,6 +305,20 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 		} catch (final XMLStreamException e) {
 			throw new IOException(e);
 		}
+	}
+
+	private void writeSequenceExpression(final SequenceValueExpression expression) throws XMLStreamException {
+		if (expression.getDifference() == 0) {
+			if (expression instanceof NextSequenceValueExpression) {
+				this.writer.writeAttribute("valueSequenceNext", expression.getSequence().getQualifiedName());
+				return;
+			}
+			if (expression instanceof CurrentSequenceValueExpression) {
+				this.writer.writeAttribute("valueSequenceCurrent", expression.getSequence().getQualifiedName());
+				return;
+			}
+		}
+		this.writer.writeAttribute("valueComputed", expression.toSql());
 	}
 
 	@Override

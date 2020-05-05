@@ -97,7 +97,7 @@ public abstract class GeneratorDialect {
 	 * @param writer
 	 *            the target of the generated statements
 	 * @param sequenceName
-	 *            the name of the sequence
+	 *            the fully qualified name of the sequence
 	 * @param currentSequenceValue
 	 *            the current value of the sequence
 	 * @param nextSequenceValue
@@ -120,7 +120,7 @@ public abstract class GeneratorDialect {
 	 * Builds the SQL expression that is used for referencing the current value of the given sequence.
 	 *
 	 * @param sequence
-	 *            the name of the sequence
+	 *            the fully qualified name of the sequence
 	 * @param incrementSize
 	 *            the expected incrementSize, as given in the schema - used by some dialects to ensure that exactly that
 	 *            inrement is used
@@ -139,7 +139,7 @@ public abstract class GeneratorDialect {
 	 * Depending on {@link #isNextSequenceValueInInsertSupported()} this will return an expression or a statement.
 	 *
 	 * @param sequence
-	 *            the name of the sequence
+	 *            the fully qualified name of the sequence
 	 * @param incrementSize
 	 *            the expected incrementSize, as given in the schema - used by some dialects to ensure that exactly that
 	 *            inrement is used

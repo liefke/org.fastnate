@@ -1,5 +1,6 @@
 package org.fastnate.generator.statements;
 
+import org.fastnate.generator.context.SequenceIdGenerator;
 import org.fastnate.generator.dialect.GeneratorDialect;
 
 /**
@@ -13,24 +14,19 @@ public class NextSequenceValueExpression extends SequenceValueExpression {
 	/**
 	 * Creates a new instance of an expression that references an ID by using the next value of a sequence.
 	 *
-	 * @param dialect
-	 *            the dialect of the current database
-	 * @param sequenceName
-	 *            the name of the sequence
-	 * @param incrementSize
-	 *            the expected incrementSize, as given in the schema - used by some dialects to ensure that exactly that
-	 *            inrement is used.
+	 * @param sequence
+	 *            describes the sequence
 	 * @param difference
 	 *            the difference of the referenced ID to the sequence value
 	 */
-	public NextSequenceValueExpression(final GeneratorDialect dialect, final String sequenceName,
-			final int incrementSize, final long difference) {
-		super(dialect, sequenceName, incrementSize, difference);
+	public NextSequenceValueExpression(final SequenceIdGenerator sequence, final long difference) {
+		super(sequence, difference);
 	}
 
 	@Override
 	public String toSql() {
-		return toSql(getDialect().buildNextSequenceValue(getSequenceName(), getIncrementSize()));
+		return toSql(getSequence().getDialect().buildNextSequenceValue(getSequence().getQualifiedName(),
+				getSequence().getAllocationSize()));
 	}
 
 }
