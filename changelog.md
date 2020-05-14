@@ -58,3 +58,11 @@ Fastnate Changelog
 * #42 Don't commit open transaction
 * #45 Correct regular expression for field name extraction
 * Correct calculation of relative dates for connected statements writer
+
+### 1.5.0 (2020-05-14)
+* #26 Move CSV import to own module, support XML import and add generic import (no need to write one line of code for import)
+* #39 Support @Resource in DataProvider
+* #46 Fix some issues with deeper entity hierarchies
+* #47 Support AssociationOverride with JoinColumns defined in the JoinTable
+* #48 Support for schema and catalog name in table and sequence annotations
+* #50 Support to create Liquibase changelog file
