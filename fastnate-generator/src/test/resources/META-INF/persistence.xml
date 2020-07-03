@@ -33,8 +33,8 @@
 	</persistence-unit>
 	<persistence-unit name="test-mysql" transaction-type="RESOURCE_LOCAL">
 		<properties>
-			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" />
-			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/fastnate" />
+			<property name="hibernate.connection.driver_class" value="com.mysql.cj.jdbc.Driver" />
+			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/fastnate?serverTimezone=UTC" />
 			<property name="hibernate.connection.username" value="fastnate" />
 			<property name="hibernate.connection.password" value="fastnate" />
 		</properties>
