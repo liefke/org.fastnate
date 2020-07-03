@@ -27,7 +27,7 @@ jobs:
     - name: Build with Maven
       run: mvn -B package --file pom.xml
     - name: Collect artifacts
-      run: mkdir results && cp target/*.jar results
+      run: mkdir results && cp fastnate-*/target/*.jar results
     - name: Publish artifacts
       uses: actions/upload-artifact@v1
       with:
