@@ -12,9 +12,9 @@ import lombok.Setter;
  *
  * @author Tobias Liefke
  */
-@Entity(name = "EmbedEnty")
 @Getter
 @Setter
+@Entity(name = "EmbedEnty")
 public class TestEmbeddingEntity {
 
 	@EmbeddedId

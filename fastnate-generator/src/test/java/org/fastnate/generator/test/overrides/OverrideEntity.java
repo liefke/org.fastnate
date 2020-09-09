@@ -33,7 +33,7 @@ public class OverrideEntity extends ToOverrideEntity {
 
 	@Embedded
 	@AttributeOverride(name = "description", column = @Column(name = "overriddenDescription"))
-	@AssociationOverride(name = "otherNode", joinColumns = @JoinColumn(name = "testOverrideOtherNode"))
+	@AssociationOverride(name = "otherEntity", joinColumns = @JoinColumn(name = "testOverrideOtherNode"))
 	private TestEmbeddedProperties embedded;
 
 }

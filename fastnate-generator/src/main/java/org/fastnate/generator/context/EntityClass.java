@@ -90,18 +90,25 @@ public class EntityClass<E> {
 	}
 
 	/**
-	 * Finds all association overrides that are attached to the given field or class.
+	 * Finds all association overrides that are attached to the given field, method or class, by taking the already
+	 * defined overrides into account.
 	 *
-	 * @param fieldOrClass
+	 * @param surroundingOverrides
+	 *            the overrides already defined for the surrounding element
+	 * @param prefix
+	 *            the prefix of the element, for lookup in {@code surroundingOverrides}
+	 * @param element
 	 *            the annotated element
 	 * @return a mapping from the name of the override to its definition, empty if neither {@link AssociationOverrides}
 	 *         nor {@link AssociationOverride} are given
 	 */
-	static Map<String, AssociationOverride> getAccociationOverrides(final AnnotatedElement fieldOrClass) {
-		final AssociationOverrides multiOverride = fieldOrClass.getAnnotation(AssociationOverrides.class);
-		final AssociationOverride singleOverride = fieldOrClass.getAnnotation(AssociationOverride.class);
+	static Map<String, AssociationOverride> getAccociationOverrides(
+			final Map<String, AssociationOverride> surroundingOverrides, final String prefix,
+			final AnnotatedElement element) {
+		final AssociationOverrides multiOverride = element.getAnnotation(AssociationOverrides.class);
+		final AssociationOverride singleOverride = element.getAnnotation(AssociationOverride.class);
 
-		if (multiOverride == null && singleOverride == null) {
+		if (multiOverride == null && singleOverride == null && surroundingOverrides.isEmpty()) {
 			return Collections.emptyMap();
 		}
 
@@ -121,23 +128,36 @@ public class EntityClass<E> {
 		for (final AssociationOverride override : config) {
 			attributeOverrides.put(override.name(), override);
 		}
+
+		for (final Map.Entry<String, AssociationOverride> override : surroundingOverrides.entrySet()) {
+			if (override.getKey().startsWith(prefix)) {
+				attributeOverrides.put(override.getKey().substring(prefix.length()), override.getValue());
+			}
+		}
 		return attributeOverrides;
 	}
 
 	/**
-	 * Funds all attribute overrides that are attached to the given field or class.
+	 * Finds all {@link AttributeOverrides} that are attached to the given field, method or class, by taking the already
+	 * defined overrides into account.
 	 *
-	 * @param fieldOrClass
+	 * @param surroundingOverrides
+	 *            the overrides already defined for the surrounding element
+	 * @param prefix
+	 *            the prefix of the element, for lookup in {@code surroundingOverrides}
+	 * @param element
 	 *            the annotated element
 	 * @return a mapping from the name of the override to its definition, empty if neither {@link AttributeOverrides}
 	 *         nor {@link AttributeOverride} are given
 	 */
-	static Map<String, AttributeOverride> getAttributeOverrides(final AnnotatedElement fieldOrClass) {
-		final AttributeOverrides multiOverride = fieldOrClass.getAnnotation(AttributeOverrides.class);
-		final AttributeOverride singleOverride = fieldOrClass.getAnnotation(AttributeOverride.class);
+	static Map<String, AttributeOverride> getAttributeOverrides(
+			final Map<String, AttributeOverride> surroundingOverrides, final String prefix,
+			final AnnotatedElement element) {
+		final AttributeOverrides multiOverride = element.getAnnotation(AttributeOverrides.class);
+		final AttributeOverride singleOverride = element.getAnnotation(AttributeOverride.class);
 
-		if (multiOverride == null && singleOverride == null) {
-			return Collections.emptyMap();
+		if (multiOverride == null && singleOverride == null && surroundingOverrides.isEmpty()) {
+			return surroundingOverrides;
 		}
 
 		final Collection<AttributeOverride> config = new ArrayList<>();
@@ -156,7 +176,19 @@ public class EntityClass<E> {
 		for (final AttributeOverride override : config) {
 			attributeOverrides.put(override.name(), override);
 		}
+
+		for (final Map.Entry<String, AttributeOverride> override : surroundingOverrides.entrySet()) {
+			if (override.getKey().startsWith(prefix)) {
+				attributeOverrides.put(override.getKey().substring(prefix.length()), override.getValue());
+			}
+		}
 		return attributeOverrides;
+	}
+
+	private static Column getColumnAnnotation(final AttributeAccessor attribute,
+			final Map<String, AttributeOverride> overrides) {
+		final AttributeOverride override = overrides.get(attribute.getName());
+		return override != null ? override.column() : attribute.getAnnotation(Column.class);
 	}
 
 	/** The current context. */
@@ -476,8 +508,8 @@ public class EntityClass<E> {
 		}
 
 		// Add the attribute and association overrides of this class
-		this.attributeOverrides.putAll(getAttributeOverrides(inspectedClass));
-		this.associationOverrides.putAll(getAccociationOverrides(inspectedClass));
+		this.attributeOverrides.putAll(getAttributeOverrides(Collections.emptyMap(), "", inspectedClass));
+		this.associationOverrides.putAll(getAccociationOverrides(Collections.emptyMap(), "", inspectedClass));
 	}
 
 	private void buildPrimaryKeyJoinColumn() {
@@ -515,8 +547,8 @@ public class EntityClass<E> {
 		if (c.isAnnotationPresent(MappedSuperclass.class) || c.isAnnotationPresent(Entity.class)) {
 			for (final AttributeAccessor attribute : this.accessStyle.getDeclaredAttributes(c, this.entityClass)) {
 				if (!attribute.isAnnotationPresent(EmbeddedId.class) && !attribute.isAnnotationPresent(Id.class)) {
-					final Property<E, ?> property = buildProperty(attribute, getColumnAnnotation(attribute),
-							this.associationOverrides.get(attribute.getName()));
+					final Property<E, ?> property = buildProperty(this.table, attribute, this.attributeOverrides,
+							this.associationOverrides);
 					if (property != null) {
 						this.properties.put(attribute.getName(), property);
 						this.allProperties.add(property);
@@ -533,32 +565,45 @@ public class EntityClass<E> {
 	/**
 	 * Builds the property for the given attribute.
 	 *
+	 * @param propertyTable
+	 *            the table of the new property (if it is not a collection property)
 	 * @param attribute
 	 *            the attribute to inspect
-	 * @param columnMetadata
-	 *            the attached (or overriden) column metadata
-	 * @param override
-	 *            the AssociationOverride found for this attribute
+	 * @param surroundingAttributeOverrides
+	 *            the overrides defined for the surrounding element
+	 * @param surroundingAssociationOverrides
+	 *            the overrides defined for the surrounding element
 	 * @return the property that represents the attribute or {@code null} if not persistent
 	 */
-	<X> Property<X, ?> buildProperty(final AttributeAccessor attribute, final Column columnMetadata,
-			final AssociationOverride override) {
-		if (attribute.isPersistent()) {
-			if (CollectionProperty.isCollectionProperty(attribute)) {
-				return new CollectionProperty<>(this, attribute, override);
-			} else if (MapProperty.isMapProperty(attribute)) {
-				return new MapProperty<>(this, attribute, override);
-			} else if (EntityProperty.isEntityProperty(attribute)) {
-				return new EntityProperty<>(this.context, getTable(), attribute, override);
-			} else if (attribute.isAnnotationPresent(Embedded.class)) {
-				return new EmbeddedProperty<>(this, attribute);
-			} else if (attribute.isAnnotationPresent(Version.class)) {
-				return new VersionProperty<>(this.context, this.table, attribute, columnMetadata);
-			} else {
-				return new PrimitiveProperty<>(this.context, this.table, attribute, columnMetadata);
-			}
+	<X> Property<X, ?> buildProperty(final GeneratorTable propertyTable, final AttributeAccessor attribute,
+			final Map<String, AttributeOverride> surroundingAttributeOverrides,
+			final Map<String, AssociationOverride> surroundingAssociationOverrides) {
+		if (!attribute.isPersistent()) {
+			return null;
 		}
-		return null;
+		if (CollectionProperty.isCollectionProperty(attribute)) {
+			ModelException.test(propertyTable == this.table, "Unsupported nesting of collection property {}",
+					attribute);
+			return new CollectionProperty<>(this, attribute, surroundingAssociationOverrides.get(attribute.getName()));
+		}
+		if (MapProperty.isMapProperty(attribute)) {
+			ModelException.test(propertyTable == this.table, "Unsupported nesting of map property {}", attribute);
+			return new MapProperty<>(this, attribute, surroundingAssociationOverrides.get(attribute.getName()));
+		}
+		if (EntityProperty.isEntityProperty(attribute)) {
+			return new EntityProperty<>(this.context, propertyTable, attribute,
+					surroundingAssociationOverrides.get(attribute.getName()));
+		}
+		if (attribute.isAnnotationPresent(Embedded.class)) {
+			return new EmbeddedProperty<>(this, propertyTable, attribute, surroundingAttributeOverrides,
+					surroundingAssociationOverrides);
+		}
+
+		final Column columnMetadata = getColumnAnnotation(attribute, surroundingAttributeOverrides);
+		if (attribute.isAnnotationPresent(Version.class)) {
+			return new VersionProperty<>(this.context, propertyTable, attribute, columnMetadata);
+		}
+		return new PrimitiveProperty<>(this.context, propertyTable, attribute, columnMetadata);
 	}
 
 	private void buildUniqueProperties(final UniqueConstraint[] uniqueConstraints) {
@@ -661,15 +706,17 @@ public class EntityClass<E> {
 	private boolean findIdProperty(final Iterable<AttributeAccessor> declaredAttributes) {
 		for (final AttributeAccessor attribute : declaredAttributes) {
 			if (attribute.isAnnotationPresent(EmbeddedId.class)) {
-				this.idProperty = new EmbeddedProperty<>(this, attribute);
+				this.idProperty = new EmbeddedProperty<>(this, this.table, attribute, this.attributeOverrides,
+						this.associationOverrides);
 				return true;
 			} else if (attribute.isAnnotationPresent(Id.class)) {
 				if (attribute.isAnnotationPresent(GeneratedValue.class)) {
 					this.context.registerGenerators(attribute, this.table);
-					this.idProperty = new GeneratedIdProperty<>(this, attribute, getColumnAnnotation(attribute));
+					this.idProperty = new GeneratedIdProperty<>(this, attribute,
+							getColumnAnnotation(attribute, this.attributeOverrides));
 				} else {
-					this.idProperty = buildProperty(attribute, getColumnAnnotation(attribute),
-							this.associationOverrides.get(attribute.getName()));
+					this.idProperty = buildProperty(this.table, attribute, this.attributeOverrides,
+							this.associationOverrides);
 				}
 				return true;
 			}
@@ -687,11 +734,6 @@ public class EntityClass<E> {
 			}
 		}
 		return null;
-	}
-
-	private Column getColumnAnnotation(final AttributeAccessor attribute) {
-		final AttributeOverride override = this.attributeOverrides.get(attribute.getName());
-		return override != null ? override.column() : attribute.getAnnotation(Column.class);
 	}
 
 	/**

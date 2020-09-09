@@ -14,7 +14,6 @@ import javax.annotation.Nonnull;
 import javax.persistence.Access;
 import javax.persistence.AssociationOverride;
 import javax.persistence.AttributeOverride;
-import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 
@@ -30,7 +29,7 @@ import lombok.Getter;
  * @author Tobias Liefke
  *
  * @param <E>
- *            The type of the container class (the entity)
+ *            The type of the container class (the entity or parent embeddable)
  * @param <T>
  *            The type of the embeddable object
  */
@@ -52,11 +51,19 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 	 * Instantiates a new embedded property.
 	 *
 	 * @param entityClass
-	 *            the class of the entity
+	 *            the surrounding entity class
+	 * @param table
+	 *            the table that contains the attribute
 	 * @param attribute
 	 *            the attribute that contains the embedded object
+	 * @param surroundingAttributeOverrides
+	 *            the attribute overrides of the surrounding entity class or embedded property (if we are nested)
+	 * @param surroundingAssociationOverrides
+	 *            the association overrides of the surrounding entity class or embedded property (if we are nested)
 	 */
-	public EmbeddedProperty(final EntityClass<?> entityClass, final AttributeAccessor attribute) {
+	public EmbeddedProperty(final EntityClass<?> entityClass, final GeneratorTable table,
+			final AttributeAccessor attribute, final Map<String, AttributeOverride> surroundingAttributeOverrides,
+			final Map<String, AssociationOverride> surroundingAssociationOverrides) {
 		super(attribute);
 
 		this.id = attribute.isAnnotationPresent(EmbeddedId.class);
@@ -85,17 +92,17 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 			accessStyle = attribute.getAccessStyle();
 		}
 
+		final String prefix = attribute.getName() + '.';
 		final Map<String, AttributeOverride> attributeOverrides = EntityClass
-				.getAttributeOverrides(attribute.getElement());
-		final Map<String, AssociationOverride> accociationOverrides = EntityClass
-				.getAccociationOverrides(attribute.getElement());
-		for (final AttributeAccessor field : accessStyle.getDeclaredAttributes((Class<Object>) type, type)) {
-			final AttributeOverride attrOveride = attributeOverrides.get(field.getName());
-			final Property<T, ?> property = entityClass.buildProperty(field,
-					attrOveride != null ? attrOveride.column() : field.getAnnotation(Column.class),
-					accociationOverrides.get(field.getName()));
+				.getAttributeOverrides(surroundingAttributeOverrides, prefix, attribute.getElement());
+		final Map<String, AssociationOverride> associationOverrides = EntityClass
+				.getAccociationOverrides(surroundingAssociationOverrides, prefix, attribute.getElement());
+		for (final AttributeAccessor embeddedAttribute : accessStyle.getDeclaredAttributes((Class<Object>) type,
+				type)) {
+			final Property<T, ?> property = entityClass.buildProperty(table, embeddedAttribute, attributeOverrides,
+					associationOverrides);
 			if (property != null) {
-				this.embeddedProperties.put(field.getName(), property);
+				this.embeddedProperties.put(embeddedAttribute.getName(), property);
 			}
 		}
 	}

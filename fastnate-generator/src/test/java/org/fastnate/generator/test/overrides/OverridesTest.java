@@ -49,8 +49,8 @@ public class OverridesTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(result.getOtherEntity().getSimpleProperty()).isEqualTo(otherEntity.getSimpleProperty());
 
 		assertThat(result.getEmbedded().getDescription()).isEqualTo(entity.getEmbedded().getDescription());
-		assertThat(result.getEmbedded().getOtherNode().getName())
-				.isEqualTo(entity.getEmbedded().getOtherNode().getName());
+		assertThat(result.getEmbedded().getOtherEntity().getName())
+				.isEqualTo(entity.getEmbedded().getOtherEntity().getName());
 
 		assertThat(result.getSimpleEntities()).hasSize(2);
 		assertThat(result.getSimpleEntities().get(0).getName()).isEqualTo(entity.getSimpleEntities().get(0).getName());

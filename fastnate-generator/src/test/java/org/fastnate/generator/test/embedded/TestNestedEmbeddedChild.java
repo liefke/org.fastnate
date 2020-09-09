@@ -1,9 +1,8 @@
 package org.fastnate.generator.test.embedded;
 
 import javax.persistence.Embeddable;
-import javax.persistence.ManyToOne;
 
-import org.fastnate.generator.test.SimpleTestEntity;
+import org.fastnate.generator.test.primitive.TestEnum;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * An embedded property of an entity.
+ * An embeddable class that is embededd in another.
  *
  * @author Tobias Liefke
  */
@@ -20,11 +19,10 @@ import lombok.Setter;
 @Embeddable
 @NoArgsConstructor
 @AllArgsConstructor
-public class TestEmbeddedProperties {
+public class TestNestedEmbeddedChild {
 
 	private String description;
 
-	@ManyToOne
-	private SimpleTestEntity otherEntity;
+	private TestEnum testEnum;
 
 }

@@ -481,7 +481,7 @@ public class XmlDataImporter extends PropertyDataImporter {
 	 */
 	protected <E, T> void importPluralProperty(final XMLEventReader reader, final E entity,
 			final PluralProperty<? super E, ?, T> property) throws XMLStreamException {
-		final List<SingularProperty<T, ?>> embeddedProperties = property.getEmbeddedProperties();
+		final List<Property<T, ?>> embeddedProperties = property.getEmbeddedProperties();
 		final EntityClass<T> targetClass = property.getValueEntityClass();
 		final String elementName = targetClass != null ? targetClass.getEntityName()
 				: property.getValueClass().getSimpleName();

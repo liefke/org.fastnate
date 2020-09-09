@@ -323,10 +323,10 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	private final GeneratorDialect dialect;
 
 	/** Contains all properties of an embedded element collection. */
-	private List<SingularProperty<T, ?>> embeddedProperties;
+	private List<Property<T, ?>> embeddedProperties;
 
 	/** Contains all properties of an embedded element collection by their name. */
-	private Map<String, SingularProperty<T, ?>> embeddedPropertiesByName;
+	private Map<String, Property<T, ?>> embeddedPropertiesByName;
 
 	/** Contains all properties of an embedded element collection which reference a required entity. */
 	private List<EntityProperty<T, ?>> requiredEmbeddedProperties;
@@ -409,7 +409,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		final ElementCollection values = attribute.getAnnotation(ElementCollection.class);
 		this.entityReference = values == null;
 		if (values == null) {
-			// Entity mapping, either OneToMany, ManyToMany or ManyToAny
+			// Entity mapping, either OneToMany, ManyToMany, or ManyToAny
 			final EntityMappingInformation mapping = new EntityMappingInformation(attribute, override,
 					valueClassParamIndex);
 			this.mappedBy = mapping.getMappedBy();
@@ -470,7 +470,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			this.valueClass = getPropertyArgument(attribute, values.targetClass(), valueClassParamIndex);
 			this.valueEntityClass = null;
 			if (this.valueClass.isAnnotationPresent(Embeddable.class)) {
-				buildEmbeddedProperties(this.valueClass);
+				buildEmbeddedProperties(sourceClass, this.valueClass);
 				this.valueConverter = null;
 				this.valueColumn = null;
 			} else {
@@ -491,12 +491,18 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/**
 	 * Builds the embedded properties of this property.
 	 *
+	 * @param sourceClass
+	 *            the class that contains our property
+	 *
 	 * @param targetType
 	 *            the target type
 	 */
-	protected void buildEmbeddedProperties(final Class<?> targetType) {
+	protected void buildEmbeddedProperties(final EntityClass<?> sourceClass, final Class<?> targetType) {
 		if (targetType.isAnnotationPresent(Embeddable.class)) {
-			// Determine the access style
+			this.embeddedProperties = new ArrayList<>();
+			this.embeddedPropertiesByName = new HashMap<>();
+			this.requiredEmbeddedProperties = new ArrayList<>();
+
 			final AccessStyle accessStyle;
 			final Access accessType = targetType.getAnnotation(Access.class);
 			if (accessType != null) {
@@ -505,46 +511,25 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				accessStyle = getAttribute().getAccessStyle();
 			}
 
-			this.embeddedProperties = new ArrayList<>();
-			this.embeddedPropertiesByName = new HashMap<>();
-			this.requiredEmbeddedProperties = new ArrayList<>();
+			final String prefix = getAttribute().getName() + '.';
 			final Map<String, AttributeOverride> attributeOverrides = EntityClass
-					.getAttributeOverrides(getAttribute().getElement());
-			final Map<String, AssociationOverride> accociationOverrides = EntityClass
-					.getAccociationOverrides(getAttribute().getElement());
+					.getAttributeOverrides(sourceClass.getAttributeOverrides(), prefix, getAttribute().getElement());
+			final Map<String, AssociationOverride> accociationOverrides = EntityClass.getAccociationOverrides(
+					sourceClass.getAssociationOverrides(), prefix, getAttribute().getElement());
 			for (final AttributeAccessor attribute : accessStyle.getDeclaredAttributes((Class<Object>) targetType,
 					getAttribute().getImplementationClass())) {
-				final AttributeOverride attributeOveride = attributeOverrides.get(attribute.getName());
-				final Column columnMetadata = attributeOveride != null ? attributeOveride.column()
-						: attribute.getAnnotation(Column.class);
-				final AssociationOverride assocOverride = accociationOverrides.get(attribute.getName());
-				final SingularProperty<T, ?> property = buildProperty(attribute, columnMetadata, assocOverride);
-				if (property != null) {
+				if (attribute.isPersistent()) {
+					final Property<T, ?> property = sourceClass.buildProperty(this.table, attribute, attributeOverrides,
+							accociationOverrides);
+
 					this.embeddedProperties.add(property);
 					this.embeddedPropertiesByName.put(property.getName(), property);
-
-					if (property.isRequired() && property instanceof EntityProperty) {
+					if (property instanceof EntityProperty && property.isRequired()) {
 						this.requiredEmbeddedProperties.add((EntityProperty<T, ?>) property);
 					}
 				}
 			}
 		}
-	}
-
-	private SingularProperty<T, ?> buildProperty(final AttributeAccessor attribute, final Column columnMetadata,
-			final AssociationOverride override) {
-		// Ignore static, transient and generated fields
-		if (attribute.isPersistent()) {
-			ModelException.test(
-					!CollectionProperty.isCollectionProperty(attribute) && !MapProperty.isMapProperty(attribute),
-					"Plural attributes not allowed for embedded element collection: {}", attribute);
-
-			if (EntityProperty.isEntityProperty(attribute)) {
-				return new EntityProperty<>(this.context, this.table, attribute, override);
-			}
-			return new PrimitiveProperty<>(this.context, this.table, attribute, columnMetadata);
-		}
-		return null;
 	}
 
 	/**
@@ -633,7 +618,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			stmt.setColumnValue(getKeyColumn(), key);
 		}
 
-		for (final SingularProperty<T, ?> property : this.embeddedProperties) {
+		for (final Property<T, ?> property : this.embeddedProperties) {
 			property.addInsertExpression(stmt, value);
 		}
 		writer.writeStatement(stmt);
