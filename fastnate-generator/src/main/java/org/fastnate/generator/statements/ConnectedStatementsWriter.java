@@ -220,6 +220,12 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	/** The count of milliseconds to wait, until a log message with the current count of statements is written. */
 	private static final long MILLISECONDS_BETWEEN_LOG_MESSAGES = 60 * 1000;
 
+	/** The minimum major version of the JDBC API that the driver needs to support. */
+	private static final int MINIMUM_JDBC_DRIVER_MAJOR_VERSION = 4;
+
+	/** The minimum minor version of the JDBC API that the driver needs to support. */
+	private static final int MINIMUM_JDBC_DRIVER_MINOR_VERSION = 2;
+
 	private static Connection buildConnection(final GeneratorContext context) throws SQLException {
 		final String url = context.getSettings().getProperty(DATABASE_URL_KEY,
 				context.getSettings().getProperty("javax.persistence.jdbc.url", null));
@@ -287,6 +293,14 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
 	private ConnectedStatementsWriter(final Connection connection, final boolean closeConnection,
 			final GeneratorContext context) throws SQLException {
+		final int jdbcMajorVersion = connection.getMetaData().getJDBCMajorVersion();
+		final int jdbcMinorVersion = connection.getMetaData().getJDBCMinorVersion();
+		if (jdbcMajorVersion < MINIMUM_JDBC_DRIVER_MAJOR_VERSION
+				|| jdbcMinorVersion < MINIMUM_JDBC_DRIVER_MINOR_VERSION) {
+			log.warn("Driver is compliant to JDBC " + jdbcMajorVersion + '.' + jdbcMinorVersion
+					+ " which is below 4.2. Some features like support for the Java 8 Time API might be missing.");
+		}
+
 		this.connection = connection;
 		this.closeConnection = closeConnection;
 		this.context = context;

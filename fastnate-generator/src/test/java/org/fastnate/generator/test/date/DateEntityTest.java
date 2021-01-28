@@ -5,6 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -40,6 +44,14 @@ public class DateEntityTest extends AbstractEntitySqlGeneratorTest {
 		testEntity.setTime(new Date(time));
 		testEntity.setTimestamp(new Date(time));
 
+		final LocalDate localDate = LocalDate.of(2020, 2, 29);
+		testEntity.setLocalDate(localDate);
+		final LocalTime localTime = LocalTime.of(22, 56, 54);
+		testEntity.setLocalTime(localTime);
+		final LocalDateTime localDateTime = LocalDateTime.of(2021, 12, 31, 23, 53, 52);
+		testEntity.setLocalDateTime(localDateTime);
+		final Duration duration = Duration.ofSeconds(321);
+		testEntity.setDuration(duration);
 		write(testEntity);
 
 		final DateTestEntity result = findSingleResult(DateTestEntity.class);
@@ -54,6 +66,12 @@ public class DateEntityTest extends AbstractEntitySqlGeneratorTest {
 		assertThat(new Date(
 				result.getTimestamp().getTime() - result.getTimestamp().getTime() % DateUtils.MILLIS_PER_SECOND))
 						.isEqualTo(testEntity.getTimestamp());
+
+		// Check Java8 times
+		assertThat(result.getLocalDate()).isEqualTo(localDate);
+		assertThat(result.getLocalTime()).isEqualTo(localTime);
+		assertThat(result.getLocalDateTime()).isEqualTo(localDateTime);
+		assertThat(result.getDuration()).isEqualTo(duration);
 
 		// Check that the default is written correctly
 		try {

@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.Duration;
+import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
@@ -288,6 +290,10 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 			} else if (value instanceof Date) {
 				writeDateExpression(expression, (Date) value,
 						((PrimitiveColumnExpression<Date>) expression).getDatabaseValue());
+			} else if (value instanceof Temporal) {
+				this.writer.writeAttribute("value", value.toString());
+			} else if (value instanceof Duration) {
+				this.writer.writeAttribute("valueNumeric", Long.toString(((Duration) value).toNanos()));
 			} else {
 				this.writer.writeAttribute("valueComputed", expression.toSql());
 			}

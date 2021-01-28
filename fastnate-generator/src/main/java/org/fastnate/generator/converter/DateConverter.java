@@ -12,7 +12,7 @@ import org.fastnate.generator.context.EntityClass;
  *
  * @author Andreas Penski
  */
-public class DateConverter extends TemporalConverter<Date> {
+public class DateConverter extends AbstractDateConverter<Date> {
 
 	/**
 	 * Creates a new instance of {@link DateConverter}.

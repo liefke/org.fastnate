@@ -1,122 +1,73 @@
 package org.fastnate.generator.converter;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
-import javax.persistence.MapKeyTemporal;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-
-import org.fastnate.generator.RelativeDate;
-import org.fastnate.generator.context.AttributeAccessor;
-import org.fastnate.generator.context.EntityClass;
+import org.fastnate.generator.DefaultValue;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.context.ModelException;
+import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.PrimitiveColumnExpression;
 
-import lombok.RequiredArgsConstructor;
-
 /**
- * Base class for converting a temporal property of an {@link EntityClass}.
+ * Converts the {@link Temporal} types from {@link java.time} to SQL expressions.
  *
- * @author Andreas Penski
- * @author Heiko Schefter
+ * @author Tobias Liefke
  * @param <T>
- *            the temporal type (e.g. Date or {@link Calendar})
+ *            the type of the temporal
  */
-@RequiredArgsConstructor
-public abstract class TemporalConverter<T> implements ValueConverter<T> {
+public class TemporalConverter<T extends Temporal> implements ValueConverter<T> {
 
-	private static final Map<Pattern, DateFormat> DEFAULT_FORMATS = new LinkedHashMap<>();
+	/** The method that creates the actual value from a string, which was defined as {@link DefaultValue}. */
+	private Method parse;
 
-	static {
-		// ISO 8601 formats for date
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}"), new SimpleDateFormat("yyyy-MM-dd"));
-
-		// ISO 8601 formats for time
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{2}:\\d{2}:\\d{2}"), new SimpleDateFormat("HH:mm:ss"));
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{2}:\\d{2}:\\d{2}\\.\\d{3}"), new SimpleDateFormat("HH:mm:ss.S"));
-
-		// ISO 8601 formats for timestamps
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"));
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}:\\d{2}"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"));
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}\\d{2}?"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:sszzz"));
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"));
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-]\\d{2}:\\d{2}"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
-		DEFAULT_FORMATS.put(Pattern.compile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-]\\d{2}\\d{2}?"),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSzzz"));
-	}
-
-	private final TemporalType type;
+	/** The method that creates the SQL string from a temporal. */
+	private Function<T, String> toString;
 
 	/**
-	 * Creates a new instance of this {@link TemporalConverter}.
+	 * Creates a new converter.
 	 *
-	 * @param attribute
-	 *            the inspected attribute
-	 * @param mapKey
-	 *            indicates that the converter is used for the key of a map property
+	 * @param type
+	 *            the type of the attribute
 	 */
-	public TemporalConverter(final AttributeAccessor attribute, final boolean mapKey) {
-		TemporalType temporalType = TemporalType.TIMESTAMP;
-		if (mapKey) {
-			final MapKeyTemporal temporal = attribute.getAnnotation(MapKeyTemporal.class);
-			if (temporal != null) {
-				temporalType = temporal.value();
+	public TemporalConverter(final Class<?> type) {
+		try {
+			final Method method = type.getMethod("parse", CharSequence.class);
+			if (Modifier.isAbstract(method.getModifiers()) || !Modifier.isStatic(method.getModifiers())
+					|| method.getReturnType() != type) {
+				throw new ModelException(type + " is not supported by the TemporalConverter!");
 			}
-		} else {
-			final Temporal temporal = attribute.getAnnotation(Temporal.class);
-			if (temporal != null) {
-				temporalType = temporal.value();
+			this.parse = method;
+			if (type == ZonedDateTime.class) {
+				this.toString = (Function<T, String>) (Function<ZonedDateTime, String>) t -> t.toLocalDateTime()
+						.toString() + t.getOffset().toString();
+			} else {
+				this.toString = Temporal::toString;
 			}
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new ModelException(type + " is not supported by the TemporalConverter!", e);
 		}
-		this.type = temporalType;
+
 	}
 
-	/**
-	 * Converts the given value into an SQL expression.
-	 *
-	 * @param value
-	 *            the value to convert
-	 * @param context
-	 *            the current context
-	 * @return the SQL expression
-	 */
-	public ColumnExpression getExpression(final Date value, final GeneratorContext context) {
-		return new PrimitiveColumnExpression<>(value, context.getDialect().convertToDatabaseDate(value, this.type),
-				v -> context.getDialect().convertTemporalValue(value, this.type));
-	}
-
-	/** Use database independent default values. */
 	@Override
 	public ColumnExpression getExpression(final String defaultValue, final GeneratorContext context) {
-		if ("CURRENT_TIMESTAMP".equals(defaultValue)) {
-			return getExpression(RelativeDate.NOW, context);
-		} else if ("CURRENT_DATE".equals(defaultValue)) {
-			return getExpression(RelativeDate.TODAY, context);
+		try {
+			return getExpression((T) this.parse.invoke(null, defaultValue), context);
+		} catch (IllegalAccessException | InvocationTargetException e) {
+			throw new IllegalArgumentException("Could not convert " + defaultValue + " to a temporal value", e);
 		}
-		for (final Map.Entry<Pattern, DateFormat> format : DEFAULT_FORMATS.entrySet()) {
-			if (format.getKey().matcher(defaultValue).matches()) {
-				try {
-					return getExpression(format.getValue().parse(defaultValue), context);
-				} catch (final ParseException e) {
-					throw new IllegalArgumentException("Can't parse " + defaultValue + " as date", e);
-				}
-			}
-		}
-		return new PrimitiveColumnExpression<>(defaultValue, Function.identity());
+	}
+
+	@Override
+	public ColumnExpression getExpression(final T value, final GeneratorContext context) {
+		final GeneratorDialect dialect = context.getDialect();
+		return new PrimitiveColumnExpression<>(value, t -> dialect.quoteString(this.toString.apply(t)));
 	}
 
 }

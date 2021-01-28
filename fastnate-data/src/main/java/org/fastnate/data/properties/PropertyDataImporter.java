@@ -1,5 +1,6 @@
 package org.fastnate.data.properties;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -31,6 +32,7 @@ public abstract class PropertyDataImporter {
 		DEFAULT_CONVERTERS.put(LocalDate.class, (targetType, value) -> LocalDate.parse(value));
 		DEFAULT_CONVERTERS.put(LocalDateTime.class, (targetType, value) -> LocalDateTime.parse(value));
 		DEFAULT_CONVERTERS.put(LocalTime.class, (targetType, value) -> LocalTime.parse(value));
+		DEFAULT_CONVERTERS.put(Duration.class, (targetType, value) -> Duration.parse(value));
 		DEFAULT_CONVERTERS.put(byte[].class, (targetType, value) -> Base64.getDecoder().decode(value));
 	}
 

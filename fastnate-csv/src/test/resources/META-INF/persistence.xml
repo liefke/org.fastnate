@@ -10,7 +10,7 @@
             <property name="hibernate.format_sql" value="false"/>
 			<property name="hibernate.use_sql_comments" value="true" />
             <property name="hibernate.connection.driver_class" value="org.h2.Driver"/>
-            <property name="hibernate.connection.url" value="jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MVCC=1;MODE=Oracle;DB_CLOSE_ON_EXIT=FALSE"/>
+            <property name="hibernate.connection.url" value="jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"/>
             <property name="hibernate.connection.username" value="sa"/>
             <property name="hibernate.connection.password" value="sa"/>
             <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>

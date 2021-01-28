@@ -89,6 +89,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-java8</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>javax.el</groupId>
 			<artifactId>javax.el-api</artifactId>
 			<scope>test</scope>

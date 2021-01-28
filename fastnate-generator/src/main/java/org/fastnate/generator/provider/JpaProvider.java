@@ -1,6 +1,8 @@
 package org.fastnate.generator.provider;
 
 import java.io.Serializable;
+import java.time.Duration;
+import java.time.temporal.Temporal;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
@@ -20,11 +22,13 @@ import org.fastnate.generator.converter.CalendarConverter;
 import org.fastnate.generator.converter.CharConverter;
 import org.fastnate.generator.converter.CustomValueConverter;
 import org.fastnate.generator.converter.DateConverter;
+import org.fastnate.generator.converter.DurationConverter;
 import org.fastnate.generator.converter.EnumConverter;
 import org.fastnate.generator.converter.LobConverter;
 import org.fastnate.generator.converter.NumberConverter;
 import org.fastnate.generator.converter.SerializableConverter;
 import org.fastnate.generator.converter.StringConverter;
+import org.fastnate.generator.converter.TemporalConverter;
 import org.fastnate.generator.converter.UnsupportedTypeConverter;
 import org.fastnate.generator.converter.ValueConverter;
 import org.fastnate.util.ClassUtil;
@@ -47,6 +51,7 @@ public interface JpaProvider {
 	 *            the primitive database type
 	 * @return the converter or an instance of {@link UnsupportedTypeConverter} if no converter is available
 	 */
+	@SuppressWarnings("checkstyle:CyclomaticComplexity")
 	default <T> ValueConverter<T> createBasicConverter(final String attributeName, final Class<T> targetType) {
 		if (String.class == targetType) {
 			return (ValueConverter<T>) new StringConverter();
@@ -59,6 +64,12 @@ public interface JpaProvider {
 		}
 		if (Calendar.class.isAssignableFrom(targetType)) {
 			return (ValueConverter<T>) new CalendarConverter(TemporalType.TIMESTAMP);
+		}
+		if (Temporal.class.isAssignableFrom(targetType)) {
+			return (ValueConverter<T>) new TemporalConverter<>(targetType);
+		}
+		if (Duration.class.isAssignableFrom(targetType)) {
+			return (ValueConverter<T>) new DurationConverter();
 		}
 		final Class<T> type = ClassUtils.primitiveToWrapper(targetType);
 		if (Character.class == type) {

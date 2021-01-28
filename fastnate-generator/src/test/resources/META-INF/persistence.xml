@@ -7,7 +7,7 @@
 		<properties>
 			<property name="hibernate.connection.driver_class" value="org.h2.Driver" />
 			<property name="hibernate.connection.url"
-				value="jdbc:h2:mem:fastnate;DB_CLOSE_DELAY=-1;MVCC=1;MODE=Oracle;DB_CLOSE_ON_EXIT=FALSE" />
+				value="jdbc:h2:mem:fastnate;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" />
 			<property name="hibernate.connection.username" value="sa" />
 			<property name="hibernate.connection.password" value="sa" />
 			<property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect" />
@@ -37,6 +37,7 @@
 			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/fastnate?serverTimezone=UTC" />
 			<property name="hibernate.connection.username" value="fastnate" />
 			<property name="hibernate.connection.password" value="fastnate" />
+			<property name="hibernate.show_sql" value="true" />
 		</properties>
 	</persistence-unit>
 	<persistence-unit name="test-mssql" transaction-type="RESOURCE_LOCAL">

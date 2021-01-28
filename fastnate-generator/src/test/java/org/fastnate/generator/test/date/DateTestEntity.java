@@ -1,5 +1,9 @@
 package org.fastnate.generator.test.date;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -31,6 +35,8 @@ public class DateTestEntity {
 	@GeneratedValue
 	private Long id;
 
+	/** Legacy dates */
+
 	@Temporal(TemporalType.DATE)
 	@Column(name = "dateColumn")
 	@DefaultValue("CURRENT_TIMESTAMP")
@@ -51,6 +57,19 @@ public class DateTestEntity {
 	@Temporal(TemporalType.TIMESTAMP)
 	@DefaultValue("2000-01-01T01:02:03.456+0200")
 	private Date defaultDate2000;
+
+	/** Java8 date objects */
+
+	@Column(name = "localDateColumn")
+	private LocalDate localDate;
+
+	@Column(name = "localTimeColumn")
+	private LocalTime localTime;
+
+	@Column(name = "localDateTimeColumn")
+	private LocalDateTime localDateTime;
+
+	private Duration duration;
 
 	@Override
 	public boolean equals(final Object obj) {

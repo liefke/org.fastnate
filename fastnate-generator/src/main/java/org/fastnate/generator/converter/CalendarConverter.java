@@ -14,7 +14,7 @@ import org.fastnate.generator.statements.ColumnExpression;
  *
  * @author Andreas Penski
  */
-public class CalendarConverter extends TemporalConverter<Calendar> {
+public class CalendarConverter extends AbstractDateConverter<Calendar> {
 
 	/**
 	 * Creates a new instance of {@link CalendarConverter}.
