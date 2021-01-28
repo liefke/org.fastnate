@@ -29,6 +29,15 @@ public class PostgresDialect extends GeneratorDialect {
 	}
 
 	@Override
+	public String buildCurrentSequenceValue(final String sequence, final int incrementSize, final boolean firstCall) {
+		if (firstCall && !isEmulatingSequences()) {
+			return "(SELECT last_value - (CASE WHEN is_called THEN 0 ELSE " + incrementSize + " END) FROM " + sequence
+					+ ')';
+		}
+		return super.buildCurrentSequenceValue(sequence, incrementSize, firstCall);
+	}
+
+	@Override
 	public String convertBooleanValue(final boolean value) {
 		return value ? "true" : "false";
 	}

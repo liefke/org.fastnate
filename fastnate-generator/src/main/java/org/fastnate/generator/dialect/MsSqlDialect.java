@@ -20,9 +20,9 @@ public class MsSqlDialect extends GeneratorDialect {
 	}
 
 	@Override
-	public String buildCurrentSequenceValue(final String sequence, final int incrementSize) {
+	public String buildCurrentSequenceValue(final String sequence, final int incrementSize, final boolean firstCall) {
 		if (isEmulatingSequences()) {
-			return super.buildCurrentSequenceValue(sequence, incrementSize);
+			return super.buildCurrentSequenceValue(sequence, incrementSize, firstCall);
 		}
 		return "(SELECT current_value FROM sys.sequences WHERE name = '" + sequence + "')";
 	}

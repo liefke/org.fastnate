@@ -98,7 +98,7 @@ public class SequenceIdGenerator extends IdGenerator {
 			}
 			expression = new NextSequenceValueExpression(this, this.currentSequenceValue - value.longValue());
 		} else {
-			expression = new CurrentSequenceValueExpression(this, this.currentSequenceValue - value.longValue());
+			expression = new CurrentSequenceValueExpression(this, this.currentSequenceValue - value.longValue(), false);
 		}
 		statement.setColumnValue(column, expression);
 	}
@@ -142,7 +142,8 @@ public class SequenceIdGenerator extends IdGenerator {
 	public ColumnExpression getExpression(final GeneratorTable entityTable, final GeneratorColumn column,
 			final Number targetId, final boolean whereExpression) {
 		if (!whereExpression || this.dialect.isSequenceInWhereSupported()) {
-			return new CurrentSequenceValueExpression(this, this.currentSequenceValue - targetId.longValue());
+			return new CurrentSequenceValueExpression(this, this.currentSequenceValue - targetId.longValue(),
+					this.initialValue == this.nextValue);
 		}
 
 		final long diff = this.nextValue - 1 - targetId.longValue();

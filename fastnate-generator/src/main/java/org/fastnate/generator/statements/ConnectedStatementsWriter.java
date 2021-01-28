@@ -72,8 +72,8 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 			// Initialize generator, if necessary
 			if (!this.context.isWriteRelativeIds()) {
 				String sql = generator.getExpression(null, null, generator.getCurrentValue(), false).toSql();
-				if (sql.matches("(SELECT\\W.*)")) {
-					sql = sql.substring(1, sql.length() - 1);
+				if (sql.matches("\\(?SELECT\\W.*")) {
+					sql = sql.replaceFirst("^\\((.*)\\)$", "$1");
 				} else {
 					sql = "SELECT (" + sql + ") currentValue " + this.context.getDialect().getOptionalTable();
 				}

@@ -28,7 +28,13 @@ public class OracleDialect extends GeneratorDialect {
 	}
 
 	@Override
-	public String buildCurrentSequenceValue(final String sequence, final int incrementSize) {
+	public String buildCurrentSequenceValue(final String sequence, final int incrementSize, final boolean firstCall) {
+		if (isEmulatingSequences()) {
+			return super.buildCurrentSequenceValue(sequence, incrementSize, firstCall);
+		}
+		if (firstCall) {
+			return "(SELECT last_number FROM user_sequences WHERE sequence_name = " + quoteString(sequence) + ')';
+		}
 		return sequence + ".currval";
 	}
 

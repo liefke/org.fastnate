@@ -124,9 +124,12 @@ public abstract class GeneratorDialect {
 	 * @param incrementSize
 	 *            the expected incrementSize, as given in the schema - used by some dialects to ensure that exactly that
 	 *            inrement is used
+	 * @param firstCall
+	 *            indicates that the sequence was not updated before in this session - we may need to use a different
+	 *            approach to get the current value
 	 * @return the SQL expression to use in statement
 	 */
-	public String buildCurrentSequenceValue(final String sequence, final int incrementSize) {
+	public String buildCurrentSequenceValue(final String sequence, final int incrementSize, final boolean firstCall) {
 		if (isEmulatingSequences()) {
 			return "(SELECT max(next_val) - " + incrementSize + " FROM " + sequence + ")";
 		}
