@@ -174,20 +174,30 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *
 	 * @param table
 	 *            the collection table
-	 * @param override
-	 *            contains optional override options
+	 * @param asscoiationOverride
+	 *            contains optional override options for association
+	 * @param attributeOverride
+	 *            contains optional override options for element collections
 	 * @param attribute
 	 *            the inspected attribute
 	 * @param defaultColumnName
 	 *            the default column name
 	 * @return the column definition
 	 */
-	protected static GeneratorColumn buildValueColumn(final GeneratorTable table, final AssociationOverride override,
+	private static GeneratorColumn buildValueColumn(final GeneratorTable table,
+			final AssociationOverride asscoiationOverride, final AttributeOverride attributeOverride,
 			final AttributeAccessor attribute, final String defaultColumnName) {
-		if (override != null) {
-			final String joinColumnName = getJoinColumnName(override.joinTable().inverseJoinColumns());
+		if (asscoiationOverride != null) {
+			final String joinColumnName = getJoinColumnName(asscoiationOverride.joinTable().inverseJoinColumns());
 			if (joinColumnName != null) {
 				return table.resolveColumn(joinColumnName);
+			}
+		}
+
+		if (attributeOverride != null) {
+			final Column column = attributeOverride.column();
+			if (column != null && column.name().length() > 0) {
+				return table.resolveColumn(column.name());
 			}
 		}
 
@@ -390,14 +400,17 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 *            the description of the current inspected class that contains this property
 	 * @param attribute
 	 *            accessor to the represented attribute
-	 * @param override
+	 * @param associationOverride
 	 *            the configured assocation override
+	 * @param attributeOverride
+	 *            the configured attribute override, if we reference an {@link ElementCollection}
 	 * @param valueClassParamIndex
 	 *            the index of the value argument in the collection class (0 for collection, 1 for map)
 	 */
 	@SuppressWarnings("checkstyle:JavaNCSS")
 	public PluralProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
-			final AssociationOverride override, final int valueClassParamIndex) {
+			final AssociationOverride associationOverride, final AttributeOverride attributeOverride,
+			final int valueClassParamIndex) {
 		super(attribute);
 		this.context = sourceClass.getContext();
 		this.dialect = this.context.getDialect();
@@ -410,7 +423,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		this.entityReference = values == null;
 		if (values == null) {
 			// Entity mapping, either OneToMany, ManyToMany, or ManyToAny
-			final EntityMappingInformation mapping = new EntityMappingInformation(attribute, override,
+			final EntityMappingInformation mapping = new EntityMappingInformation(attribute, associationOverride,
 					valueClassParamIndex);
 			this.mappedBy = mapping.getMappedBy();
 			this.useTargetTable = mapping.isUseTargetTable();
@@ -432,24 +445,27 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				// Bidirectional - use the columns of the target class
 				this.table = this.valueEntityClass.getTable();
 				initializeInverseProperty();
-				this.valueColumn = buildValueColumn(this.table, null, attribute,
+				this.valueColumn = buildValueColumn(this.table, null, null, attribute,
 						this.valueEntityClass.getIdColumn(attribute).getName());
 				this.anyMapping = null;
 			} else if (this.useTargetTable) {
 				// Unidirectional and join column is in the table of the target class
 				this.table = this.valueEntityClass.getTable();
-				this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, override, null, null,
+				this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, associationOverride, null, null,
 						attribute.getName() + '_' + sourceClass.getIdColumn(attribute)));
-				this.valueColumn = buildValueColumn(this.table, null, attribute,
+				this.valueColumn = buildValueColumn(this.table, null, null, attribute,
 						this.valueEntityClass.getIdColumn(attribute).getName());
 				this.anyMapping = null;
 			} else {
 				// We need a mapping table
 				final JoinTable joinTable = attribute.getAnnotation(JoinTable.class);
-				this.table = resolveTable(this.context, override, joinTable, collectionTable, sourceClass.getTable(),
+				this.table = resolveTable(this.context, associationOverride, joinTable, collectionTable,
+						sourceClass.getTable(),
 						this.valueEntityClass == null ? "table" : this.valueEntityClass.getTable().getName());
-				initializeIdColumnForMappingTable(sourceClass, attribute, override, joinTable, collectionTable);
-				this.valueColumn = buildValueColumn(this.table, override, attribute, attribute.getName() + '_'
+				initializeIdColumnForMappingTable(sourceClass, attribute, associationOverride, joinTable,
+						collectionTable);
+				this.valueColumn = buildValueColumn(this.table, associationOverride, null, attribute, attribute
+						.getName() + '_'
 						+ (this.valueEntityClass == null ? "id" : this.valueEntityClass.getIdColumn(attribute)));
 				this.anyMapping = mapping.buildAnyMapping(this.context, this.table);
 			}
@@ -461,9 +477,10 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			this.composition = true;
 
 			// Initialize the table and id column name
-			this.table = this.context.resolveTable(collectionTable, CollectionTable::catalog, CollectionTable::schema,
-					CollectionTable::name, sourceClass.getEntityName() + '_' + attribute.getName());
-			this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, override, collectionTable,
+			this.table = this.context.resolveTable(associationOverride, collectionTable, CollectionTable::catalog,
+					CollectionTable::schema, CollectionTable::name,
+					sourceClass.getEntityName() + '_' + attribute.getName());
+			this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, associationOverride, collectionTable,
 					sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute)));
 
 			// Initialize the target description and columns
@@ -476,7 +493,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			} else {
 				// Check for primitive value
 				this.valueConverter = this.context.getProvider().createConverter(attribute, this.valueClass, false);
-				this.valueColumn = buildValueColumn(this.table, null, attribute, attribute.getName());
+				this.valueColumn = buildValueColumn(this.table, null, attributeOverride, attribute,
+						attribute.getName());
 			}
 		}
 

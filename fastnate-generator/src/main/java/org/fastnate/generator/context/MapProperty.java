@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.Map;
 
 import javax.persistence.AssociationOverride;
+import javax.persistence.AttributeOverride;
+import javax.persistence.ElementCollection;
 import javax.persistence.MapKeyClass;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.MapKeyJoinColumn;
@@ -79,12 +81,14 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	 *            the description of the current inspected class that contains this property
 	 * @param attribute
 	 *            the accessor of the represented attribute
-	 * @param override
+	 * @param associationOverride
 	 *            the configured assocation override
+	 * @param attributeOverride
+	 *            the configured attribute override, if we reference an {@link ElementCollection}
 	 */
 	public MapProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
-			final AssociationOverride override) {
-		super(sourceClass, attribute, override, 1);
+			final AssociationOverride associationOverride, final AttributeOverride attributeOverride) {
+		super(sourceClass, attribute, associationOverride, attributeOverride, 1);
 
 		// Initialize the key description
 		final MapKeyClass keyClassAnnotation = attribute.getAnnotation(MapKeyClass.class);

@@ -23,12 +23,16 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity
-@AttributeOverrides(@AttributeOverride(name = "simpleProperty", column = @Column(name = "overriddenSimpleProperty")))
 @AssociationOverrides({
 		@AssociationOverride(name = "otherEntity", joinTable = @JoinTable(name = "TestOverrideOtherEntity"), //
 				joinColumns = @JoinColumn(name = "myColumn")),
 		@AssociationOverride(name = "simpleEntities", joinTable = @JoinTable(name = "TestOverrideSimpleEntities", //
-				joinColumns = @JoinColumn(name = "join_id"), inverseJoinColumns = @JoinColumn(name = "inverseJoin_id"))) })
+				joinColumns = @JoinColumn(name = "join_id"), inverseJoinColumns = @JoinColumn(name = "inverseJoin_id"))),
+		@AssociationOverride(name = "stringList", joinTable = @JoinTable(name = "TestOverrideStringList", //
+				joinColumns = @JoinColumn(name = "test_entity_id"))) })
+@AttributeOverrides({ //
+		@AttributeOverride(name = "simpleProperty", column = @Column(name = "overriddenSimpleProperty")),
+		@AttributeOverride(name = "stringList", column = @Column(name = "test_string")) })
 public class OverrideEntity extends ToOverrideEntity {
 
 	@Embedded

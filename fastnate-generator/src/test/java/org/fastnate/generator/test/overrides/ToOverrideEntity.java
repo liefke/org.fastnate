@@ -4,9 +4,11 @@ import java.util.List;
 
 import javax.persistence.AttributeOverride;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.OrderColumn;
 
 import org.fastnate.generator.test.BaseTestEntity;
 import org.fastnate.generator.test.SimpleTestEntity;
@@ -33,5 +35,9 @@ public class ToOverrideEntity extends BaseTestEntity {
 
 	@ManyToMany
 	private List<SimpleTestEntity> simpleEntities;
+
+	@OrderColumn
+	@ElementCollection
+	private List<String> stringList;
 
 }

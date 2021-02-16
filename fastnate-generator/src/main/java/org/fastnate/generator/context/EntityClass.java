@@ -335,7 +335,7 @@ public class EntityClass<E> {
 	void build() {
 		// Find the (initial) table name
 		final Table tableMetadata = this.entityClass.getAnnotation(Table.class);
-		this.table = this.context.resolveTable(tableMetadata, Table::catalog, Table::schema, Table::name,
+		this.table = this.context.resolveTable(null, tableMetadata, Table::catalog, Table::schema, Table::name,
 				this.entityName);
 
 		// Build the attribute and association overrides of this class
@@ -584,11 +584,13 @@ public class EntityClass<E> {
 		if (CollectionProperty.isCollectionProperty(attribute)) {
 			ModelException.test(propertyTable == this.table, "Unsupported nesting of collection property {}",
 					attribute);
-			return new CollectionProperty<>(this, attribute, surroundingAssociationOverrides.get(attribute.getName()));
+			return new CollectionProperty<>(this, attribute, surroundingAssociationOverrides.get(attribute.getName()),
+					surroundingAttributeOverrides.get(attribute.getName()));
 		}
 		if (MapProperty.isMapProperty(attribute)) {
 			ModelException.test(propertyTable == this.table, "Unsupported nesting of map property {}", attribute);
-			return new MapProperty<>(this, attribute, surroundingAssociationOverrides.get(attribute.getName()));
+			return new MapProperty<>(this, attribute, surroundingAssociationOverrides.get(attribute.getName()),
+					surroundingAttributeOverrides.get(attribute.getName()));
 		}
 		if (EntityProperty.isEntityProperty(attribute)) {
 			return new EntityProperty<>(this.context, propertyTable, attribute,

@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.persistence.AssociationOverride;
+import javax.persistence.AttributeOverride;
+import javax.persistence.ElementCollection;
 import javax.persistence.OrderColumn;
 
 import org.fastnate.generator.converter.EntityConverter;
@@ -50,12 +52,14 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	 *            the description of the current inspected class that contains this property
 	 * @param attribute
 	 *            accessor to the represented attribute
-	 * @param override
+	 * @param associationOverride
 	 *            the configured assocation override
+	 * @param attributeOverride
+	 *            the configured attribute override, if we reference an {@link ElementCollection}
 	 */
 	public CollectionProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
-			final AssociationOverride override) {
-		super(sourceClass, attribute, override, 0);
+			final AssociationOverride associationOverride, final AttributeOverride attributeOverride) {
+		super(sourceClass, attribute, associationOverride, attributeOverride, 0);
 
 		// Read a potentially defined order column
 		final OrderColumn orderColumnDef = attribute.getAnnotation(OrderColumn.class);

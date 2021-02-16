@@ -17,9 +17,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.persistence.AssociationOverride;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.persistence.JoinTable;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.TableGenerator;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -542,6 +544,8 @@ public class GeneratorContext {
 	/**
 	 * Finds resp. builds the metadata to the given table from the given (optional) annotation.
 	 *
+	 * @param override
+	 *            contains the overrides for the mapping table
 	 * @param annotation
 	 *            the optional annotation that contains any metadata to the table
 	 * @param catalogName
@@ -554,10 +558,11 @@ public class GeneratorContext {
 	 *            the name of the talbe, if the annotation is {@code null} or contains no value for the table name
 	 * @return the metadata for the given table
 	 */
-	public <A extends Annotation> GeneratorTable resolveTable(final A annotation, final Function<A, String> catalogName,
-			final Function<A, String> schemaName, final Function<A, String> tableName, final String defaultTableName) {
-		final String catalog;
-		final String schema;
+	public <A extends Annotation> GeneratorTable resolveTable(final AssociationOverride override, final A annotation,
+			final Function<A, String> catalogName, final Function<A, String> schemaName,
+			final Function<A, String> tableName, final String defaultTableName) {
+		String catalog;
+		String schema;
 		String table;
 		if (annotation == null) {
 			catalog = null;
@@ -566,11 +571,17 @@ public class GeneratorContext {
 		} else {
 			catalog = catalogName.apply(annotation);
 			schema = schemaName.apply(annotation);
-			table = tableName.apply(annotation);
-			if (table.length() == 0) {
-				table = defaultTableName;
+			table = StringUtils.defaultIfEmpty(tableName.apply(annotation), defaultTableName);
+		}
+		if (override != null) {
+			final JoinTable joinTable = override.joinTable();
+			if (joinTable != null) {
+				catalog = StringUtils.defaultIfEmpty(joinTable.catalog(), catalog);
+				schema = StringUtils.defaultIfEmpty(joinTable.schema(), catalog);
+				table = StringUtils.defaultIfEmpty(joinTable.name(), table);
 			}
 		}
+
 		return resolveTable(catalog, schema, table);
 	}
 

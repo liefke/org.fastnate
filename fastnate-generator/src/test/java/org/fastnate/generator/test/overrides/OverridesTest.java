@@ -39,6 +39,8 @@ public class OverridesTest extends AbstractEntitySqlGeneratorTest {
 		entity.setEmbedded(new TestEmbeddedProperties("Test embedded attribute override",
 				new SimpleTestEntity("Test embedded association override")));
 
+		entity.setStringList(Arrays.asList("Test 1", "Test 2"));
+
 		write(entity);
 
 		final OverrideEntity result = super.findSingleResult(
@@ -54,6 +56,8 @@ public class OverridesTest extends AbstractEntitySqlGeneratorTest {
 
 		assertThat(result.getSimpleEntities()).hasSize(2);
 		assertThat(result.getSimpleEntities().get(0).getName()).isEqualTo(entity.getSimpleEntities().get(0).getName());
+
+		assertThat(result.getStringList()).containsExactlyElementsOf(entity.getStringList());
 	}
 
 }
