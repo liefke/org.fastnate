@@ -30,15 +30,30 @@
 			<url>https://github.com/liefke</url>
 		</developer>
 	</developers>
+	
+	<contributors>
+		<contributor>
+			<name>Andreas Penski</name>
+		</contributor>
+		<contributor>
+			<name>Heiko Schefter</name>
+		</contributor>
+		<contributor>
+			<name>André Babinski</name>
+		</contributor>
+		<contributor>
+			<name>Mathieu Lavigne</name>
+		</contributor>
+	</contributors>
 
 	<distributionManagement>
 		<repository>
 			<id>fastnate-download</id>
-			<url>ftp://download.fastnate.org/repository</url>
+			<url>scpexe://download.fastnate.org${fastnate.download.path}/repository</url>
 		</repository>
 		<site>
 			<id>fastnate-api</id>
-			<url>ftp://api.fastnate.org/latest</url>
+			<url>scpexe://api.fastnate.org${fastnate.api.path}/latest</url>
 		</site>
 	</distributionManagement>
 
@@ -223,42 +238,12 @@
 	</dependencyManagement>
 
 	<build>
-		<pluginManagement>
-			<plugins>
-				<!-- This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>org.projectlombok</groupId>
-										<artifactId>lombok-maven-plugin</artifactId>
-										<versionRange>[1.0.0,)</versionRange>
-										<goals>
-											<goal>delombok</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore />
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-
 		<extensions>
-			<!-- Enabling the use of FTP for deployment -->
+			<!-- Enable the use of SSH for deployment -->
 			<extension>
 				<groupId>org.apache.maven.wagon</groupId>
-				<artifactId>wagon-ftp</artifactId>
-				<version>2.9</version>
+				<artifactId>wagon-ssh-external</artifactId>
+				<version>3.4.3</version>
 			</extension>
 		</extensions>
 		<plugins>
@@ -350,7 +335,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
-				<version>3.4</version>
+				<version>3.10.0</version>
 			</plugin>
 
 			<!-- Enable release of Fastnate -->
@@ -446,6 +431,46 @@
 			</build>
 		</profile>
 
+		<profile>
+			<id>only-eclipse</id>
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<!-- This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build 
+							itself. -->
+						<plugin>
+							<groupId>org.eclipse.m2e</groupId>
+							<artifactId>lifecycle-mapping</artifactId>
+							<version>1.0.0</version>
+							<configuration>
+								<lifecycleMappingMetadata>
+									<pluginExecutions>
+										<pluginExecution>
+											<pluginExecutionFilter>
+												<groupId>org.projectlombok</groupId>
+												<artifactId>lombok-maven-plugin</artifactId>
+												<versionRange>[1.0.0,)</versionRange>
+												<goals>
+													<goal>delombok</goal>
+												</goals>
+											</pluginExecutionFilter>
+											<action>
+												<ignore />
+											</action>
+										</pluginExecution>
+									</pluginExecutions>
+								</lifecycleMappingMetadata>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
 	</profiles>
 
 </project>
