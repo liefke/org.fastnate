@@ -36,7 +36,7 @@ public class SchemaTestEntity {
 
 	@Id
 	@GeneratedValue(generator = "SchemaTestSequence")
-	@SequenceGenerator(name = "SchemaTestSequence", schema = "MySchema", sequenceName = "STSeq")
+	@SequenceGenerator(name = "SchemaTestSequence", schema = "SequenceSchema", sequenceName = "STSeq")
 	private Long id;
 
 	@NotNull

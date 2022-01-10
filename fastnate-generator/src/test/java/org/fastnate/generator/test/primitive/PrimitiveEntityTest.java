@@ -138,16 +138,15 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 	public void testSerializableProperties() throws IOException {
 		final PrimitiveTestEntity testEntity = new PrimitiveTestEntity("Test Serializables");
 
-		testEntity.setSerializale(new SerializableTestObject("stringProperty", 2));
+		testEntity.setSerializable(new SerTestObject("st", 2));
 
 		write(testEntity);
 
 		// Test equalness
 		final PrimitiveTestEntity result = findSingleResult(PrimitiveTestEntity.class);
-		assertThat(result.getSerializale()).isEqualTo(testEntity.getSerializale());
-		assertThat(result.getSerializale().getStringProperty())
-				.isEqualTo(testEntity.getSerializale().getStringProperty());
-		assertThat(result.getSerializale().getIntProperty()).isEqualTo(testEntity.getSerializale().getIntProperty());
+		assertThat(result.getSerializable()).isEqualTo(testEntity.getSerializable());
+		assertThat(result.getSerializable().getStr()).isEqualTo(testEntity.getSerializable().getStr());
+		assertThat(result.getSerializable().getNum()).isEqualTo(testEntity.getSerializable().getNum());
 	}
 
 	/**

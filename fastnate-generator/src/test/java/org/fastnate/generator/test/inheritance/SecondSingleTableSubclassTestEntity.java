@@ -1,5 +1,6 @@
 package org.fastnate.generator.test.inheritance;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.InheritanceType;
 
@@ -18,6 +19,7 @@ public class SecondSingleTableSubclassTestEntity extends MappedSubclassTestEntit
 
 	@Getter
 	@Setter
+	@Column(name = "\"value\"")
 	private int value;
 
 	/**

@@ -18,12 +18,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class SerializableTestObject implements Serializable {
+public class SerTestObject implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private String stringProperty;
+	private String str;
 
-	private int intProperty;
+	private int num;
 
 }

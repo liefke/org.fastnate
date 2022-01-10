@@ -10,7 +10,7 @@ public class H2Dialect extends GeneratorDialect {
 
 	@Override
 	public String createBlobExpression(final byte[] blob) {
-		return createHexBlobExpression("'", blob, "'");
+		return createHexBlobExpression("X'", blob, "'");
 	}
 
 }

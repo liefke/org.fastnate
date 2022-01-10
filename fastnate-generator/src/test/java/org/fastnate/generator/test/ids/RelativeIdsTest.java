@@ -23,6 +23,11 @@ public class RelativeIdsTest extends IdsTest {
 	}
 
 	@Override
+	public void setup() {
+		super.setup("create");
+	}
+
+	@Override
 	protected <E extends IdTestEntity<E>> E testIds(final Class<E> entityClass, final String prefix)
 			throws IOException, ReflectiveOperationException {
 		// First test with an empty database

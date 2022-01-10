@@ -71,7 +71,7 @@ public class PrimitiveTestEntity {
 	// For PostgreSQL: @Column(columnDefinition = "BYTEA")
 	private byte[] lobBytes;
 
-	private SerializableTestObject serializale;
+	private SerTestObject serializable;
 
 	@Enumerated
 	private TestEnum ordinalEnum;

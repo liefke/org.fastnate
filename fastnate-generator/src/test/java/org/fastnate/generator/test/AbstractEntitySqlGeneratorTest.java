@@ -203,7 +203,7 @@ public class AbstractEntitySqlGeneratorTest {
 	 */
 	@Before
 	public void setup() {
-		setup("create");
+		setup("create-drop");
 	}
 
 	/**
