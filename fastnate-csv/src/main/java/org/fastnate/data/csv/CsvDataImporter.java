@@ -83,6 +83,9 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 
 		@Override
 		public String getValue(final int columnIndex) {
+			if (columnIndex >= this.row.size()) {
+				return "";
+			}
 			return this.row.get(columnIndex);
 		}
 
