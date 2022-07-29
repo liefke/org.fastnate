@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import javax.persistence.TableGenerator;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.provider.JpaProvider;
 import org.fastnate.generator.statements.ColumnExpression;

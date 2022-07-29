@@ -22,7 +22,7 @@ import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.fastnate.data.DataImportException;
 import org.fastnate.data.EntityRegistration;
 import org.fastnate.data.csv.properties.DataRow;

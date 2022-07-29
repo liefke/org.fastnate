@@ -1,6 +1,6 @@
 package org.fastnate.data.properties;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Converts a string in an import file to an {@link Enum} value.

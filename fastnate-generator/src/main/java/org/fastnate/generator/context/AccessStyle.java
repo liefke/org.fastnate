@@ -14,7 +14,7 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Transient;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.fastnate.util.ClassUtil;
 import org.hibernate.annotations.Formula;
 

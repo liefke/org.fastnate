@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.lang3.time.StopWatch;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.dialect.PostgresDialect;
 import org.fastnate.generator.statements.ConnectedStatementsWriter;

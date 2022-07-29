@@ -14,7 +14,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.TableGenerator;
 import javax.persistence.TemporalType;
 
-import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.lang3.ClassUtils;
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.PrimitiveProperty;
 import org.fastnate.generator.converter.BooleanConverter;
@@ -71,7 +71,7 @@ public interface JpaProvider {
 		if (Duration.class.isAssignableFrom(targetType)) {
 			return (ValueConverter<T>) new DurationConverter();
 		}
-		final Class<T> type = ClassUtils.primitiveToWrapper(targetType);
+		final Class<T> type = (Class<T>) ClassUtils.primitiveToWrapper(targetType);
 		if (Character.class == type) {
 			return (ValueConverter<T>) new CharConverter();
 		}

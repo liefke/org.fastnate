@@ -15,8 +15,8 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
-import org.apache.commons.lang.time.DateFormatUtils;
-import org.apache.commons.lang.time.FastDateFormat;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.fastnate.generator.RelativeDate;
 import org.fastnate.generator.RelativeDate.Precision;
 import org.fastnate.generator.RelativeDate.ReferenceDate;
@@ -255,11 +255,14 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 			}
 			this.writer.writeAttribute("valueComputed", expression.toSql());
 		} else if (databaseValue instanceof java.sql.Time) {
-			this.writer.writeAttribute("valueDate", DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(databaseValue));
+			this.writer.writeAttribute("valueDate",
+					DateFormatUtils.ISO_8601_EXTENDED_TIME_FORMAT.format(databaseValue));
 		} else if (databaseValue instanceof java.sql.Date) {
-			this.writer.writeAttribute("valueDate", DateFormatUtils.ISO_DATE_FORMAT.format(databaseValue));
+			this.writer.writeAttribute("valueDate",
+					DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(databaseValue));
 		} else if (value.getTime() % RelativeDate.SECONDS.getMillis() == 0) {
-			this.writer.writeAttribute("valueDate", DateFormatUtils.ISO_DATETIME_FORMAT.format(databaseValue));
+			this.writer.writeAttribute("valueDate",
+					DateFormatUtils.ISO_8601_EXTENDED_DATETIME_FORMAT.format(databaseValue));
 		} else {
 			this.writer.writeAttribute("valueDate", ISO_DATETIMESECONDS_FORMAT.format(databaseValue));
 		}

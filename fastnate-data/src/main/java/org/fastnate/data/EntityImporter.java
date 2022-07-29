@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 import javax.persistence.Entity;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.fastnate.data.files.DataFile;
 import org.fastnate.data.files.DataFolder;
 import org.fastnate.data.files.FsDataFile;

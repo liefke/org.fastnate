@@ -43,7 +43,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.fastnate.generator.context.GenerationState.PendingState;
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.PlainColumnExpression;

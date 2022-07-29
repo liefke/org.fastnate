@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Properties;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.fastnate.data.EntityImporter;
 import org.fastnate.data.csv.CsvDataImporter;
 import org.fastnate.data.csv.GenericCsvDataProvider;

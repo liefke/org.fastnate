@@ -3,7 +3,7 @@ package org.fastnate.data.properties;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Converts a string in an import file to a {@link Boolean}.

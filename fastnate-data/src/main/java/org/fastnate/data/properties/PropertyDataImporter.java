@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.lang3.ClassUtils;
 
 /**
  * Base class for all importers that work with {@link PropertyConverter}s.
@@ -65,7 +65,7 @@ public abstract class PropertyDataImporter {
 			return null;
 		}
 		if (propertyClass.isPrimitive()) {
-			return findConverter(ClassUtils.primitiveToWrapper(propertyClass));
+			return findConverter((Class<T>) ClassUtils.primitiveToWrapper(propertyClass));
 		}
 		PropertyConverter<?> converter = this.converters.get(propertyClass);
 		if (converter != null) {
