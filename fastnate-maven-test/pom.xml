@@ -20,13 +20,13 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.fastnate</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>fastnate-data</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
 		<dependency>
-			<groupId>org.fastnate</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>fastnate-csv</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -47,7 +47,7 @@
 			<artifactId>hibernate-core</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>

@@ -4,13 +4,15 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -32,7 +34,8 @@ import org.junit.Before;
 import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
-import liquibase.resource.ResourceAccessor;
+import liquibase.resource.AbstractResourceAccessor;
+import liquibase.resource.InputStreamList;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -46,29 +49,36 @@ public class AbstractEntitySqlGeneratorTest {
 
 	/** Liquibase resource accessor that returns only a stream from the given byte buffer. */
 	@RequiredArgsConstructor
-	private final class ByteArrayResourceAccessor implements ResourceAccessor {
+	private final class ByteArrayResourceAccessor extends AbstractResourceAccessor {
 
 		private final String fileName;
 
 		private final byte[] buffer;
 
 		@Override
-		public Set<InputStream> getResourcesAsStream(final String path) throws IOException {
-			if (path.equals(this.fileName)) {
-				return Collections.singleton(new ByteArrayInputStream(this.buffer));
+		public SortedSet<String> describeLocations() {
+			return new TreeSet<>(Collections.singletonList(this.fileName));
+		}
+
+		@Override
+		public SortedSet<String> list(final String relativeTo, final String path, final boolean recursive,
+				final boolean includeFiles, final boolean includeDirectories) throws IOException {
+			final SortedSet<String> returnSet = new TreeSet<>();
+			if (this.fileName.startsWith(path)) {
+				returnSet.add(this.fileName);
 			}
-			return Collections.emptySet();
+			return returnSet;
 		}
 
 		@Override
-		public Set<String> list(final String relativeTo, final String path, final boolean includeFiles,
-				final boolean includeDirectories, final boolean recursive) throws IOException {
-			return Collections.emptySet();
-		}
-
-		@Override
-		public ClassLoader toClassLoader() {
-			return getClass().getClassLoader();
+		public InputStreamList openStreams(final String relativeTo, final String streamPath) throws IOException {
+			if (!this.fileName.equals(streamPath)) {
+				return null;
+			}
+			final InputStream stream = new ByteArrayInputStream(this.buffer);
+			final InputStreamList list = new InputStreamList();
+			list.add(URI.create(streamPath), stream);
+			return list;
 		}
 	}
 
@@ -210,7 +220,7 @@ public class AbstractEntitySqlGeneratorTest {
 	 * Build a entity manager factory (with a connected database) for testing.
 	 *
 	 * @param schemaCreation
-	 *            indicates that how to initialize the database ("create" vs. "")
+	 *            indicates how to initialize the database ("create" vs. "")
 	 */
 	protected void setup(final String schemaCreation) {
 		final Properties properties = new Properties(System.getProperties());
@@ -241,7 +251,7 @@ public class AbstractEntitySqlGeneratorTest {
 			try {
 				final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 				final ByteArrayOutputStream startStream = new ByteArrayOutputStream();
-				this.generator = new EntitySqlGenerator(context, new LiquibaseStatementsWriter(buffer, "3.8") {
+				this.generator = new EntitySqlGenerator(context, new LiquibaseStatementsWriter(buffer, "4.12") {
 
 					private long counter = System.currentTimeMillis();
 

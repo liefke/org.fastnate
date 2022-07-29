@@ -22,7 +22,7 @@
 	<dependencies>
 		<!-- Use the generator -->
 		<dependency>
-			<groupId>org.fastnate</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>fastnate-generator</artifactId>
 			<version>${project.version}</version>
 		</dependency>

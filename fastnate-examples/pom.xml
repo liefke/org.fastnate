@@ -20,12 +20,12 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.fastnate</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>fastnate-data</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.fastnate</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>fastnate-csv</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -111,7 +111,7 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.fastnate</groupId>
+				<groupId>${project.groupId}</groupId>
 				<artifactId>fastnate-maven-plugin</artifactId>
 				<version>${project.version}</version>
 				<executions>

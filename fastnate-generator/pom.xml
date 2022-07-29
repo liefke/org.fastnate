@@ -146,7 +146,7 @@
 				<dependency>
 					<groupId>org.postgresql</groupId>
 					<artifactId>postgresql</artifactId>
-					<version>42.2.18</version>
+					<version>42.4.0</version>
 					<scope>test</scope>
 				</dependency>
 
@@ -154,7 +154,7 @@
 				<dependency>
 					<groupId>mysql</groupId>
 					<artifactId>mysql-connector-java</artifactId>
-					<version>8.0.20</version>
+					<version>8.0.30</version>
 					<scope>test</scope>
 				</dependency>
 

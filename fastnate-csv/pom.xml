@@ -24,7 +24,7 @@
 	<dependencies>
 		<!-- Use the data framework -->
 		<dependency>
-			<groupId>org.fastnate</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>fastnate-data</artifactId>
 			<version>${project.version}</version>
 		</dependency>
