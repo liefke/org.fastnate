@@ -46,7 +46,8 @@ public class PrimitiveTestEntity {
 
 	private transient String transient2;
 
-	private String description;
+	@Column(name = "\"group\"")
+	private String group;
 
 	private char testChar;
 

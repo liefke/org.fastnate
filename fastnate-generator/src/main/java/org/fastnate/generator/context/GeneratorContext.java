@@ -76,7 +76,7 @@ public class GeneratorContext {
 			if (this.table == null) {
 				return this.id.hashCode();
 			}
-			return this.id.hashCode() << 2 | this.table.getName().hashCode();
+			return this.id.hashCode() << 2 | this.table.getQualifiedName().hashCode();
 		}
 
 		@Override
@@ -469,7 +469,7 @@ public class GeneratorContext {
 		switch (strategy) {
 			case IDENTITY:
 				return addContextObject(this.generators, ContextModelListener::foundGenerator,
-						new GeneratorId(column.getName(), table), new IdentityValue(this, table, column));
+						new GeneratorId(column.getUnquotedName(), table), new IdentityValue(this, table, column));
 			case TABLE:
 				return getDefaultTableGenerator();
 			case SEQUENCE:

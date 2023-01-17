@@ -232,13 +232,13 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 			for (final Iterator<Map.Entry<GeneratorColumn, ColumnExpression>> entries = getValues().entrySet()
 					.iterator(); entries.hasNext();) {
 				final Entry<GeneratorColumn, ColumnExpression> entry = entries.next();
-				result.append(entry.getKey().getName()).append(" = ");
+				result.append(entry.getKey().getName(getDialect())).append(" = ");
 				entry.getValue().appendSql(result);
 				if (entries.hasNext()) {
 					result.append(", ");
 				}
 			}
-			result.append(" WHERE ").append(this.idColumn.getName()).append(" = ");
+			result.append(" WHERE ").append(this.idColumn.getName(getDialect())).append(" = ");
 			this.idValue.appendSql(result);
 			return result.toString();
 		}

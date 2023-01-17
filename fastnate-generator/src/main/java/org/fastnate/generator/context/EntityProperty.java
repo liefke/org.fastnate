@@ -274,13 +274,13 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	public String getPredicate(final E entity) {
 		final T value = getValue(entity);
 		if (value == null) {
-			return this.column.getName() + " IS NULL";
+			return this.column.getName(this.context.getDialect()) + " IS NULL";
 		}
 		final ColumnExpression reference = EntityConverter.getEntityReference(value, this.idField, this.context, true);
 		if (reference == null) {
 			return null;
 		}
-		final String predicate = this.column + " = " + reference.toSql();
+		final String predicate = this.column.getName(this.context.getDialect()) + " = " + reference.toSql();
 		if (this.anyMapping == null) {
 			return predicate;
 		}

@@ -323,7 +323,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				resolveAnnotationAttribute(override, joinTable, collectionTable, JoinTable::schema,
 						CollectionTable::schema, sourceEntityTable.getSchema()),
 				resolveAnnotationAttribute(override, joinTable, collectionTable, JoinTable::name, CollectionTable::name,
-						sourceEntityTable.getName() + '_' + targetEntityTable));
+						sourceEntityTable.getUnquotedName() + '_' + targetEntityTable));
 	}
 
 	/** The current context. */
@@ -452,7 +452,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				// Unidirectional and join column is in the table of the target class
 				this.table = this.valueEntityClass.getTable();
 				this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, associationOverride, null, null,
-						attribute.getName() + '_' + sourceClass.getIdColumn(attribute)));
+						attribute.getName() + '_' + sourceClass.getIdColumn(attribute).getUnquotedName()));
 				this.valueColumn = buildValueColumn(this.table, null, null, attribute,
 						this.valueEntityClass.getIdColumn(attribute).getName());
 				this.anyMapping = null;
@@ -461,12 +461,12 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				final JoinTable joinTable = attribute.getAnnotation(JoinTable.class);
 				this.table = resolveTable(this.context, associationOverride, joinTable, collectionTable,
 						sourceClass.getTable(),
-						this.valueEntityClass == null ? "table" : this.valueEntityClass.getTable().getName());
+						this.valueEntityClass == null ? "table" : this.valueEntityClass.getTable().getUnquotedName());
 				initializeIdColumnForMappingTable(sourceClass, attribute, associationOverride, joinTable,
 						collectionTable);
-				this.valueColumn = buildValueColumn(this.table, associationOverride, null, attribute, attribute
-						.getName() + '_'
-						+ (this.valueEntityClass == null ? "id" : this.valueEntityClass.getIdColumn(attribute)));
+				this.valueColumn = buildValueColumn(this.table, associationOverride, null, attribute,
+						attribute.getName() + '_' + (this.valueEntityClass == null ? "id"
+								: this.valueEntityClass.getIdColumn(attribute).getUnquotedName()));
 				this.anyMapping = mapping.buildAnyMapping(this.context, this.table);
 			}
 		} else {

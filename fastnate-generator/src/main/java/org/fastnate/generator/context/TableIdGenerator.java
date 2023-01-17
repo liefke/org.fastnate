@@ -164,7 +164,7 @@ public class TableIdGenerator extends IdGenerator {
 	public IdGenerator derive(final GeneratorTable currentTable) {
 		if (this.pkColumnValue == null) {
 			return new TableIdGenerator(this.dialect, this.relativeIds, this.generatorTable, this.pkColumn,
-					PrimitiveColumnExpression.create(currentTable.getName(), this.dialect), this.valueColumn,
+					PrimitiveColumnExpression.create(currentTable.getUnquotedName(), this.dialect), this.valueColumn,
 					this.allocationSize, this.initialValue, this.nextValue, this.maxAllocatedValue);
 		}
 		return this;
@@ -179,9 +179,9 @@ public class TableIdGenerator extends IdGenerator {
 	public ColumnExpression getExpression(final GeneratorTable table, final GeneratorColumn column,
 			final Number targetId, final boolean whereExpression) {
 		final long diff = getValueColumnValue() - targetId.longValue();
-		return new PlainColumnExpression("(SELECT " + this.valueColumn.getName() + (diff == 0 ? "" : " - " + diff)
-				+ " FROM " + this.generatorTable.getQualifiedName() + " WHERE " + this.pkColumn + " = "
-				+ this.pkColumnValue + ')');
+		return new PlainColumnExpression("(SELECT " + this.valueColumn.getName(this.dialect)
+				+ (diff == 0 ? "" : " - " + diff) + " FROM " + this.generatorTable.getQualifiedName() + " WHERE "
+				+ this.pkColumn.getName(this.dialect) + " = " + this.pkColumnValue + ')');
 	}
 
 	private long getValueColumnValue() {

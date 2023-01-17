@@ -96,7 +96,7 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 	public void testPrimitiveProperties() throws IOException {
 		final PrimitiveTestEntity testEntity = new PrimitiveTestEntity("Test Primitives");
 
-		testEntity.setDescription("Test all primitive values and 'escaping'.\n\t\r\b\"New line\".\'");
+		testEntity.setGroup("Test all primitive values and 'escaping'.\n\t\r\b\"New line\".\'");
 		testEntity.setTestChar('\'');
 
 		testEntity.setTestBoolean(true);
@@ -116,7 +116,7 @@ public class PrimitiveEntityTest extends AbstractEntitySqlGeneratorTest {
 		// Test equalness
 		final PrimitiveTestEntity result = findSingleResult(PrimitiveTestEntity.class);
 		assertThat(result.getName()).isEqualTo(testEntity.getName());
-		assertThat(result.getDescription()).isEqualTo(testEntity.getDescription());
+		assertThat(result.getGroup()).isEqualTo(testEntity.getGroup());
 		assertThat(result.getTestChar()).isEqualTo(testEntity.getTestChar());
 		assertThat(result.isTestBoolean()).isEqualTo(testEntity.isTestBoolean());
 		assertThat(result.getTestByte()).isEqualTo(testEntity.getTestByte());

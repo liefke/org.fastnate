@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public class GeneratorTable {
+public class GeneratorTable extends NamedObject {
 
 	/** The index of this table in the list of all available tables. */
 	private final int index;

@@ -117,6 +117,24 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
+	 * Quotes an object in the current database dialect, if it is marked for quoting with surrounding '"' or '`' in the
+	 * column definition.
+	 *
+	 * @param objectName
+	 *            the name of the object (column, table, ...) according to the annotation
+	 * @return the quoted object name
+	 */
+	public String adjustObjectName(final String objectName) {
+		final char firstChar = objectName.charAt(0);
+		final int indexOfLastChar = objectName.length() - 1;
+		if (firstChar == '"' && objectName.charAt(indexOfLastChar) == '"'
+				|| firstChar == '`' && objectName.charAt(indexOfLastChar) == '`') {
+			return quoteObjectName(objectName.substring(1, indexOfLastChar));
+		}
+		return objectName;
+	}
+
+	/**
 	 * Builds the SQL expression that is used for referencing the current value of the given sequence.
 	 *
 	 * @param sequence
@@ -427,6 +445,18 @@ public abstract class GeneratorDialect {
 	 */
 	public boolean isSettingIdentityAllowed() {
 		return true;
+	}
+
+	/**
+	 * Quotes an object name for the current database dialect.
+	 *
+	 * @param name
+	 *            the plain object name
+	 *
+	 * @return the quoted object name
+	 */
+	public String quoteObjectName(final String name) {
+		return '"' + name.replace("\"", "\"\"") + '"';
 	}
 
 	/**

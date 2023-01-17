@@ -23,6 +23,7 @@ import org.fastnate.generator.RelativeDate.ReferenceDate;
 import org.fastnate.generator.context.GeneratorColumn;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.dialect.GeneratorDialect;
+import org.fastnate.generator.dialect.H2Dialect;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -53,6 +54,9 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 
 	private static final FastDateFormat ISO_DATETIMESECONDS_FORMAT = FastDateFormat
 			.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
+	/** The current database dialect (in case any plain SQL statement needs to be written). */
+	private final GeneratorDialect dialect;
 
 	/** The receiver of our XML elements. */
 	private final XMLStreamWriter writer;
@@ -87,8 +91,9 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 	 *             if the parent directory does not exist
 	 */
 	public LiquibaseStatementsWriter(final GeneratorContext context) throws XMLStreamException, FileNotFoundException {
-		this(new BufferedOutputStream(
-				new FileOutputStream(context.getSettings().getProperty(OUTPUT_FILE_KEY, "changelog.xml"))),
+		this(context.getDialect(),
+				new BufferedOutputStream(
+						new FileOutputStream(context.getSettings().getProperty(OUTPUT_FILE_KEY, "changelog.xml"))),
 				// "1.9" was not able to write "valueComputed", so we use "2.0" as default
 				context.getSettings().getProperty(VERSION_KEY, "2.0"));
 	}
@@ -96,6 +101,8 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 	/**
 	 * Creates a new writer which generates an XML file with "UTF-8" encoding.
 	 *
+	 * @param dialect
+	 *            the database dialect for any plain SQL statement
 	 * @param outputStream
 	 *            the target stream, will be close when this wirter is closed
 	 * @param version
@@ -103,16 +110,19 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 	 * @throws XMLStreamException
 	 *             if already the root element could not be created
 	 */
-	public LiquibaseStatementsWriter(final OutputStream outputStream, final String version) throws XMLStreamException {
-		this(XMLOutputFactory.newFactory().createXMLStreamWriter(outputStream), version);
+	public LiquibaseStatementsWriter(final GeneratorDialect dialect, final OutputStream outputStream,
+			final String version) throws XMLStreamException {
+		this(dialect, XMLOutputFactory.newFactory().createXMLStreamWriter(outputStream), version);
 
 		// Remember the outputStream to close it at the end
 		this.outputStream = outputStream;
 	}
 
 	/**
-	 * Creates a new instance of {@link LiquibaseStatementsWriter}.
+	 * Creates a new writer.
 	 *
+	 * @param dialect
+	 *            the database dialect for any plain SQL statement
 	 * @param writer
 	 *            the stream writer for generating the XML
 	 * @param version
@@ -120,7 +130,9 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 	 * @throws XMLStreamException
 	 *             if already the root element could not be created
 	 */
-	public LiquibaseStatementsWriter(final XMLStreamWriter writer, final String version) throws XMLStreamException {
+	public LiquibaseStatementsWriter(final GeneratorDialect dialect, final XMLStreamWriter writer, final String version)
+			throws XMLStreamException {
+		this.dialect = dialect;
 		this.writer = writer;
 		writer.writeStartDocument();
 		writer.writeCharacters("\n");
@@ -134,6 +146,35 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 		writer.writeAttribute("http://www.w3.org/2001/XMLSchema-instance", "schemaLocation",
 				namespace + " http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-" + version + ".xsd");
 		this.relativeDatesSupported = !version.matches("[1-3]\\..*");
+	}
+
+	/**
+	 * Creates a new writer which generates an XML file with "UTF-8" encoding and use the H2 dialect for any plain
+	 * statement.
+	 *
+	 * @param outputStream
+	 *            the target stream, will be close when this wirter is closed
+	 * @param version
+	 *            the liquibase version - this is only for the referenced schema and won't change anything else
+	 * @throws XMLStreamException
+	 *             if already the root element could not be created
+	 */
+	public LiquibaseStatementsWriter(final OutputStream outputStream, final String version) throws XMLStreamException {
+		this(new H2Dialect(), outputStream, version);
+	}
+
+	/**
+	 * Creates a new writer which uses H2 for any plain statement.
+	 *
+	 * @param writer
+	 *            the stream writer for generating the XML
+	 * @param version
+	 *            the liquibase version - this is only for the referenced schema and won't change anything else
+	 * @throws XMLStreamException
+	 *             if already the root element could not be created
+	 */
+	public LiquibaseStatementsWriter(final XMLStreamWriter writer, final String version) throws XMLStreamException {
+		this(new H2Dialect(), writer, version);
 	}
 
 	/**
@@ -269,7 +310,7 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 	}
 
 	@Override
-	public void writePlainStatement(final GeneratorDialect dialect, final String sql) throws IOException {
+	public void writePlainStatement(final GeneratorDialect currentDialect, final String sql) throws IOException {
 		try {
 			ensureChangeSetStarted();
 			this.writer.writeCharacters("\n\t\t");
@@ -378,7 +419,7 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 
 				this.writer.writeCharacters("\n\t\t\t");
 				this.writer.writeStartElement("where");
-				this.writer.writeCharacters(update.getIdColumn().getName());
+				this.writer.writeCharacters(update.getIdColumn().getName(this.dialect));
 				this.writer.writeCharacters(" = ");
 				this.writer.writeCharacters(update.getIdValue().toSql());
 				this.writer.writeEndElement();
@@ -410,11 +451,11 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 		if (insert.getTable().getSchema() != null) {
 			this.writer.writeAttribute("schemaName", insert.getTable().getSchema());
 		}
-		this.writer.writeAttribute("tableName", insert.getTable().getName());
+		this.writer.writeAttribute("tableName", insert.getTable().getUnquotedName());
 		for (final Entry<GeneratorColumn, ColumnExpression> entry : insert.getValues().entrySet()) {
 			this.writer.writeCharacters("\n\t\t\t");
 			this.writer.writeEmptyElement("column");
-			this.writer.writeAttribute("name", entry.getKey().getName());
+			this.writer.writeAttribute("name", entry.getKey().getUnquotedName());
 			writeColumnExpression(entry.getValue());
 		}
 	}

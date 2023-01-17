@@ -68,4 +68,9 @@ public class MsSqlDialect extends GeneratorDialect {
 		return false;
 	}
 
+	@Override
+	public String quoteObjectName(final String name) {
+		return '[' + name.replace("]", "]]") + ']';
+	}
+
 }

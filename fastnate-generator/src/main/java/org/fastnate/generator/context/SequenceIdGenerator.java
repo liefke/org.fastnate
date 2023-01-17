@@ -147,8 +147,8 @@ public class SequenceIdGenerator extends IdGenerator {
 		}
 
 		final long diff = this.nextValue - 1 - targetId.longValue();
-		return new PlainColumnExpression("(SELECT max(" + column.getName() + ')' + (diff == 0 ? "" : " - " + diff)
-				+ " FROM " + entityTable.getQualifiedName() + ')');
+		return new PlainColumnExpression("(SELECT max(" + column.getName(this.dialect) + ')'
+				+ (diff == 0 ? "" : " - " + diff) + " FROM " + entityTable.getQualifiedName() + ')');
 	}
 
 	@Override
