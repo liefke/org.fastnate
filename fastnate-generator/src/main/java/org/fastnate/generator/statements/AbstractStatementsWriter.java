@@ -1,13 +1,12 @@
 package org.fastnate.generator.statements;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -113,58 +112,58 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 		 *            the string builder
 		 * @param columns
 		 *            contains the columns
+		 * @param mapper
+		 *            add the column to the expression
 		 * @return {@code result} for chaining
 		 */
-		protected StringBuilder addColumns(final StringBuilder result, final Collection<?> columns) {
-			final Iterator<?> it = columns.iterator();
+		protected <T> StringBuilder addColumns(final StringBuilder result, final Collection<T> columns,
+				final BiConsumer<StringBuilder, T> mapper) {
+			final Iterator<T> it = columns.iterator();
 			if (it.hasNext()) {
-				result.append(it.next());
+				mapper.accept(result, it.next());
 			}
 			while (it.hasNext()) {
 				result.append(", ");
-				result.append(it.next());
+				mapper.accept(result, it.next());
 			}
 			return result;
 		}
 
 		@Override
 		public String toSql() {
+			final GeneratorDialect dialect = getDialect();
 			final StringBuilder result = new StringBuilder("INSERT INTO ").append(getTable().getQualifiedName());
 			if (getValues().isEmpty()) {
-				// Can happen if we have an generated identity column and only null values
-				result.append(' ').append(getDialect().getEmptyValuesExpression());
+				// Can happen if we have a generated identity column and only null values
+				result.append(' ').append(dialect.getEmptyValuesExpression());
 			} else {
 				result.append(" (");
-				if (!getDialect().isSelectFromSameTableInInsertSupported() && isPlainExpressionAvailable()) {
+				if (!dialect.isSelectFromSameTableInInsertSupported() && isPlainExpressionAvailable()) {
 					// Create MySQL compatible INSERTs
 					final Pattern subselectPattern = Pattern.compile(
 							"\\(SELECT\\s+(.*)\\s+FROM\\s+" + getTable().getQualifiedName() + "\\s*\\)",
 							Pattern.CASE_INSENSITIVE);
-					if (getValues().values().stream().anyMatch(e -> !(e instanceof PrimitiveColumnExpression)
-							&& subselectPattern.matcher(e.toSql()).matches())) {
-						addColumns(result, getValues().keySet()).append(") SELECT ");
-						final List<String> rewrite = new ArrayList<>();
-						for (final ColumnExpression value : getValues().values()) {
+					if (getValues().values().stream().anyMatch(value -> !(value instanceof PrimitiveColumnExpression)
+							&& subselectPattern.matcher(value.toSql()).matches())) {
+						addColumns(result, getValues().keySet(), (sb, column) -> sb.append(column.getName(dialect)))
+								.append(") SELECT ");
+						addColumns(result, getValues().values(), (sb, value) -> {
 							final String sql = value.toSql();
-							final Matcher matcher = subselectPattern.matcher(sql);
-							if (matcher.matches()) {
-								rewrite.add(matcher.group(1));
+							final Matcher matcher;
+							if (!(value instanceof PrimitiveColumnExpression)
+									&& (matcher = subselectPattern.matcher(sql)).matches()) {
+								sb.append(matcher.group(1));
 							} else {
-								rewrite.add(sql);
+								sb.append(sql);
 							}
-						}
-						addColumns(result, rewrite).append(" FROM ").append(getTable().getQualifiedName());
+						}).append(" FROM ").append(getTable().getQualifiedName());
 						return result.toString();
 					}
 				}
 
-				addColumns(result, getValues().keySet()).append(") VALUES (");
-				for (final Iterator<ColumnExpression> iterator = getValues().values().iterator(); iterator.hasNext();) {
-					iterator.next().appendSql(result);
-					if (iterator.hasNext()) {
-						result.append(", ");
-					}
-				}
+				addColumns(result, getValues().keySet(), (sb, column) -> sb.append(column.getName(dialect)))
+						.append(") VALUES (");
+				addColumns(result, getValues().values(), (sb, column) -> column.appendSql(result));
 				result.append(')');
 			}
 			return result.toString();
