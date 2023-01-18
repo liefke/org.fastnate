@@ -481,7 +481,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					CollectionTable::schema, CollectionTable::name,
 					sourceClass.getEntityName() + '_' + attribute.getName());
 			this.idColumn = this.table.resolveColumn(buildIdColumn(attribute, associationOverride, collectionTable,
-					sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute)));
+					sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute).getUnquotedName()));
 
 			// Initialize the target description and columns
 			this.valueClass = getPropertyArgument(attribute, values.targetClass(), valueClassParamIndex);
@@ -730,7 +730,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					}
 					return false;
 				}).map(Property::getName).findFirst().orElseGet(sourceClass::getEntityName);
-				this.idColumn = this.table.resolveColumn(entityName + '_' + sourceClass.getIdColumn(getAttribute()));
+				this.idColumn = this.table
+						.resolveColumn(entityName + '_' + sourceClass.getIdColumn(getAttribute()).getUnquotedName());
 			});
 		}
 	}

@@ -184,8 +184,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			if (joinColumn != null && joinColumn.name().length() > 0) {
 				this.column = containerTable.resolveColumn(joinColumn.name());
 			} else {
-				this.column = containerTable.resolveColumn(attribute.getName() + "_"
-						+ (this.targetClass == null ? "id" : this.targetClass.getIdColumn(attribute)));
+				this.column = containerTable.resolveColumn(attribute.getName() + '_' + (this.targetClass == null ? "id"
+						: this.targetClass.getIdColumn(attribute).getUnquotedName()));
 			}
 		} else {
 			this.column = null;
@@ -274,13 +274,13 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	public String getPredicate(final E entity) {
 		final T value = getValue(entity);
 		if (value == null) {
-			return this.column.getName(this.context.getDialect()) + " IS NULL";
+			return this.column.getQualifiedName() + " IS NULL";
 		}
 		final ColumnExpression reference = EntityConverter.getEntityReference(value, this.idField, this.context, true);
 		if (reference == null) {
 			return null;
 		}
-		final String predicate = this.column.getName(this.context.getDialect()) + " = " + reference.toSql();
+		final String predicate = this.column.getQualifiedName() + " = " + reference.toSql();
 		if (this.anyMapping == null) {
 			return predicate;
 		}

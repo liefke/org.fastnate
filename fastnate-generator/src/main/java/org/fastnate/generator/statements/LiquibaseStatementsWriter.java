@@ -419,7 +419,7 @@ public class LiquibaseStatementsWriter extends AbstractStatementsWriter {
 
 				this.writer.writeCharacters("\n\t\t\t");
 				this.writer.writeStartElement("where");
-				this.writer.writeCharacters(update.getIdColumn().getName(this.dialect));
+				this.writer.writeCharacters(update.getIdColumn().getQualifiedName());
 				this.writer.writeCharacters(" = ");
 				this.writer.writeCharacters(update.getIdValue().toSql());
 				this.writer.writeEndElement();

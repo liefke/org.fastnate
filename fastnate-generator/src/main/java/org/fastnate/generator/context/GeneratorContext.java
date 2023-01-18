@@ -60,31 +60,31 @@ public class GeneratorContext {
 
 		private final String id;
 
-		private final GeneratorTable table;
+		private final String tableName;
 
 		@Override
 		public boolean equals(final Object obj) {
 			if (obj instanceof GeneratorId) {
 				final GeneratorId other = (GeneratorId) obj;
-				return this.id.equals(other.id) && Objects.equals(this.table, other.table);
+				return this.id.equals(other.id) && Objects.equals(this.tableName, other.tableName);
 			}
 			return false;
 		}
 
 		@Override
 		public int hashCode() {
-			if (this.table == null) {
+			if (this.tableName == null) {
 				return this.id.hashCode();
 			}
-			return this.id.hashCode() << 2 | this.table.getQualifiedName().hashCode();
+			return this.id.hashCode() << 2 | this.tableName.hashCode();
 		}
 
 		@Override
 		public String toString() {
-			if (this.table == null) {
+			if (this.tableName == null) {
 				return this.id;
 			}
-			return this.id + '.' + this.table.getQualifiedName();
+			return this.tableName + '.' + this.id;
 		}
 
 	}
@@ -133,6 +133,9 @@ public class GeneratorContext {
 
 	/** The settings key for {@link #writeRelativeIds}. */
 	public static final String RELATIVE_IDS_KEY = "fastnate.generator.relative.ids";
+
+	/** The settings key for {@link #quoteAllIdentifiers}. */
+	public static final String QUOTE_ALL_IDENTIFIERS_KEY = "fastnate.generator.quote.all.identifiers";
 
 	/** The settings key for the {@link #uniquePropertyQuality}. */
 	public static final String UNIQUE_PROPERTIES_QUALITY_KEY = "fastnate.generator.unique.properties.quality";
@@ -219,6 +222,13 @@ public class GeneratorContext {
 
 	/** Indicates to include null values in statements. */
 	private boolean writeNullValues;
+
+	/**
+	 * Indicates to quote all identifiers.
+	 *
+	 * Otherwise only those identifiers are quoted, which are surrounded by '"' or '`'.
+	 */
+	private boolean quoteAllIdentifiers;
 
 	/** Contains the settings that were given during creation, resp. as read from the persistence configuration. */
 	private final Properties settings;
@@ -308,6 +318,8 @@ public class GeneratorContext {
 				.parseBoolean(settings.getProperty(RELATIVE_IDS_KEY, String.valueOf(this.writeRelativeIds)));
 		this.writeNullValues = Boolean
 				.parseBoolean(settings.getProperty(NULL_VALUES_KEY, String.valueOf(this.writeNullValues)));
+		this.quoteAllIdentifiers = Boolean.parseBoolean(
+				settings.getProperty(QUOTE_ALL_IDENTIFIERS_KEY, String.valueOf(this.quoteAllIdentifiers)));
 		this.uniquePropertyQuality = UniquePropertyQuality
 				.valueOf(settings.getProperty(UNIQUE_PROPERTIES_QUALITY_KEY, this.uniquePropertyQuality.name()));
 		this.maxUniqueProperties = Integer
@@ -334,6 +346,51 @@ public class GeneratorContext {
 	}
 
 	/**
+	 * Quotes an object in the current database dialect, if it is marked for quoting with surrounding '"' or '`' in the
+	 * column definition or if we {@link #quoteAllIdentifiers quote all identifiers}.
+	 *
+	 * @param identifier
+	 *            the name of the object (column, table, ...) according to the annotation
+	 * @return the quoted object name
+	 */
+	public String adjustIdentifier(final String identifier) {
+		final char firstChar = identifier.charAt(0);
+		final int indexOfLastChar = identifier.length() - 1;
+		if (firstChar == '"' && identifier.charAt(indexOfLastChar) == '"'
+				|| firstChar == '`' && identifier.charAt(indexOfLastChar) == '`') {
+			return this.dialect.quoteIdentifier(identifier.substring(1, indexOfLastChar));
+		}
+		if (this.quoteAllIdentifiers) {
+			return this.dialect.quoteIdentifier(identifier);
+		}
+		return identifier;
+	}
+
+	/**
+	 * Builds the fully qualified name for the given database object.
+	 *
+	 * @param catalog
+	 *            the optional catalog name
+	 * @param schema
+	 *            the optional schema name
+	 * @param objectName
+	 *            the name of the database object
+	 * @return the qualified name, as used by this dialect
+	 */
+	public String buildQualifiedName(final String catalog, final String schema, final String objectName) {
+		if (catalog == null || catalog.length() == 0) {
+			if (schema == null || schema.length() == 0 || !this.dialect.isSchemaSupported()) {
+				return adjustIdentifier(objectName);
+			}
+			return adjustIdentifier(schema) + '.' + adjustIdentifier(objectName);
+		}
+		if (schema == null || schema.length() == 0 || !this.dialect.isSchemaSupported()) {
+			return adjustIdentifier(catalog) + '.' + adjustIdentifier(objectName);
+		}
+		return adjustIdentifier(catalog) + '.' + adjustIdentifier(schema) + '.' + adjustIdentifier(objectName);
+	}
+
+	/**
 	 * Fires an event to all {@link #getContextModelListeners() listeners}.
 	 *
 	 * @param listenerFunction
@@ -355,7 +412,7 @@ public class GeneratorContext {
 							new SimpleEntry<String, Object>("allocationSize", Integer.valueOf(1)))
 					.collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
 			this.defaultSequenceGenerator = new SequenceIdGenerator(
-					AnnotationDefaults.create(SequenceGenerator.class, defaults), this.dialect, this.writeRelativeIds);
+					AnnotationDefaults.create(SequenceGenerator.class, defaults), this);
 			fireContextObjectAdded(ContextModelListener::foundGenerator, this.defaultSequenceGenerator);
 		}
 		return this.defaultSequenceGenerator;
@@ -450,7 +507,7 @@ public class GeneratorContext {
 		if (StringUtils.isNotEmpty(name)) {
 			ModelException.test(strategy != GenerationType.IDENTITY,
 					"Generator for GenerationType.IDENTITY not allowed");
-			IdGenerator generator = this.generators.get(new GeneratorId(name, table));
+			IdGenerator generator = this.generators.get(new GeneratorId(name, table.getQualifiedName()));
 			if (generator == null) {
 				generator = this.generators.get(new GeneratorId(name, null));
 				ModelException.test(generator != null, "Generator '{}' not found", name);
@@ -458,7 +515,7 @@ public class GeneratorContext {
 				final IdGenerator derived = generator.derive(table);
 				if (derived != generator) {
 					return addContextObject(this.generators, ContextModelListener::foundGenerator,
-							new GeneratorId(name, table), derived);
+							new GeneratorId(name, table.getQualifiedName()), derived);
 				}
 			}
 			return generator;
@@ -469,7 +526,8 @@ public class GeneratorContext {
 		switch (strategy) {
 			case IDENTITY:
 				return addContextObject(this.generators, ContextModelListener::foundGenerator,
-						new GeneratorId(column.getUnquotedName(), table), new IdentityValue(this, table, column));
+						new GeneratorId(column.getUnquotedName(), table.getQualifiedName()),
+						new IdentityValue(this, table, column));
 			case TABLE:
 				return getDefaultTableGenerator();
 			case SEQUENCE:
@@ -514,10 +572,10 @@ public class GeneratorContext {
 			if (!(existingGenerator instanceof SequenceIdGenerator) || !((SequenceIdGenerator) existingGenerator)
 					.getSequenceName().equals(sequenceGenerator.sequenceName())) {
 				if (existingGenerator != null) {
-					key = new GeneratorId(sequenceGenerator.name(), table);
+					key = new GeneratorId(sequenceGenerator.name(), table.getQualifiedName());
 				}
 				addContextObject(this.generators, ContextModelListener::foundGenerator, key,
-						new SequenceIdGenerator(sequenceGenerator, this.dialect, this.writeRelativeIds));
+						new SequenceIdGenerator(sequenceGenerator, this));
 			}
 		}
 
@@ -598,25 +656,9 @@ public class GeneratorContext {
 	 * @return the metadata for the given table
 	 */
 	public GeneratorTable resolveTable(final String catalogName, final String schemaName, final String tableName) {
-		final String catalog;
-		final String schema;
-		final String qualified;
-		if (catalogName == null || catalogName.length() == 0) {
-			catalog = null;
-			if (schemaName == null || schemaName.length() == 0) {
-				schema = null;
-				qualified = tableName;
-			} else {
-				schema = schemaName;
-				qualified = schemaName + '.' + tableName;
-			}
-		} else {
-			schema = schemaName;
-			ModelException.test(schema != null && schema.length() > 0,
-					"Catalog name '{}' found for table '{}' but schema name is missing.", catalogName, tableName);
-			catalog = catalogName;
-			qualified = catalog + '.' + schema + '.' + tableName;
-		}
+		final String catalog = StringUtils.defaultIfEmpty(catalogName, null);
+		final String schema = StringUtils.defaultIfEmpty(schemaName, null);
+		final String qualified = buildQualifiedName(catalog, schema, tableName);
 		final GeneratorTable table = this.tables.get(qualified);
 		if (table != null) {
 			return table;

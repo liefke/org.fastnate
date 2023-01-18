@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.persistence.SequenceGenerator;
 
+import org.apache.commons.lang3.StringUtils;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.CurrentSequenceValueExpression;
@@ -58,30 +59,16 @@ public class SequenceIdGenerator extends IdGenerator {
 	 *
 	 * @param generator
 	 *            the annotation that contains our settings
-	 * @param dialect
-	 *            the current database dialect
-	 * @param relativeIds
-	 *            indicates that the sequence is always used, instead of absolute IDs
+	 * @param context
+	 *            the current context
 	 */
-	public SequenceIdGenerator(final SequenceGenerator generator, final GeneratorDialect dialect,
-			final boolean relativeIds) {
-		this.dialect = dialect;
-		this.catalog = generator.catalog().length() == 0 ? null : generator.catalog();
-		this.schema = generator.schema().length() == 0 ? null : generator.schema();
+	public SequenceIdGenerator(final SequenceGenerator generator, final GeneratorContext context) {
+		this.dialect = context.getDialect();
+		this.catalog = StringUtils.defaultIfEmpty(generator.catalog(), null);
+		this.schema = StringUtils.defaultIfEmpty(generator.schema(), null);
 		this.sequenceName = generator.sequenceName();
-		if (this.catalog == null) {
-			if (this.schema == null) {
-				this.qualifiedName = this.sequenceName;
-			} else {
-				this.qualifiedName = this.schema + '.' + this.sequenceName;
-			}
-		} else {
-			ModelException.test(this.schema != null,
-					"Catalog name '{}' found for sequence '{}' but schema name is missing.", this.catalog,
-					this.sequenceName);
-			this.qualifiedName = this.catalog + '.' + this.schema + '.' + this.sequenceName;
-		}
-		this.relativeIds = relativeIds;
+		this.qualifiedName = context.buildQualifiedName(this.catalog, this.schema, this.sequenceName);
+		this.relativeIds = context.isWriteRelativeIds();
 		this.allocationSize = generator.allocationSize();
 		this.nextValue = this.initialValue = generator.initialValue();
 		this.currentSequenceValue = this.initialValue - 1;
@@ -147,7 +134,7 @@ public class SequenceIdGenerator extends IdGenerator {
 		}
 
 		final long diff = this.nextValue - 1 - targetId.longValue();
-		return new PlainColumnExpression("(SELECT max(" + column.getName(this.dialect) + ')'
+		return new PlainColumnExpression("(SELECT max(" + column.getQualifiedName() + ')'
 				+ (diff == 0 ? "" : " - " + diff) + " FROM " + entityTable.getQualifiedName() + ')');
 	}
 

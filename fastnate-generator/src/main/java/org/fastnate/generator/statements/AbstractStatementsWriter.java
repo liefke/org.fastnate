@@ -131,21 +131,20 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 
 		@Override
 		public String toSql() {
-			final GeneratorDialect dialect = getDialect();
 			final StringBuilder result = new StringBuilder("INSERT INTO ").append(getTable().getQualifiedName());
 			if (getValues().isEmpty()) {
 				// Can happen if we have a generated identity column and only null values
-				result.append(' ').append(dialect.getEmptyValuesExpression());
+				result.append(' ').append(getDialect().getEmptyValuesExpression());
 			} else {
 				result.append(" (");
-				if (!dialect.isSelectFromSameTableInInsertSupported() && isPlainExpressionAvailable()) {
+				if (!getDialect().isSelectFromSameTableInInsertSupported() && isPlainExpressionAvailable()) {
 					// Create MySQL compatible INSERTs
 					final Pattern subselectPattern = Pattern.compile(
 							"\\(SELECT\\s+(.*)\\s+FROM\\s+" + getTable().getQualifiedName() + "\\s*\\)",
 							Pattern.CASE_INSENSITIVE);
 					if (getValues().values().stream().anyMatch(value -> !(value instanceof PrimitiveColumnExpression)
 							&& subselectPattern.matcher(value.toSql()).matches())) {
-						addColumns(result, getValues().keySet(), (sb, column) -> sb.append(column.getName(dialect)))
+						addColumns(result, getValues().keySet(), (sb, column) -> sb.append(column.getQualifiedName()))
 								.append(") SELECT ");
 						addColumns(result, getValues().values(), (sb, value) -> {
 							final String sql = value.toSql();
@@ -161,7 +160,7 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 					}
 				}
 
-				addColumns(result, getValues().keySet(), (sb, column) -> sb.append(column.getName(dialect)))
+				addColumns(result, getValues().keySet(), (sb, column) -> sb.append(column.getQualifiedName()))
 						.append(") VALUES (");
 				addColumns(result, getValues().values(), (sb, column) -> column.appendSql(result));
 				result.append(')');
@@ -231,13 +230,13 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 			for (final Iterator<Map.Entry<GeneratorColumn, ColumnExpression>> entries = getValues().entrySet()
 					.iterator(); entries.hasNext();) {
 				final Entry<GeneratorColumn, ColumnExpression> entry = entries.next();
-				result.append(entry.getKey().getName(getDialect())).append(" = ");
+				result.append(entry.getKey().getQualifiedName()).append(" = ");
 				entry.getValue().appendSql(result);
 				if (entries.hasNext()) {
 					result.append(", ");
 				}
 			}
-			result.append(" WHERE ").append(this.idColumn.getName(getDialect())).append(" = ");
+			result.append(" WHERE ").append(this.idColumn.getQualifiedName()).append(" = ");
 			this.idValue.appendSql(result);
 			return result.toString();
 		}

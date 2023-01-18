@@ -1,7 +1,5 @@
 package org.fastnate.generator.context;
 
-import org.fastnate.generator.dialect.GeneratorDialect;
-
 /**
  * Base class for database schema objects that have a (possibly quoted) name.
  *
@@ -12,46 +10,55 @@ import org.fastnate.generator.dialect.GeneratorDialect;
 public abstract class NamedObject {
 
 	/**
-	 * Resolves the name of this object.
+	 * Resolves the name of this object, as given by the metamodel.
 	 *
 	 * @return the name of the object, possibly quoted with '"' or '`'
 	 */
 	public abstract String getName();
 
 	/**
-	 * Resolves the name of this column for the given dialect.
+	 * Resolves the fully qualfified name of this object, as it is used by the dialect.
 	 *
-	 * @param dialect
-	 *            the current database dialect
-	 *
-	 * @return the column name with the correct quotes
+	 * @return the name of the object, quoted according to the dialect
 	 */
-	public String getName(final GeneratorDialect dialect) {
-		return dialect.adjustObjectName(getName());
-	}
+	public abstract String getQualifiedName();
 
 	/**
-	 * Removes any quotes, if the column name contains them.
+	 * Removes any quotes, if the object name contains them.
 	 *
-	 * @return the column name without quotes
+	 * @return the object name without quotes
 	 */
 	public String getUnquotedName() {
-		final String name = getName();
-		final char firstChar = name.charAt(0);
-		final int indexLastChar = name.length() - 1;
-		if (firstChar == '"') {
-			if (name.charAt(indexLastChar) == '"') {
-				return name.substring(1, indexLastChar);
-			}
-		} else if (firstChar == '`' && name.charAt(indexLastChar) == '`') {
-			return name.substring(1, indexLastChar);
-		}
-		return name;
+		return unqoteObjectName(getName());
 	}
 
 	@Override
 	public String toString() {
-		return getName();
+		return getQualifiedName();
+	}
+
+	/**
+	 * Removes any quotes from the given object.
+	 *
+	 * @param objectName
+	 *            the name of the object, as given by the metamodel
+	 *
+	 * @return the object name without quotes or {@code null} if no object name was given
+	 */
+	protected String unqoteObjectName(final String objectName) {
+		if (objectName == null) {
+			return null;
+		}
+		final char firstChar = objectName.charAt(0);
+		final int indexLastChar = objectName.length() - 1;
+		if (firstChar == '"') {
+			if (objectName.charAt(indexLastChar) == '"') {
+				return objectName.substring(1, indexLastChar);
+			}
+		} else if (firstChar == '`' && objectName.charAt(indexLastChar) == '`') {
+			return objectName.substring(1, indexLastChar);
+		}
+		return objectName;
 	}
 
 }

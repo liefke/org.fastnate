@@ -16,7 +16,6 @@ import org.fastnate.generator.converter.BooleanConverter;
 import org.fastnate.generator.converter.NumberConverter;
 import org.fastnate.generator.converter.StringConverter;
 import org.fastnate.generator.converter.ValueConverter;
-import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.PrimitiveColumnExpression;
 import org.fastnate.generator.statements.TableStatement;
@@ -67,9 +66,6 @@ public class AnyMapping<T> {
 		}
 		return null;
 	}
-
-	/** The current database dialect. */
-	private GeneratorDialect dialect;
 
 	/** The name of the column that contains the id of the entity class, if {@link Any} is used. */
 	private final GeneratorColumn column;
@@ -196,9 +192,9 @@ public class AnyMapping<T> {
 	 */
 	public String getPredicate(final T value) {
 		if (value == null) {
-			return this.column.getName(this.dialect) + " IS NULL";
+			return this.column.getQualifiedName() + " IS NULL";
 		}
-		return this.column.getName(this.dialect) + " = " + findDesc(value);
+		return this.column.getQualifiedName() + " = " + findDesc(value);
 	}
 
 	/**

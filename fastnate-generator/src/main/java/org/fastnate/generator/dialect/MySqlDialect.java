@@ -58,12 +58,17 @@ public class MySqlDialect extends GeneratorDialect {
 	}
 
 	@Override
+	public boolean isSchemaSupported() {
+		return false;
+	}
+
+	@Override
 	public boolean isSelectFromSameTableInInsertSupported() {
 		return false;
 	}
 
 	@Override
-	public String quoteObjectName(final String name) {
+	public String quoteIdentifier(final String name) {
 		return '`' + name + '`';
 	}
 

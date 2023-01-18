@@ -139,6 +139,9 @@ public class HibernateProvider implements JpaProvider {
 			}
 		}
 
+		copySetting(settings, AvailableSettings.GLOBALLY_QUOTED_IDENTIFIERS,
+				GeneratorContext.QUOTE_ALL_IDENTIFIERS_KEY);
+
 		copySetting(settings, AvailableSettings.SHOW_SQL, ConnectedStatementsWriter.LOG_STATEMENTS_KEY);
 
 		copySetting(settings, AvailableSettings.DRIVER, ConnectedStatementsWriter.DATABASE_DRIVER_KEY);

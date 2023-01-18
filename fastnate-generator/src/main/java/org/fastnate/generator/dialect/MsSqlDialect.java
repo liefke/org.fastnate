@@ -69,7 +69,7 @@ public class MsSqlDialect extends GeneratorDialect {
 	}
 
 	@Override
-	public String quoteObjectName(final String name) {
+	public String quoteIdentifier(final String name) {
 		return '[' + name.replace("]", "]]") + ']';
 	}
 

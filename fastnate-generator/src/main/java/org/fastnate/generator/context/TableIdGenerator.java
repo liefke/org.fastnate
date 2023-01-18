@@ -179,9 +179,9 @@ public class TableIdGenerator extends IdGenerator {
 	public ColumnExpression getExpression(final GeneratorTable table, final GeneratorColumn column,
 			final Number targetId, final boolean whereExpression) {
 		final long diff = getValueColumnValue() - targetId.longValue();
-		return new PlainColumnExpression("(SELECT " + this.valueColumn.getName(this.dialect)
+		return new PlainColumnExpression("(SELECT " + this.valueColumn.getQualifiedName()
 				+ (diff == 0 ? "" : " - " + diff) + " FROM " + this.generatorTable.getQualifiedName() + " WHERE "
-				+ this.pkColumn.getName(this.dialect) + " = " + this.pkColumnValue + ')');
+				+ this.pkColumn.getQualifiedName() + " = " + this.pkColumnValue + ')');
 	}
 
 	private long getValueColumnValue() {

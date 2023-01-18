@@ -7,6 +7,7 @@ import java.util.Date;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.persistence.Table;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
@@ -114,24 +115,6 @@ public abstract class GeneratorDialect {
 		} else {
 			writer.writePlainStatement(this, "ALTER SEQUENCE " + sequenceName + " RESTART WITH " + nextSequenceValue);
 		}
-	}
-
-	/**
-	 * Quotes an object in the current database dialect, if it is marked for quoting with surrounding '"' or '`' in the
-	 * column definition.
-	 *
-	 * @param objectName
-	 *            the name of the object (column, table, ...) according to the annotation
-	 * @return the quoted object name
-	 */
-	public String adjustObjectName(final String objectName) {
-		final char firstChar = objectName.charAt(0);
-		final int indexOfLastChar = objectName.length() - 1;
-		if (firstChar == '"' && objectName.charAt(indexOfLastChar) == '"'
-				|| firstChar == '`' && objectName.charAt(indexOfLastChar) == '`') {
-			return quoteObjectName(objectName.substring(1, indexOfLastChar));
-		}
-		return objectName;
 	}
 
 	/**
@@ -412,9 +395,18 @@ public abstract class GeneratorDialect {
 	}
 
 	/**
-	 * Indicates that this dialect may select from the same table in a select.
+	 * Indicates that this dialect supports the {@link Table#schema() schema} naming.
 	 *
-	 * @return {@code true} if "INSERT INTO XXX (a) VALUES (SELECT max(a) FROM XXX)" is supported
+	 * @return {@code true} if we support the name of schema when referencing a table
+	 */
+	public boolean isSchemaSupported() {
+		return true;
+	}
+
+	/**
+	 * Indicates that this dialect may select from the same table in an insert statement.
+	 *
+	 * @return {@code true} if "INSERT INTO MY_TABLE (a) VALUES (SELECT max(a) FROM MY_TABLE)" is supported
 	 */
 	public boolean isSelectFromSameTableInInsertSupported() {
 		return true;
@@ -455,7 +447,7 @@ public abstract class GeneratorDialect {
 	 *
 	 * @return the quoted object name
 	 */
-	public String quoteObjectName(final String name) {
+	public String quoteIdentifier(final String name) {
 		return '"' + name.replace("\"", "\"\"") + '"';
 	}
 
