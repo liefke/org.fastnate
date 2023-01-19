@@ -155,8 +155,8 @@ public class AnyMapping<T> {
 			return metaDef;
 		}
 
-		// ... or in the package declaration
-		metaDef = findElementMetaDef(entityClass.getPackage(), metaDefName);
+		// ... or in the declaration of the package or a parent package
+		metaDef = findMetaDefInPackageHierarchy(entityClass.getPackage(), metaDefName);
 		if (metaDef != null) {
 			return metaDef;
 		}
@@ -169,16 +169,31 @@ public class AnyMapping<T> {
 			}
 		}
 
-		// ... or in the super class
-		metaDef = findMetaDefInClassHierarchy(entityClass.getSuperclass(), metaDefName);
-		if (metaDef != null) {
-			return metaDef;
-		}
-
 		// .. or in one of the attributes
 		return Stream.concat(Stream.of(entityClass.getDeclaredFields()), Stream.of(entityClass.getDeclaredMethods()))
 				.map(element -> findElementMetaDef(element, metaDefName)).filter(Objects::nonNull).findFirst()
-				.orElse(null);
+				.orElseGet(() ->
+				// ... or in the super class
+				findMetaDefInClassHierarchy(entityClass.getSuperclass(), metaDefName));
+	}
+
+	private AnyMetaDef findMetaDefInPackageHierarchy(final Package classPackage, final String metaDefName) {
+		if (classPackage == null) {
+			return null;
+		}
+		final AnyMetaDef metaDef = findElementMetaDef(classPackage, metaDefName);
+		if (metaDef != null) {
+			return metaDef;
+		}
+		final String packageName = classPackage.getName();
+		for (int lastDot = packageName.lastIndexOf('.'); lastDot > 0; lastDot = packageName.lastIndexOf('.',
+				lastDot - 1)) {
+			final Package parentPackage = Package.getPackage(packageName.substring(0, lastDot));
+			if (parentPackage != null) {
+				return findMetaDefInPackageHierarchy(parentPackage, metaDefName);
+			}
+		}
+		return null;
 	}
 
 	/**
