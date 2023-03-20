@@ -25,6 +25,8 @@ import org.hibernate.annotations.AnyMetaDefs;
 import org.hibernate.annotations.ManyToAny;
 import org.hibernate.annotations.MetaValue;
 
+import lombok.Getter;
+
 /**
  * A column that is responsible to store the information for references to arbitrary entity types that are stored in the
  * same attribute.
@@ -67,7 +69,8 @@ public class AnyMapping<T> {
 		return null;
 	}
 
-	/** The name of the column that contains the id of the entity class, if {@link Any} is used. */
+	/** The column that contains the identifier of the type according to the {@link AnyMetaDef meta definition}. */
+	@Getter
 	private final GeneratorColumn column;
 
 	/** Contains the mapping from a class to its id in the database. */

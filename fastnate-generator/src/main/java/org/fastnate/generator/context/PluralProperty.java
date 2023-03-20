@@ -56,7 +56,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 * Helper for evaluating correct mapping information from the annotations.
 	 */
 	@Getter
-	private static class EntityMappingInformation {
+	private static class MappingInformation {
 
 		private static boolean useTargetTable(final AttributeAccessor attribute, final AssociationOverride override) {
 			final JoinColumn joinColumn = override != null && override.joinColumns().length > 0
@@ -81,7 +81,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 		private final boolean composition;
 
-		EntityMappingInformation(final AttributeAccessor attribute, final AssociationOverride override,
+		MappingInformation(final AttributeAccessor attribute, final AssociationOverride override,
 				final int valueArgumentIndex) {
 			this.attribute = attribute;
 			final OneToMany oneToMany = attribute.getAnnotation(OneToMany.class);
@@ -423,7 +423,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		this.entityReference = values == null;
 		if (values == null) {
 			// Entity mapping, either OneToMany, ManyToMany, or ManyToAny
-			final EntityMappingInformation mapping = new EntityMappingInformation(attribute, associationOverride,
+			final MappingInformation mapping = new MappingInformation(attribute, associationOverride,
 					valueClassParamIndex);
 			this.mappedBy = mapping.getMappedBy();
 			this.useTargetTable = mapping.isUseTargetTable();
