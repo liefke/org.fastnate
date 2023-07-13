@@ -39,8 +39,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>javax.validation</groupId>
-			<artifactId>validation-api</artifactId>
+			<groupId>jakarta.validation</groupId>
+			<artifactId>jakarta.validation-api</artifactId>
 		</dependency>
 
 		<dependency>
@@ -50,11 +50,13 @@
 		</dependency>
 
 		<!-- This is just the JPA standalone API (without Hibernate) -->
+		<!--
 		<dependency>
-			<groupId>org.hibernate.javax.persistence</groupId>
+			<groupId>org.hibernate.jakarta.persistence</groupId>
 			<artifactId>hibernate-jpa-2.1-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
+		-->
 
 		<!-- As long as we don't move HibernateProvider to its own module, we need a reference to @Formula and @Any -->
 		<dependency>
@@ -76,11 +78,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!--
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-entitymanager</artifactId>
 			<scope>test</scope>
 		</dependency>
+		-->
 
 		<dependency>
 			<groupId>org.hibernate</groupId>
@@ -88,15 +92,17 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!--
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-java8</artifactId>
 			<scope>test</scope>
 		</dependency>
+		-->
 
 		<dependency>
-			<groupId>javax.el</groupId>
-			<artifactId>javax.el-api</artifactId>
+			<groupId>jakarta.el</groupId>
+			<artifactId>jakarta.el-api</artifactId>
 			<scope>test</scope>
 		</dependency>
 

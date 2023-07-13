@@ -55,11 +55,13 @@
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		<!--
 		<dependency>
-			<groupId>org.hibernate.javax.persistence</groupId>
+			<groupId>org.hibernate.jakarta.persistence</groupId>
 			<artifactId>hibernate-jpa-2.1-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
+		-->
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>

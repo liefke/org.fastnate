@@ -98,8 +98,8 @@
 
 		<!-- Versions -->
 		<slf4j.version>1.7.7</slf4j.version>
-		<hibernate.version>5.0.7.Final</hibernate.version>
-		<hibernate.validator.version>5.3.6.Final</hibernate.validator.version>
+		<hibernate.version>6.1.7.Final</hibernate.version>
+		<hibernate.validator.version>8.0.0.Final</hibernate.validator.version>
 	</properties>
 
 	<dependencyManagement>
@@ -107,7 +107,7 @@
 			<dependency>
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
-				<version>1.16.8</version>
+				<version>1.18.28</version>
 			</dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
@@ -130,9 +130,9 @@
 				<version>2.0.3</version>
 			</dependency>
 			<dependency>
-				<groupId>javax.validation</groupId>
-				<artifactId>validation-api</artifactId>
-				<version>1.1.0.Final</version>
+				<groupId>jakarta.validation</groupId>
+				<artifactId>jakarta.validation-api</artifactId>
+				<version>3.0.2</version>
 			</dependency>
 			<dependency>
 				<groupId>net.sf.supercsv</groupId>
@@ -154,17 +154,19 @@
 
 			<!-- Injections for DataProvider -->
 			<dependency>
-				<groupId>javax.inject</groupId>
-				<artifactId>javax.inject</artifactId>
-				<version>1</version>
+				<groupId>jakarta.inject</groupId>
+				<artifactId>jakarta.inject-api</artifactId>
+				<version>2.0.1</version>
 			</dependency>
 
 			<!-- This is just the JPA standalone API (without Hibernate) -->
+			<!--
 			<dependency>
-				<groupId>org.hibernate.javax.persistence</groupId>
+				<groupId>org.hibernate.jakarta.persistence</groupId>
 				<artifactId>hibernate-jpa-2.1-api</artifactId>
 				<version>1.0.0.Final</version>
 			</dependency>
+			-->
 
 			<!-- Hibernate dependencies -->
 			<dependency>
@@ -173,6 +175,7 @@
 				<version>${hibernate.version}</version>
 			</dependency>
 
+			<!--
 			<dependency>
 				<groupId>org.hibernate</groupId>
 				<artifactId>hibernate-entitymanager</artifactId>
@@ -184,6 +187,8 @@
 				<artifactId>hibernate-java8</artifactId>
 				<version>${hibernate.version}</version>
 			</dependency>
+
+			-->
 
 			<dependency>
 				<groupId>org.hibernate</groupId>
@@ -205,9 +210,9 @@
 			</dependency>
 
 			<dependency>
-				<groupId>javax.el</groupId>
-				<artifactId>javax.el-api</artifactId>
-				<version>2.2.5</version>
+				<groupId>jakarta.el</groupId>
+				<artifactId>jakarta.el-api</artifactId>
+				<version>5.0.1</version>
 			</dependency>
 
 			<dependency>
@@ -296,7 +301,7 @@
 			<plugin>
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok-maven-plugin</artifactId>
-				<version>1.16.10.0</version>
+				<version>1.18.20.0</version>
 				<executions>
 					<execution>
 						<phase>generate-sources</phase>

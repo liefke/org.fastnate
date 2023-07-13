@@ -48,8 +48,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>javax.inject</groupId>
-			<artifactId>javax.inject</artifactId>
+			<groupId>jakarta.inject</groupId>
+			<artifactId>jakarta.inject-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
 
@@ -60,11 +60,13 @@
 		</dependency>
 
 		<!-- This is just the JPA standalone API (without Hibernate) -->
+		<!--
 		<dependency>
-			<groupId>org.hibernate.javax.persistence</groupId>
+			<groupId>org.hibernate.jakarta.persistence</groupId>
 			<artifactId>hibernate-jpa-2.1-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
+		-->
 
 		<!-- Test dependencies -->
 		<dependency>
@@ -85,11 +87,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!--
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-entitymanager</artifactId>
 			<scope>test</scope>
 		</dependency>
+		-->
 
 		<dependency>
 			<groupId>com.h2database</groupId>
