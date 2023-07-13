@@ -11,7 +11,6 @@ import org.hibernate.boot.SchemaAutoTooling;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.tool.hbm2ddl.ImportScriptException;
 
 /**
  * Imports data on startup of Hibernate, if {@link SessionFactoryOptions#getSchemaAutoTooling() schema auto tooling} is
@@ -40,7 +39,7 @@ public class DatabaseStartupImport implements SessionFactoryObserver {
 				// Import data
 				new EntityImporter(new Properties()).importData(connection);
 			} catch (final SQLException | IOException e) {
-				throw new ImportScriptException("Could not import SQL data: " + e, e);
+				throw new RuntimeException("Could not import SQL data: " + e, e);
 			}
 		}
 	}
