@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
-import javax.persistence.CascadeType;
+import jakarta.persistence.CascadeType;
 
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;

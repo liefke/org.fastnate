@@ -1,7 +1,7 @@
 package org.fastnate.generator.test.versioning;
 
-import javax.persistence.Entity;
-import javax.persistence.Version;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Version;
 
 import org.fastnate.generator.test.BaseTestEntity;
 

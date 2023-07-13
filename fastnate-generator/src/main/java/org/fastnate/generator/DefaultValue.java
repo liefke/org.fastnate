@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 /**
  * Annotation for attributes of {@link Entity entities}, which indicates default values during SQL generation.

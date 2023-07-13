@@ -2,7 +2,7 @@ package org.fastnate.generator.test.schema;
 
 import java.io.IOException;
 
-import javax.persistence.Table;
+import jakarta.persistence.Table;
 
 import org.assertj.core.api.Assertions;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;

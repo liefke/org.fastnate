@@ -9,8 +9,8 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import javax.persistence.Column;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Column;
+import jakarta.validation.constraints.NotNull;
 
 import org.fastnate.generator.converter.BooleanConverter;
 import org.fastnate.generator.converter.NumberConverter;

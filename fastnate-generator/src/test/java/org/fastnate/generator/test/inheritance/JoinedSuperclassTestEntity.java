@@ -1,9 +1,9 @@
 package org.fastnate.generator.test.inheritance;
 
-import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.OneToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.OneToOne;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

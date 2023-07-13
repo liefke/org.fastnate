@@ -17,13 +17,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.persistence.AssociationOverride;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.JoinTable;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.TableGenerator;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.TableGenerator;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 

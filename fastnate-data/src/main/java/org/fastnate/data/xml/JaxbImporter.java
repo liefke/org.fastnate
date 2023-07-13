@@ -3,9 +3,9 @@ package org.fastnate.data.xml;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.xml.bind.JAXB;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXB;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 
 import org.fastnate.data.DataImportException;
 import org.fastnate.data.files.DataFile;

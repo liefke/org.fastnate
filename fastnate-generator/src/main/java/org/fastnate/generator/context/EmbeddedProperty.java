@@ -10,12 +10,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.annotation.Nonnull;
-import javax.persistence.Access;
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
-import javax.persistence.Embeddable;
-import javax.persistence.EmbeddedId;
+import jakarta.annotation.Nonnull;
+import jakarta.persistence.Access;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
 
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;

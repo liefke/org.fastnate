@@ -2,7 +2,7 @@ package org.fastnate.generator.test.primitive;
 
 import java.awt.Color;
 
-import javax.persistence.AttributeConverter;
+import jakarta.persistence.AttributeConverter;
 
 /**
  * Converts a color to an int and vice versa.

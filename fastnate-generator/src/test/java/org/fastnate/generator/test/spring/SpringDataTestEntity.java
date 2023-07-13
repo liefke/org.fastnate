@@ -1,6 +1,6 @@
 package org.fastnate.generator.test.spring;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 import org.springframework.data.jpa.domain.AbstractPersistable;
 

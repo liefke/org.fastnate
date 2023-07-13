@@ -3,9 +3,9 @@ package org.fastnate.generator.test.collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 
 import org.fastnate.generator.test.BaseTestEntity;
 

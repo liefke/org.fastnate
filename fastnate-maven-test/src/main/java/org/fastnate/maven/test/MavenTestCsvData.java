@@ -3,7 +3,7 @@ package org.fastnate.maven.test;
 import java.io.IOException;
 import java.util.Collection;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import org.fastnate.data.AbstractDataProvider;
 import org.fastnate.data.csv.CsvDataImporter;

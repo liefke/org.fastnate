@@ -1,6 +1,6 @@
 package org.fastnate.generator.converter;
 
-import javax.persistence.Lob;
+import jakarta.persistence.Lob;
 
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.statements.ColumnExpression;

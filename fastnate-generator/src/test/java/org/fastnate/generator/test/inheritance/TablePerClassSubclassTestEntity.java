@@ -1,8 +1,8 @@
 package org.fastnate.generator.test.inheritance;
 
-import javax.persistence.Entity;
-import javax.persistence.InheritanceType;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AttributeOverride;
 
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.test.SimpleTestEntity;

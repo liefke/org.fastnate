@@ -5,9 +5,9 @@ import java.math.BigInteger;
 import java.util.Calendar;
 import java.util.Date;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Basic;
+import jakarta.persistence.Column;
+import jakarta.validation.constraints.NotNull;
 
 import org.fastnate.generator.DefaultValue;
 import org.fastnate.generator.converter.ValueConverter;

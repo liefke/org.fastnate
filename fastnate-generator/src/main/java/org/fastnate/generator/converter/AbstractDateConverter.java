@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import javax.persistence.MapKeyTemporal;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import jakarta.persistence.MapKeyTemporal;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
 import org.fastnate.generator.RelativeDate;
 import org.fastnate.generator.context.AttributeAccessor;

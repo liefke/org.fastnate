@@ -7,12 +7,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Convert;
-import javax.persistence.Lob;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.TableGenerator;
-import javax.persistence.TemporalType;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Lob;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.TableGenerator;
+import jakarta.persistence.TemporalType;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.fastnate.generator.context.AttributeAccessor;

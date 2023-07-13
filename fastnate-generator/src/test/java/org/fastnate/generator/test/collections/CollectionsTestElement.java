@@ -1,8 +1,8 @@
 package org.fastnate.generator.test.collections;
 
-import javax.persistence.Embeddable;
-import javax.persistence.ManyToOne;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotNull;
 
 import org.fastnate.generator.test.embedded.TestEmbeddingEntity;
 

@@ -3,12 +3,12 @@ package org.fastnate.generator.test.any;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.Access;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.OrderColumn;
+import jakarta.persistence.Access;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.OrderColumn;
 
 import org.fastnate.generator.test.BaseTestEntity;
 import org.fastnate.generator.test.SimpleTestEntity;

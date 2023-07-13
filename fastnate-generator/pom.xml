@@ -1,177 +1,194 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<name>Fastnate Generator</name>
-	<description>The Fastnate Offline SQL Generator</description>
+    <name>Fastnate Generator</name>
+    <description>The Fastnate Offline SQL Generator</description>
 
-	<parent>
-		<groupId>org.fastnate</groupId>
-		<artifactId>fastnate-base</artifactId>
-		<version>1.6.0-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
+    <parent>
+        <groupId>org.fastnate</groupId>
+        <artifactId>fastnate-base</artifactId>
+        <version>1.6.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
-	<artifactId>fastnate-generator</artifactId>
-	<packaging>jar</packaging>
+    <artifactId>fastnate-generator</artifactId>
+    <packaging>jar</packaging>
 
-	<properties>
-		<!-- Projectroot -->
-		<fastnate.root>${basedir}/..</fastnate.root>
-	</properties>
+    <properties>
+        <!-- Projectroot -->
+        <fastnate.root>${basedir}/..</fastnate.root>
+    </properties>
 
-	<dependencies>
+    <dependencies>
 
-		<!-- Compile time dependencies -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-		</dependency>
+        <!-- Compile time dependencies -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>com.google.code.findbugs</groupId>
-			<artifactId>jsr305</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>jakarta.validation</groupId>
-			<artifactId>jakarta.validation-api</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<scope>provided</scope>
-		</dependency>
 
-		<!-- This is just the JPA standalone API (without Hibernate) -->
-		<!--
-		<dependency>
-			<groupId>org.hibernate.jakarta.persistence</groupId>
-			<artifactId>hibernate-jpa-2.1-api</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		-->
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+        </dependency>
 
-		<!-- As long as we don't move HibernateProvider to its own module, we need a reference to @Formula and @Any -->
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-core</artifactId>
-			<scope>provided</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
-		<!-- Test dependencies -->
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
 
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-jdk14</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-		<!--
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-entitymanager</artifactId>
-			<scope>test</scope>
-		</dependency>
-		-->
+        <!-- This is just the JPA standalone API (without Hibernate) -->
+        <!--
+        <dependency>
+            <groupId>org.hibernate.jakarta.persistence</groupId>
+            <artifactId>hibernate-jpa-2.1-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        -->
 
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-validator</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <!-- As long as we don't move HibernateProvider to its own module, we need a reference to @Formula and @Any -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-		<!--
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-java8</artifactId>
-			<scope>test</scope>
-		</dependency>
-		-->
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>jakarta.el</groupId>
-			<artifactId>jakarta.el-api</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.assertj</groupId>
-			<artifactId>assertj-core</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <!--
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <scope>test</scope>
+        </dependency>
+        -->
 
-		<dependency>
-			<groupId>org.springframework.data</groupId>
-			<artifactId>spring-data-jpa</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-		<!-- H2 is the default database for testing -->
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <!--
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-java8</artifactId>
+            <scope>test</scope>
+        </dependency>
+        -->
 
-		<!-- We use Liquibase only for testing the LiquibaseStatementsWriter but the writer itself doesn't need the dependency -->
-		<dependency>
-			<groupId>org.liquibase</groupId>
-			<artifactId>liquibase-core</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>jakarta.el</groupId>
+            <artifactId>jakarta.el-api</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-	<profiles>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-		<!-- Additional database drivers for testing Integrated into its own profile to keep them optional for contributors. -->
-		<profile>
-			<id>test-all-databases</id>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-jpa</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-			<dependencies>
-				<!-- Oracle -->
-				<dependency>
-					<groupId>com.oracle.database.jdbc</groupId>
-					<artifactId>ojdbc10</artifactId>
-					<version>19.9.0.0</version>
-					<scope>test</scope>
-				</dependency>
+        <!-- H2 is the default database for testing -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-				<!-- Postgres -->
-				<dependency>
-					<groupId>org.postgresql</groupId>
-					<artifactId>postgresql</artifactId>
-					<version>42.5.1</version>
-					<scope>test</scope>
-				</dependency>
+        <!-- We use Liquibase only for testing the LiquibaseStatementsWriter but the writer itself doesn't need the dependency -->
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-				<!-- MySQL -->
-				<dependency>
-					<groupId>com.mysql</groupId>
-					<artifactId>mysql-connector-j</artifactId>
-					<version>8.0.31</version>
-				</dependency>
+    <profiles>
 
-				<!-- MsSQL -->
-				<dependency>
-					<groupId>com.microsoft.sqlserver</groupId>
-					<artifactId>mssql-jdbc</artifactId>
-					<version>7.4.1.jre11</version>
-				</dependency>
-			</dependencies>
-		</profile>
+        <!-- Additional database drivers for testing Integrated into its own profile to keep them optional for contributors. -->
+        <profile>
+            <id>test-all-databases</id>
 
-	</profiles>
+            <dependencies>
+                <!-- Oracle -->
+                <dependency>
+                    <groupId>com.oracle.database.jdbc</groupId>
+                    <artifactId>ojdbc10</artifactId>
+                    <version>19.9.0.0</version>
+                    <scope>test</scope>
+                </dependency>
+
+                <!-- Postgres -->
+                <dependency>
+                    <groupId>org.postgresql</groupId>
+                    <artifactId>postgresql</artifactId>
+                    <version>42.5.1</version>
+                    <scope>test</scope>
+                </dependency>
+
+                <!-- MySQL -->
+                <dependency>
+                    <groupId>com.mysql</groupId>
+                    <artifactId>mysql-connector-j</artifactId>
+                    <version>8.0.31</version>
+                </dependency>
+
+                <!-- MsSQL -->
+                <dependency>
+                    <groupId>com.microsoft.sqlserver</groupId>
+                    <artifactId>mssql-jdbc</artifactId>
+                    <version>7.4.1.jre11</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+    </profiles>
 
 </project>

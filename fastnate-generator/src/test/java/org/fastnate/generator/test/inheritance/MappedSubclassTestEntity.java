@@ -1,9 +1,9 @@
 package org.fastnate.generator.test.inheritance;
 
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.Entity;
-import javax.persistence.InheritanceType;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.InheritanceType;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

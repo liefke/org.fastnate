@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fastnate.data.files.DataFile;
@@ -213,7 +213,7 @@ public class EntityImporter {
 		String providerFactoryName = getSettings().getProperty(FACTORY_KEY, "");
 		if (providerFactoryName.isEmpty()) {
 			try {
-				Class.forName("javax.inject.Inject");
+				Class.forName("jakarta.inject.Inject");
 				providerFactoryName = "org.fastnate.data.InjectDataProviderFactory";
 			} catch (final ClassNotFoundException e) {
 				providerFactoryName = DefaultDataProviderFactory.class.getName();

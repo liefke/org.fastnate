@@ -6,12 +6,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
-import javax.persistence.ElementCollection;
-import javax.persistence.MapKeyClass;
-import javax.persistence.MapKeyColumn;
-import javax.persistence.MapKeyJoinColumn;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.MapKeyClass;
+import jakarta.persistence.MapKeyColumn;
+import jakarta.persistence.MapKeyJoinColumn;
 
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.converter.ValueConverter;

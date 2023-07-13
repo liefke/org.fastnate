@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.EntityClass;

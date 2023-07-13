@@ -3,7 +3,7 @@ package org.fastnate.generator.test;
 import java.io.IOException;
 import java.io.Writer;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 
 import org.apache.commons.lang3.StringUtils;
 

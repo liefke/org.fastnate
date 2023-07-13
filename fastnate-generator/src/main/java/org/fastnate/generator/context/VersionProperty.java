@@ -2,10 +2,10 @@ package org.fastnate.generator.context;
 
 import java.util.Date;
 
-import javax.persistence.Column;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.persistence.Version;
+import jakarta.persistence.Column;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import jakarta.persistence.Version;
 
 import org.fastnate.generator.RelativeDate;
 

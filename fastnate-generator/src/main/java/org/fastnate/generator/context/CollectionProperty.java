@@ -6,10 +6,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
-import javax.persistence.ElementCollection;
-import javax.persistence.OrderColumn;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.OrderColumn;
 
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.dialect.GeneratorDialect;

@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 
-import javax.persistence.Version;
+import jakarta.persistence.Version;
 
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.junit.Test;

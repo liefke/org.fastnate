@@ -3,7 +3,7 @@ package org.fastnate.generator.dialect;
 import java.io.IOException;
 import java.util.Date;
 
-import javax.persistence.TemporalType;
+import jakarta.persistence.TemporalType;
 
 import org.fastnate.generator.RelativeDate;
 import org.fastnate.generator.statements.StatementsWriter;

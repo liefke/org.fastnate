@@ -1,6 +1,6 @@
 package org.fastnate.generator.test.embedded;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 import org.fastnate.generator.test.primitive.TestEnum;
 

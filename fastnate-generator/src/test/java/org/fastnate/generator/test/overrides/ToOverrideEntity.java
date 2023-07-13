@@ -2,13 +2,13 @@ package org.fastnate.generator.test.overrides;
 
 import java.util.List;
 
-import javax.persistence.AttributeOverride;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.OrderColumn;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.OrderColumn;
 
 import org.fastnate.generator.test.BaseTestEntity;
 import org.fastnate.generator.test.SimpleTestEntity;

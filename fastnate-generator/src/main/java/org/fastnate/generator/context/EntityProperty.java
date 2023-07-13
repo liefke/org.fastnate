@@ -4,16 +4,16 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
-import javax.annotation.Nullable;
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.MapsId;
-import javax.persistence.OneToOne;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
+import jakarta.validation.constraints.NotNull;
 
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.statements.ColumnExpression;

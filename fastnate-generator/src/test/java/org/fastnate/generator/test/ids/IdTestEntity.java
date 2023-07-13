@@ -2,8 +2,8 @@ package org.fastnate.generator.test.ids;
 
 import java.io.Serializable;
 
-import javax.annotation.Nullable;
-import javax.persistence.MappedSuperclass;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.MappedSuperclass;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

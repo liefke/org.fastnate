@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.util.List;
 
-import javax.persistence.InheritanceType;
+import jakarta.persistence.InheritanceType;
 
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.junit.Test;

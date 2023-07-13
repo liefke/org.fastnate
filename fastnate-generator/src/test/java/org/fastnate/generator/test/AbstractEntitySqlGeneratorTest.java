@@ -14,12 +14,12 @@ import java.util.Properties;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.xml.stream.XMLStreamException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.xml.stream.XMLStreamException;
 
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;

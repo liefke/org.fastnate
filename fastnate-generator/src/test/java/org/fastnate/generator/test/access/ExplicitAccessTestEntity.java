@@ -1,9 +1,9 @@
 package org.fastnate.generator.test.access;
 
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

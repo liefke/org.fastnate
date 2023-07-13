@@ -2,7 +2,7 @@ package org.fastnate.generator.context;
 
 import java.io.IOException;
 
-import javax.persistence.SequenceGenerator;
+import jakarta.persistence.SequenceGenerator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fastnate.generator.dialect.GeneratorDialect;

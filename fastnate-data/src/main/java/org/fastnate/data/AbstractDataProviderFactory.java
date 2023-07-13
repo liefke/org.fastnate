@@ -7,7 +7,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 import org.fastnate.data.files.DataFolder;
 import org.fastnate.generator.context.GeneratorContext;

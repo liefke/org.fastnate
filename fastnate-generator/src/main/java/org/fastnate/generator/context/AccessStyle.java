@@ -10,9 +10,9 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.Transient;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fastnate.util.ClassUtil;

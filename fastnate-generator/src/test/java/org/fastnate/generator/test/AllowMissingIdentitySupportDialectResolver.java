@@ -1,6 +1,6 @@
 package org.fastnate.generator.test;
 
-import javax.persistence.GenerationType;
+import jakarta.persistence.GenerationType;
 
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.dialect.internal.StandardDialectResolver;

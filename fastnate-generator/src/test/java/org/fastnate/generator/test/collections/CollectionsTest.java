@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.Convert;
+import jakarta.persistence.Convert;
 
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.test.SimpleTestEntity;

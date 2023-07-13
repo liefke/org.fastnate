@@ -2,7 +2,7 @@ package org.fastnate.generator.converter;
 
 import java.util.Calendar;
 
-import javax.persistence.TemporalType;
+import jakarta.persistence.TemporalType;
 
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.EntityClass;
