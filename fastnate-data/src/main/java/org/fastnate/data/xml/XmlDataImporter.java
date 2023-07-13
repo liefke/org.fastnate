@@ -12,16 +12,16 @@ import java.util.function.Consumer;
 
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
-import jakarta.xml.namespace.QName;
-import jakarta.xml.stream.FactoryConfigurationError;
-import jakarta.xml.stream.Location;
-import jakarta.xml.stream.XMLEventReader;
-import jakarta.xml.stream.XMLInputFactory;
-import jakarta.xml.stream.XMLStreamConstants;
-import jakarta.xml.stream.XMLStreamException;
-import jakarta.xml.stream.events.Attribute;
-import jakarta.xml.stream.events.StartElement;
-import jakarta.xml.stream.events.XMLEvent;
+import javax.xml.namespace.QName;
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
 
 import org.fastnate.data.DataImportException;
 import org.fastnate.data.EntityRegistration;

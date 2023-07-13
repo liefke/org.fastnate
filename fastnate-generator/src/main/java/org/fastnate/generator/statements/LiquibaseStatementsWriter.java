@@ -11,9 +11,9 @@ import java.util.Date;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import jakarta.xml.stream.XMLOutputFactory;
-import jakarta.xml.stream.XMLStreamException;
-import jakarta.xml.stream.XMLStreamWriter;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.FastDateFormat;

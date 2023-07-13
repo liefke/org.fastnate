@@ -9,13 +9,10 @@ import java.util.Collections;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.test.SimpleTestEntity;
 import org.hibernate.annotations.Any;
-import org.hibernate.annotations.AnyMetaDef;
-import org.hibernate.annotations.AnyMetaDefs;
 import org.hibernate.annotations.ManyToAny;
 import org.junit.Test;
 
 /**
- * Tests that {@link Any}, {@link ManyToAny}, {@link AnyMetaDef} and {@link AnyMetaDefs} are read correctly.
  *
  * @author Tobias Liefke
  */

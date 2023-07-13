@@ -14,7 +14,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
-import org.hibernate.NullPrecedence;
+import org.hibernate.query.sqm.NullPrecedence;
 import org.hibernate.ScrollMode;
 import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.dialect.ColumnAliasExtractor;
@@ -31,7 +31,7 @@ import org.hibernate.engine.jdbc.env.spi.NameQualifierSupport;
 import org.hibernate.engine.jdbc.env.spi.SchemaNameResolver;
 import org.hibernate.exception.spi.SQLExceptionConversionDelegate;
 import org.hibernate.exception.spi.SQLExceptionConverter;
-import org.hibernate.exception.spi.ViolatedConstraintNameExtracter;
+import org.hibernate.exception.spi.ViolatedConstraintNameExtractor;
 import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
 import org.hibernate.id.PostInsertIdentityPersister;
 import org.hibernate.persister.entity.Lockable;
@@ -615,8 +615,8 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 	}
 
 	@Override
-	public ViolatedConstraintNameExtracter getViolatedConstraintNameExtracter() {
-		return this.wrapped.getViolatedConstraintNameExtracter();
+	public ViolatedConstraintNameExtractor getViolatedConstraintNameExtractor() {
+		return this.wrapped.getViolatedConstraintNameExtractor();
 	}
 
 	@Override

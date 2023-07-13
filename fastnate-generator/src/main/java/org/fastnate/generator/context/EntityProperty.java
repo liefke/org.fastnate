@@ -84,8 +84,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 					ModelException.mustExist(any, "{} declares none of OneToOne, ManyToOne, or Any", attribute);
 					this.valueClass = attribute.getType();
 					this.optional = any.optional() && notNull == null;
-					this.anyColumn = any.metaColumn();
-					this.anyDefName = any.metaDef();
+					this.anyColumn = null;
+					this.anyDefName = null;
 					this.composition = false;
 				}
 			}

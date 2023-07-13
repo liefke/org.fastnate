@@ -108,8 +108,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					this.valueClass = getPropertyArgument(attribute, void.class, valueArgumentIndex);
 					this.mappedBy = null;
 					this.useTargetTable = false;
-					this.anyColumn = manyToAny.metaColumn();
-					this.anyDefName = manyToAny.metaDef();
+					this.anyColumn = null;
+					this.anyDefName = null;
 					this.composition = false;
 				}
 			}
