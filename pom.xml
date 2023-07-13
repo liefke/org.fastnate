@@ -1,501 +1,509 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<name>Fastnate Root</name>
-	<description>The Fastnate root project</description>
-	<url>http://api.fastnate.org/latest</url>
+    <name>Fastnate Root</name>
+    <description>The Fastnate root project</description>
+    <url>http://api.fastnate.org/latest</url>
 
-	<groupId>org.fastnate</groupId>
-	<artifactId>fastnate-base</artifactId>
-	<version>1.6.0-SNAPSHOT</version>
-	<packaging>pom</packaging>
+    <groupId>org.fastnate</groupId>
+    <artifactId>fastnate-base</artifactId>
+    <version>1.6.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-	<organization>
-		<name>fastnate.org</name>
-		<url>http://fastnate.org</url>
-	</organization>
+    <organization>
+        <name>fastnate.org</name>
+        <url>http://fastnate.org</url>
+    </organization>
 
-	<licenses>
-		<license>
-			<name>Apache License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		</license>
-	</licenses>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
-	<developers>
-		<developer>
-			<name>Tobias Liefke</name>
-			<email>liefke@fastnate.org</email>
-			<url>https://github.com/liefke</url>
-		</developer>
-	</developers>
-	
-	<contributors>
-		<contributor>
-			<name>Andreas Penski</name>
-		</contributor>
-		<contributor>
-			<name>Heiko Schefter</name>
-		</contributor>
-		<contributor>
-			<name>André Babinski</name>
-		</contributor>
-		<contributor>
-			<name>Mathieu Lavigne</name>
-		</contributor>
-	</contributors>
+    <developers>
+        <developer>
+            <name>Tobias Liefke</name>
+            <email>liefke@fastnate.org</email>
+            <url>https://github.com/liefke</url>
+        </developer>
+    </developers>
 
-	<distributionManagement>
-		<repository>
-			<id>fastnate-download</id>
-			<url>scpexe://download.fastnate.org${fastnate.download.path}/repository</url>
-		</repository>
-		<site>
-			<id>fastnate-api</id>
-			<url>scpexe://api.fastnate.org${fastnate.api.path}/latest</url>
-		</site>
-	</distributionManagement>
+    <contributors>
+        <contributor>
+            <name>Andreas Penski</name>
+        </contributor>
+        <contributor>
+            <name>Heiko Schefter</name>
+        </contributor>
+        <contributor>
+            <name>André Babinski</name>
+        </contributor>
+        <contributor>
+            <name>Mathieu Lavigne</name>
+        </contributor>
+    </contributors>
 
-	<scm>
-		<url>https://github.com/liefke/org.fastnate</url>
-		<connection>scm:git:git://github.com/liefke/org.fastnate.git</connection>
-		<developerConnection>scm:git:git@github.com:liefke/org.fastnate.git</developerConnection>
-		<tag>HEAD</tag>
-	</scm>
+    <distributionManagement>
+        <repository>
+            <id>fastnate-download</id>
+            <url>scpexe://download.fastnate.org${fastnate.download.path}/repository</url>
+        </repository>
+        <site>
+            <id>fastnate-api</id>
+            <url>scpexe://api.fastnate.org${fastnate.api.path}/latest</url>
+        </site>
+    </distributionManagement>
 
-	<issueManagement>
-		<url>https://github.com/liefke/org.fastnate/issues</url>
-		<system>GitHub</system>
-	</issueManagement>
+    <scm>
+        <url>https://github.com/liefke/org.fastnate</url>
+        <connection>scm:git:git://github.com/liefke/org.fastnate.git</connection>
+        <developerConnection>scm:git:git@github.com:liefke/org.fastnate.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 
-	<prerequisites>
-		<maven>3.0.4</maven>
-	</prerequisites>
+    <issueManagement>
+        <url>https://github.com/liefke/org.fastnate/issues</url>
+        <system>GitHub</system>
+    </issueManagement>
 
-	<modules>
-		<module>fastnate-generator</module>
-		<module>fastnate-data</module>
-		<module>fastnate-csv</module>
-		<module>fastnate-maven-plugin</module>
-		<module>fastnate-maven-test</module>
-		<module>fastnate-examples</module>
-	</modules>
+    <prerequisites>
+        <maven>3.0.4</maven>
+    </prerequisites>
 
-	<properties>
-		<!-- Projectroot -->
-		<fastnate.root>${basedir}</fastnate.root>
+    <modules>
+        <module>fastnate-generator</module>
+        <module>fastnate-data</module>
+        <module>fastnate-csv</module>
+        <module>fastnate-maven-plugin</module>
+        <module>fastnate-maven-test</module>
+        <module>fastnate-examples</module>
+    </modules>
 
-		<!-- Build specific properties -->
-		<build.number>Local</build.number>
-		<build.svnRevNumber>Unknown</build.svnRevNumber>
-		<maven.build.timestamp.format>yyyyMMdd'T'HHmmss</maven.build.timestamp.format>
-		<build.timestamp>${maven.build.timestamp}</build.timestamp>
-		<project.scm.id>git-server</project.scm.id>
+    <properties>
+        <!-- Projectroot -->
+        <fastnate.root>${basedir}</fastnate.root>
 
-		<!-- Default encoding -->
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Build specific properties -->
+        <build.number>Local</build.number>
+        <build.svnRevNumber>Unknown</build.svnRevNumber>
+        <maven.build.timestamp.format>yyyyMMdd'T'HHmmss</maven.build.timestamp.format>
+        <build.timestamp>${maven.build.timestamp}</build.timestamp>
+        <project.scm.id>git-server</project.scm.id>
 
-		<!-- Versions -->
-		<slf4j.version>1.7.7</slf4j.version>
-		<hibernate.version>6.1.7.Final</hibernate.version>
-		<hibernate.validator.version>8.0.0.Final</hibernate.validator.version>
-	</properties>
+        <!-- Default encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.projectlombok</groupId>
-				<artifactId>lombok</artifactId>
-				<version>1.18.28</version>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>${slf4j.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>commons-io</groupId>
-				<artifactId>commons-io</artifactId>
-				<version>2.11.0</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-lang3</artifactId>
-				<version>3.12.0</version>
-			</dependency>
-			<dependency>
-				<groupId>com.google.code.findbugs</groupId>
-				<artifactId>jsr305</artifactId>
-				<version>2.0.3</version>
-			</dependency>
-			<dependency>
-				<groupId>jakarta.validation</groupId>
-				<artifactId>jakarta.validation-api</artifactId>
-				<version>3.0.2</version>
-			</dependency>
-			<!-- https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api -->
-			<dependency>
-				<groupId>jakarta.annotation</groupId>
-				<artifactId>jakarta.annotation-api</artifactId>
-				<version>2.1.1</version>
-			</dependency>
-			<dependency>
-				<groupId>jakarta.xml.bind</groupId>
-				<artifactId>jakarta.xml.bind-api</artifactId>
-				<version>4.0.0</version>
-			</dependency>
+        <!-- Versions -->
+        <slf4j.version>1.7.7</slf4j.version>
+        <hibernate.version>6.1.7.Final</hibernate.version>
+        <hibernate.validator.version>8.0.0.Final</hibernate.validator.version>
+    </properties>
 
-			<dependency>
-				<groupId>com.sun.xml.bind</groupId>
-				<artifactId>jaxb-impl</artifactId>
-				<version>4.0.3</version>
-			</dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>1.18.28</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.11.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.12.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>2.0.3</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>3.0.2</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api -->
+            <dependency>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>2.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>4.0.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>4.0.3</version>
+            </dependency>
 
 
+            <dependency>
+                <groupId>net.sf.supercsv</groupId>
+                <artifactId>super-csv</artifactId>
+                <version>2.4.0</version>
+            </dependency>
+            <!-- Reflections -->
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>0.9.10</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>dom4j</groupId>
+                        <artifactId>dom4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
 
-			<dependency>
-				<groupId>net.sf.supercsv</groupId>
-				<artifactId>super-csv</artifactId>
-				<version>2.4.0</version>
-			</dependency>
-			<!-- Reflections -->
-			<dependency>
-				<groupId>org.reflections</groupId>
-				<artifactId>reflections</artifactId>
-				<version>0.9.10</version>
-				<exclusions>
-					<exclusion>
-						<groupId>dom4j</groupId>
-						<artifactId>dom4j</artifactId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+            <!-- Injections for DataProvider -->
+            <dependency>
+                <groupId>jakarta.inject</groupId>
+                <artifactId>jakarta.inject-api</artifactId>
+                <version>2.0.1</version>
+            </dependency>
 
-			<!-- Injections for DataProvider -->
-			<dependency>
-				<groupId>jakarta.inject</groupId>
-				<artifactId>jakarta.inject-api</artifactId>
-				<version>2.0.1</version>
-			</dependency>
+            <!-- This is just the JPA standalone API (without Hibernate) -->
+            <!--
+            <dependency>
+                <groupId>org.hibernate.jakarta.persistence</groupId>
+                <artifactId>hibernate-jpa-2.1-api</artifactId>
+                <version>1.0.0.Final</version>
+            </dependency>
+            -->
 
-			<!-- This is just the JPA standalone API (without Hibernate) -->
-			<!--
-			<dependency>
-				<groupId>org.hibernate.jakarta.persistence</groupId>
-				<artifactId>hibernate-jpa-2.1-api</artifactId>
-				<version>1.0.0.Final</version>
-			</dependency>
-			-->
+            <!-- Hibernate dependencies -->
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-core</artifactId>
+                <version>${hibernate.version}</version>
+            </dependency>
 
-			<!-- Hibernate dependencies -->
-			<dependency>
-				<groupId>org.hibernate</groupId>
-				<artifactId>hibernate-core</artifactId>
-				<version>${hibernate.version}</version>
-			</dependency>
+            <!--
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-entitymanager</artifactId>
+                <version>${hibernate.version}</version>
+            </dependency>
 
-			<!--
-			<dependency>
-				<groupId>org.hibernate</groupId>
-				<artifactId>hibernate-entitymanager</artifactId>
-				<version>${hibernate.version}</version>
-			</dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-java8</artifactId>
+                <version>${hibernate.version}</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.hibernate</groupId>
-				<artifactId>hibernate-java8</artifactId>
-				<version>${hibernate.version}</version>
-			</dependency>
+            -->
 
-			-->
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${hibernate.validator.version}</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.hibernate</groupId>
-				<artifactId>hibernate-validator</artifactId>
-				<version>${hibernate.validator.version}</version>
-			</dependency>
+            <!-- Test dependencies -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13.1</version>
+            </dependency>
 
-			<!-- Test dependencies -->
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>4.13.1</version>
-			</dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-jdk14</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-jdk14</artifactId>
-				<version>${slf4j.version}</version>
-			</dependency>
+            <dependency>
+                <groupId>jakarta.el</groupId>
+                <artifactId>jakarta.el-api</artifactId>
+                <version>5.0.1</version>
+            </dependency>
 
-			<dependency>
-				<groupId>jakarta.el</groupId>
-				<artifactId>jakarta.el-api</artifactId>
-				<version>5.0.1</version>
-			</dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>2.1.214</version>
+            </dependency>
 
-			<dependency>
-				<groupId>com.h2database</groupId>
-				<artifactId>h2</artifactId>
-				<version>2.1.214</version>
-			</dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>3.4.1</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.assertj</groupId>
-				<artifactId>assertj-core</artifactId>
-				<version>3.4.1</version>
-			</dependency>
+            <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-jpa</artifactId>
+                <version>1.11.23.RELEASE</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.springframework.data</groupId>
-				<artifactId>spring-data-jpa</artifactId>
-				<version>1.11.23.RELEASE</version>
-			</dependency>
+            <dependency>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-core</artifactId>
+                <version>4.14.0</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.liquibase</groupId>
-				<artifactId>liquibase-core</artifactId>
-				<version>4.14.0</version>
-			</dependency>
+        </dependencies>
+    </dependencyManagement>
 
-		</dependencies>
-	</dependencyManagement>
+    <build>
+        <extensions>
+            <!-- Enable the use of SSH for deployment -->
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>3.4.3</version>
+            </extension>
+        </extensions>
+        <plugins>
+            <!-- Define the default compiler settings. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <encoding>UTF-8</encoding>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.28</version>
+                        </path>
+                    </annotationProcessorPaths>
 
-	<build>
-		<extensions>
-			<!-- Enable the use of SSH for deployment -->
-			<extension>
-				<groupId>org.apache.maven.wagon</groupId>
-				<artifactId>wagon-ssh-external</artifactId>
-				<version>3.4.3</version>
-			</extension>
-		</extensions>
-		<plugins>
-			<!-- Define the default compiler settings. -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.5.1</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-					<encoding>UTF-8</encoding>
-				</configuration>
-			</plugin>
+                </configuration>
 
-			<!-- We are open source - attach the sources. -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>2.4</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+            </plugin>
 
-			<!-- Define the default manifest entries -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
-				<configuration>
-					<archive>
-						<manifest>
-							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-						</manifest>
-						<manifest-entries>
-							<Implementation-Build>${build.number}</Implementation-Build>
-							<Implementation-Revision>${build.svnRevNumber}</Implementation-Revision>
-						</manifest-entries>
-					</archive>
-				</configuration>
-			</plugin>
+            <!-- We are open source - attach the sources. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
-			<!-- Delombok for JavaDoc plugin -->
-			<plugin>
-				<groupId>org.projectlombok</groupId>
-				<artifactId>lombok-maven-plugin</artifactId>
-				<version>1.18.20.0</version>
-				<executions>
-					<execution>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>delombok</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<addOutputDirectory>false</addOutputDirectory>
-					<sourceDirectory>src/main/java</sourceDirectory>
-				</configuration>
-			</plugin>
+            <!-- Define the default manifest entries -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifest-entries>
+                            <Implementation-Build>${build.number}</Implementation-Build>
+                            <Implementation-Revision>${build.svnRevNumber}</Implementation-Revision>
+                        </manifest-entries>
+                    </archive>
+                </configuration>
+            </plugin>
 
-			<!-- Add Javadoc -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.3</version>
-				<executions>
-					<execution>
-						<id>make-javadoc</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<defaultVersion>${project.version}</defaultVersion>
-					<sourcepath>target/generated-sources/delombok</sourcepath>
-				</configuration>
-			</plugin>
+            <!-- Delombok for JavaDoc plugin -->
+            <plugin>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-maven-plugin</artifactId>
+                <version>1.18.20.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>delombok</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <addOutputDirectory>false</addOutputDirectory>
+                    <sourceDirectory>src/main/java</sourceDirectory>
+                </configuration>
+            </plugin>
 
-			<!-- Generate documentation for maven plugin(s). -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-site-plugin</artifactId>
-				<version>3.10.0</version>
-			</plugin>
+            <!-- Add Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.3</version>
+                <executions>
+                    <execution>
+                        <id>make-javadoc</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <defaultVersion>${project.version}</defaultVersion>
+                    <sourcepath>target/generated-sources/delombok</sourcepath>
+                </configuration>
+            </plugin>
 
-			<!-- Enable release of Fastnate -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<configuration>
-					<autoVersionSubmodules>true</autoVersionSubmodules>
-					<useReleaseProfile>false</useReleaseProfile>
-					<releaseProfiles>release</releaseProfiles>
-					<goals>deploy</goals>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+            <!-- Generate documentation for maven plugin(s). -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.10.0</version>
+            </plugin>
 
-	<!-- Generate Javadoc for site -->
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.3</version>
-				<configuration>
-					<defaultVersion>${project.version}</defaultVersion>
-					<sourcepath>target/generated-sources/delombok</sourcepath>
-					<show>private</show>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.1.1</version>
-				<configuration>
-					<configLocation>src/checkstyle/checkstyle.xml</configLocation>
-					<propertyExpansion>config_loc=${fastnate.root}/src/checkstyle</propertyExpansion>
-				</configuration>
-			</plugin>
-		</plugins>
-	</reporting>
+            <!-- Enable release of Fastnate -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>release</releaseProfiles>
+                    <goals>deploy</goals>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
-	<profiles>
-		<profile>
-			<!-- Sign everything -->
-			<id>sign</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.5</version>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
+    <!-- Generate Javadoc for site -->
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.3</version>
+                <configuration>
+                    <defaultVersion>${project.version}</defaultVersion>
+                    <sourcepath>target/generated-sources/delombok</sourcepath>
+                    <show>private</show>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.1.1</version>
+                <configuration>
+                    <configLocation>src/checkstyle/checkstyle.xml</configLocation>
+                    <propertyExpansion>config_loc=${fastnate.root}/src/checkstyle</propertyExpansion>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 
-		<!-- Release to OSSRH -->
-		<profile>
-			<id>ossrh-release</id>
-			<distributionManagement>
-				<snapshotRepository>
-					<id>ossrh</id>
-					<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-				</snapshotRepository>
-				<repository>
-					<id>ossrh</id>
-					<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-				</repository>
-			</distributionManagement>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.sonatype.plugins</groupId>
-						<artifactId>nexus-staging-maven-plugin</artifactId>
-						<version>1.6.7</version>
-						<extensions>true</extensions>
-						<configuration>
-							<serverId>ossrh</serverId>
-							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
+    <profiles>
+        <profile>
+            <!-- Sign everything -->
+            <id>sign</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
-		<profile>
-			<id>only-eclipse</id>
-			<activation>
-				<property>
-					<name>m2e.version</name>
-				</property>
-			</activation>
-			<build>
-				<pluginManagement>
-					<plugins>
-						<!-- This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build 
-							itself. -->
-						<plugin>
-							<groupId>org.eclipse.m2e</groupId>
-							<artifactId>lifecycle-mapping</artifactId>
-							<version>1.0.0</version>
-							<configuration>
-								<lifecycleMappingMetadata>
-									<pluginExecutions>
-										<pluginExecution>
-											<pluginExecutionFilter>
-												<groupId>org.projectlombok</groupId>
-												<artifactId>lombok-maven-plugin</artifactId>
-												<versionRange>[1.0.0,)</versionRange>
-												<goals>
-													<goal>delombok</goal>
-												</goals>
-											</pluginExecutionFilter>
-											<action>
-												<ignore />
-											</action>
-										</pluginExecution>
-									</pluginExecutions>
-								</lifecycleMappingMetadata>
-							</configuration>
-						</plugin>
-					</plugins>
-				</pluginManagement>
-			</build>
-		</profile>
-	</profiles>
+        <!-- Release to OSSRH -->
+        <profile>
+            <id>ossrh-release</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+                <repository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.7</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>only-eclipse</id>
+            <activation>
+                <property>
+                    <name>m2e.version</name>
+                </property>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <!-- This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build
+                            itself. -->
+                        <plugin>
+                            <groupId>org.eclipse.m2e</groupId>
+                            <artifactId>lifecycle-mapping</artifactId>
+                            <version>1.0.0</version>
+                            <configuration>
+                                <lifecycleMappingMetadata>
+                                    <pluginExecutions>
+                                        <pluginExecution>
+                                            <pluginExecutionFilter>
+                                                <groupId>org.projectlombok</groupId>
+                                                <artifactId>lombok-maven-plugin</artifactId>
+                                                <versionRange>[1.0.0,)</versionRange>
+                                                <goals>
+                                                    <goal>delombok</goal>
+                                                </goals>
+                                            </pluginExecutionFilter>
+                                            <action>
+                                                <ignore/>
+                                            </action>
+                                        </pluginExecution>
+                                    </pluginExecutions>
+                                </lifecycleMappingMetadata>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

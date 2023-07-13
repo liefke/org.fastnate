@@ -27,6 +27,10 @@ public class MappedSuperclassTestEntity<E> {
 	@Setter
 	private String superProperty;
 
+	public String getSuperProperty() {
+		return superProperty;
+	}
+
 	@Setter
 	private E genericProperty;
 

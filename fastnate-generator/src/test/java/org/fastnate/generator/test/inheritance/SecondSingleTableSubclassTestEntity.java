@@ -42,4 +42,5 @@ public class SecondSingleTableSubclassTestEntity extends MappedSubclassTestEntit
 		return String.valueOf(this.value);
 	}
 
+
 }

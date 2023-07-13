@@ -1,20 +1,10 @@
 package org.fastnate.generator.test;
 
-import java.sql.CallableStatement;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import jakarta.persistence.GenerationType;
-
-import org.hibernate.HibernateException;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
-import org.hibernate.query.sqm.NullPrecedence;
 import org.hibernate.ScrollMode;
 import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.dialect.ColumnAliasExtractor;
@@ -30,19 +20,20 @@ import org.hibernate.engine.jdbc.env.spi.IdentifierHelperBuilder;
 import org.hibernate.engine.jdbc.env.spi.NameQualifierSupport;
 import org.hibernate.engine.jdbc.env.spi.SchemaNameResolver;
 import org.hibernate.exception.spi.SQLExceptionConversionDelegate;
-import org.hibernate.exception.spi.SQLExceptionConverter;
 import org.hibernate.exception.spi.ViolatedConstraintNameExtractor;
-import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
 import org.hibernate.id.PostInsertIdentityPersister;
 import org.hibernate.persister.entity.Lockable;
 import org.hibernate.procedure.spi.CallableStatementSupport;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.sql.CaseFragment;
-import org.hibernate.sql.JoinFragment;
 import org.hibernate.tool.schema.extract.spi.SequenceInformationExtractor;
-import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
 
-import lombok.RequiredArgsConstructor;
+import java.sql.CallableStatement;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A Hibernate Dialgect which allows {@link GenerationType#IDENTITY} in model, even if the database does not support
@@ -56,15 +47,7 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 
 	private final Dialect wrapped;
 
-	@Override
-	public String appendIdentitySelectToInsert(final String insertString) {
-		return this.wrapped.appendIdentitySelectToInsert(insertString);
-	}
 
-	@Override
-	public String appendLockHint(final LockMode mode, final String tableName) {
-		return this.wrapped.appendLockHint(mode, tableName);
-	}
 
 	@Override
 	public String appendLockHint(final LockOptions lockOptions, final String tableName) {
@@ -77,20 +60,6 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.applyLocksToSql(sql, aliasedLockOptions, keyColumnNames);
 	}
 
-	@Override
-	public boolean areStringComparisonsCaseInsensitive() {
-		return this.wrapped.areStringComparisonsCaseInsensitive();
-	}
-
-	@Override
-	public boolean bindLimitParametersFirst() {
-		return this.wrapped.bindLimitParametersFirst();
-	}
-
-	@Override
-	public boolean bindLimitParametersInReverseOrder() {
-		return this.wrapped.bindLimitParametersInReverseOrder();
-	}
 
 	@Override
 	public IdentifierHelper buildIdentifierHelper(final IdentifierHelperBuilder builder,
@@ -103,10 +72,6 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.buildSQLExceptionConversionDelegate();
 	}
 
-	@Override
-	public SQLExceptionConverter buildSQLExceptionConverter() {
-		return this.wrapped.buildSQLExceptionConverter();
-	}
 
 	@Override
 	public boolean canCreateCatalog() {
@@ -118,21 +83,8 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.canCreateSchema();
 	}
 
-	@Override
-	public String cast(final String value, final int jdbcTypeCode, final int length) {
-		return this.wrapped.cast(value, jdbcTypeCode, length);
-	}
 
-	@Override
-	public String cast(final String value, final int jdbcTypeCode, final int precision, final int scale) {
-		return this.wrapped.cast(value, jdbcTypeCode, precision, scale);
-	}
 
-	@Override
-	public String cast(final String value, final int jdbcTypeCode, final int length, final int precision,
-			final int scale) {
-		return this.wrapped.cast(value, jdbcTypeCode, length, precision, scale);
-	}
 
 	@Override
 	public char closeQuote() {
@@ -144,20 +96,8 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		this.wrapped.contributeTypes(typeContributions, serviceRegistry);
 	}
 
-	@Override
-	public int convertToFirstRowValue(final int zeroBasedFirstResult) {
-		return this.wrapped.convertToFirstRowValue(zeroBasedFirstResult);
-	}
 
-	@Override
-	public CaseFragment createCaseFragment() {
-		return this.wrapped.createCaseFragment();
-	}
 
-	@Override
-	public JoinFragment createOuterJoinFragment() {
-		return this.wrapped.createOuterJoinFragment();
-	}
 
 	@Override
 	public ScrollMode defaultScrollMode() {
@@ -184,20 +124,12 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.equals(obj);
 	}
 
-	@Override
-	public boolean forceLimitUsage() {
-		return this.wrapped.forceLimitUsage();
-	}
 
 	@Override
 	public boolean forceLobAsLastValue() {
 		return this.wrapped.forceLobAsLastValue();
 	}
 
-	@Override
-	public boolean forUpdateOfColumns() {
-		return this.wrapped.forUpdateOfColumns();
-	}
 
 	@Override
 	public String getAddColumnString() {
@@ -221,10 +153,6 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getAddPrimaryKeyConstraintString(constraintName);
 	}
 
-	@Override
-	public String getAddUniqueConstraintString(final String constraintName) {
-		return this.wrapped.getAddUniqueConstraintString(constraintName);
-	}
 
 	@Override
 	public CallableStatementSupport getCallableStatementSupport() {
@@ -241,10 +169,6 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getCaseInsensitiveLike();
 	}
 
-	@Override
-	public String getCastTypeName(final int code) {
-		return this.wrapped.getCastTypeName(code);
-	}
 
 	@Override
 	public ColumnAliasExtractor getColumnAliasExtractor() {
@@ -271,26 +195,13 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getCreateSchemaCommand(schemaName);
 	}
 
-	@Override
-	public String[] getCreateSequenceStrings(final String sequenceName) throws MappingException {
-		return this.wrapped.getCreateSequenceStrings(sequenceName);
-	}
 
-	@Override
-	public String[] getCreateSequenceStrings(final String sequenceName, final int initialValue, final int incrementSize)
-			throws MappingException {
-		return this.wrapped.getCreateSequenceStrings(sequenceName, initialValue, incrementSize);
-	}
 
 	@Override
 	public String getCreateTableString() {
 		return this.wrapped.getCreateTableString();
 	}
 
-	@Override
-	public String getCrossJoinSeparator() {
-		return this.wrapped.getCrossJoinSeparator();
-	}
 
 	@Override
 	public String getCurrentSchemaCommand() {
@@ -302,15 +213,7 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getCurrentTimestampSelectString();
 	}
 
-	@Override
-	public String getCurrentTimestampSQLFunctionName() {
-		return this.wrapped.getCurrentTimestampSQLFunctionName();
-	}
 
-	@Override
-	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
-		return this.wrapped.getDefaultMultiTableBulkIdStrategy();
-	}
 
 	@Override
 	public String[] getDropCatalogCommand(final String catalogName) {
@@ -327,10 +230,6 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getDropSchemaCommand(schemaName);
 	}
 
-	@Override
-	public String[] getDropSequenceStrings(final String sequenceName) throws MappingException {
-		return this.wrapped.getDropSequenceStrings(sequenceName);
-	}
 
 	@Override
 	public String getDropTableString(final String tableName) {
@@ -382,21 +281,10 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getForUpdateString(aliases, lockOptions);
 	}
 
-	@Override
-	public String getHibernateTypeName(final int code) throws HibernateException {
-		return this.wrapped.getHibernateTypeName(code);
-	}
 
-	@Override
-	public String getHibernateTypeName(final int code, final int length, final int precision, final int scale)
-			throws HibernateException {
-		return this.wrapped.getHibernateTypeName(code, length, precision, scale);
-	}
 
-	@Override
-	public String getIdentityColumnString(final int type) throws MappingException {
-		return this.wrapped.getIdentityColumnString(type);
-	}
+
+
 
 	@Override
 	public IdentityColumnSupport getIdentityColumnSupport() {
@@ -452,16 +340,7 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		};
 	}
 
-	@Override
-	public String getIdentityInsertString() {
-		return this.wrapped.getIdentityInsertString();
-	}
 
-	@Override
-	public String getIdentitySelectString(final String table, final String column, final int type)
-			throws MappingException {
-		return this.wrapped.getIdentitySelectString(table, column, type);
-	}
 
 	@Override
 	public int getInExpressionCountLimit() {
@@ -478,10 +357,7 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getLimitHandler();
 	}
 
-	@Override
-	public String getLimitString(final String query, final int offset, final int limit) {
-		return this.wrapped.getLimitString(query, offset, limit);
-	}
+
 
 	@Override
 	public LobMergeStrategy getLobMergeStrategy() {
@@ -508,20 +384,14 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getNameQualifierSupport();
 	}
 
-	@Override
-	public Class<?> getNativeIdentifierGeneratorClass() {
-		return this.wrapped.getNativeIdentifierGeneratorClass();
-	}
+
 
 	@Override
 	public String getNoColumnsInsertString() {
 		return this.wrapped.getNoColumnsInsertString();
 	}
 
-	@Override
-	public String getNotExpression(final String expression) {
-		return this.wrapped.getNotExpression(expression);
-	}
+
 
 	@Override
 	public String getNullColumnString() {
@@ -563,30 +433,20 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getSchemaNameResolver();
 	}
 
-	@Override
-	public String getSelectClauseNullString(final int sqlType) {
-		return this.wrapped.getSelectClauseNullString(sqlType);
-	}
 
 	@Override
 	public String getSelectGUIDString() {
 		return this.wrapped.getSelectGUIDString();
 	}
 
-	@Override
-	public String getSelectSequenceNextValString(final String sequenceName) throws MappingException {
-		return this.wrapped.getSelectSequenceNextValString(sequenceName);
-	}
+
 
 	@Override
 	public SequenceInformationExtractor getSequenceInformationExtractor() {
 		return this.wrapped.getSequenceInformationExtractor();
 	}
 
-	@Override
-	public String getSequenceNextValString(final String sequenceName) throws MappingException {
-		return this.wrapped.getSequenceNextValString(sequenceName);
-	}
+
 
 	@Override
 	public String getTableComment(final String comment) {
@@ -598,16 +458,6 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.getTableTypeString();
 	}
 
-	@Override
-	public String getTypeName(final int code) throws HibernateException {
-		return this.wrapped.getTypeName(code);
-	}
-
-	@Override
-	public String getTypeName(final int code, final long length, final int precision, final int scale)
-			throws HibernateException {
-		return this.wrapped.getTypeName(code, length, precision, scale);
-	}
 
 	@Override
 	public UniqueDelegate getUniqueDelegate() {
@@ -629,10 +479,6 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.hasAlterTable();
 	}
 
-	@Override
-	public boolean hasDataTypeInIdentityColumn() {
-		return this.wrapped.hasDataTypeInIdentityColumn();
-	}
 
 	@Override
 	public int hashCode() {
@@ -675,26 +521,6 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.registerResultSetOutParameter(statement, name);
 	}
 
-	@Override
-	public SqlTypeDescriptor remapSqlTypeDescriptor(final SqlTypeDescriptor sqlTypeDescriptor) {
-		return this.wrapped.remapSqlTypeDescriptor(sqlTypeDescriptor);
-	}
-
-	@Override
-	public String renderOrderByElement(final String expression, final String collation, final String order,
-			final NullPrecedence nulls) {
-		return this.wrapped.renderOrderByElement(expression, collation, order, nulls);
-	}
-
-	@Override
-	public boolean replaceResultVariableInOrderByClauseWithPosition() {
-		return this.wrapped.replaceResultVariableInOrderByClauseWithPosition();
-	}
-
-	@Override
-	public boolean requiresCastingOfParametersInSelectClause() {
-		return this.wrapped.requiresCastingOfParametersInSelectClause();
-	}
 
 	@Override
 	public boolean requiresParensForTupleDistinctCounts() {
@@ -736,10 +562,6 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.supportsCurrentTimestampSelection();
 	}
 
-	@Override
-	public boolean supportsEmptyInList() {
-		return this.wrapped.supportsEmptyInList();
-	}
 
 	@Override
 	public boolean supportsExistsInSelect() {
@@ -751,10 +573,7 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.supportsExpectedLobUsagePattern();
 	}
 
-	@Override
-	public boolean supportsIdentityColumns() {
-		return this.wrapped.supportsIdentityColumns();
-	}
+
 
 	@Override
 	public boolean supportsIfExistsAfterConstraintName() {
@@ -776,35 +595,14 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.supportsIfExistsBeforeTableName();
 	}
 
-	@Override
-	public boolean supportsInsertSelectIdentity() {
-		return this.wrapped.supportsInsertSelectIdentity();
-	}
 
-	@Override
-	public boolean supportsLimit() {
-		return this.wrapped.supportsLimit();
-	}
-
-	@Override
-	public boolean supportsLimitOffset() {
-		return this.wrapped.supportsLimitOffset();
-	}
-
-	@Override
-	public boolean supportsLobValueChangePropogation() {
-		return this.wrapped.supportsLobValueChangePropogation();
-	}
 
 	@Override
 	public boolean supportsLockTimeouts() {
 		return this.wrapped.supportsLockTimeouts();
 	}
 
-	@Override
-	public boolean supportsNotNullUnique() {
-		return this.wrapped.supportsNotNullUnique();
-	}
+
 
 	@Override
 	public boolean supportsOuterJoinForUpdate() {
@@ -816,30 +614,14 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.supportsParametersInInsertSelect();
 	}
 
-	@Override
-	public boolean supportsPooledSequences() {
-		return this.wrapped.supportsPooledSequences();
-	}
+
 
 	@Override
 	public boolean supportsResultSetPositionQueryMethodsOnForwardOnlyCursor() {
 		return this.wrapped.supportsResultSetPositionQueryMethodsOnForwardOnlyCursor();
 	}
 
-	@Override
-	public boolean supportsRowValueConstructorSyntax() {
-		return this.wrapped.supportsRowValueConstructorSyntax();
-	}
 
-	@Override
-	public boolean supportsRowValueConstructorSyntaxInInList() {
-		return this.wrapped.supportsRowValueConstructorSyntaxInInList();
-	}
-
-	@Override
-	public boolean supportsSequences() {
-		return this.wrapped.supportsSequences();
-	}
 
 	@Override
 	public boolean supportsSubqueryOnMutatingTable() {
@@ -866,10 +648,7 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.supportsTupleDistinctCounts();
 	}
 
-	@Override
-	public boolean supportsTuplesInSubqueries() {
-		return this.wrapped.supportsTuplesInSubqueries();
-	}
+
 
 	@Override
 	public boolean supportsUnboundedLobLocatorMaterialization() {
@@ -881,20 +660,7 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.supportsUnionAll();
 	}
 
-	@Override
-	public boolean supportsUnique() {
-		return this.wrapped.supportsUnique();
-	}
 
-	@Override
-	public boolean supportsUniqueConstraintInCreateAlterTable() {
-		return this.wrapped.supportsUniqueConstraintInCreateAlterTable();
-	}
-
-	@Override
-	public boolean supportsVariableLimit() {
-		return this.wrapped.supportsVariableLimit();
-	}
 
 	@Override
 	public String toBooleanValueString(final boolean bool) {
@@ -911,19 +677,12 @@ public class AllowMissingIdentitySupportDialect extends Dialect {
 		return this.wrapped.transformSelectString(select);
 	}
 
-	@Override
-	public boolean useFollowOnLocking() {
-		return this.wrapped.useFollowOnLocking();
-	}
 
 	@Override
 	public boolean useInputStreamToInsertBlob() {
 		return this.wrapped.useInputStreamToInsertBlob();
 	}
 
-	@Override
-	public boolean useMaxForLimit() {
-		return this.wrapped.useMaxForLimit();
-	}
+
 
 }

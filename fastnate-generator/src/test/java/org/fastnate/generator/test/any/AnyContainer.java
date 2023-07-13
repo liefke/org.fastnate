@@ -4,18 +4,14 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.persistence.Access;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.OrderColumn;
 
 import org.fastnate.generator.test.BaseTestEntity;
-import org.fastnate.generator.test.SimpleTestEntity;
 import org.hibernate.annotations.Any;
-import org.hibernate.annotations.AnyMetaDef;
 import org.hibernate.annotations.ManyToAny;
-import org.hibernate.annotations.MetaValue;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,26 +24,20 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@AnyMetaDef(name = "AnyMetaDefInClass", idType = "long", metaType = "string", metaValues = {
-		@MetaValue(targetEntity = SimpleTestEntity.class, value = "SimpleTestEntity"), //
-		@MetaValue(targetEntity = AnyContainer.class, value = "AnyContainer") })
 public class AnyContainer extends BaseTestEntity {
 
-	@Any(metaColumn = @Column(name = "classId"))
-	@AnyMetaDef(idType = "long", metaType = "long", metaValues = {
-			@MetaValue(targetEntity = SimpleTestEntity.class, value = "1"),
-			@MetaValue(targetEntity = AnyContainer.class, value = "2") })
+	@Any
 	@JoinColumn(name = "entityId")
 	private BaseTestEntity singleAny;
 
-	@ManyToAny(metaColumn = @Column(name = "classId"), metaDef = "AnyMetaDefInClass")
+	@ManyToAny
 	@JoinTable(name = "ManyAny", //
 			joinColumns = @JoinColumn(name = "containerId"), //
 			inverseJoinColumns = @JoinColumn(name = "entityId"))
 	@OrderColumn(name = "orderId")
 	private List<BaseTestEntity> manyAny;
 
-	@ManyToAny(metaColumn = @Column(name = "classId"), metaDef = "AnyMetaDefInPackage")
+	@ManyToAny
 	@JoinTable(name = "AnyMap", //
 			joinColumns = @JoinColumn(name = "containerId"), //
 			inverseJoinColumns = @JoinColumn(name = "entityId"))

@@ -22,9 +22,11 @@ import lombok.Setter;
 @DiscriminatorColumn(discriminatorType = DiscriminatorType.INTEGER)
 public class MappedSubclassTestEntity extends MappedSuperclassTestEntity<Integer> implements SuperclassEntity {
 
-	@Getter
 	@Setter
 	private String name;
+	public String getName() {
+		return this.name;
+	}
 
 	/**
 	 * Creates a new instance of {@link MappedSubclassTestEntity}.
