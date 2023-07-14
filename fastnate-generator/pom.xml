@@ -63,7 +63,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>provided</scope>
+            <scope>provided,test</scope>
         </dependency>
 
         <!-- This is just the JPA standalone API (without Hibernate) -->
@@ -77,7 +77,7 @@
 
         <!-- As long as we don't move HibernateProvider to its own module, we need a reference to @Formula and @Any -->
         <dependency>
-            <groupId>org.hibernate</groupId>
+            <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
             <scope>provided</scope>
         </dependency>
@@ -104,7 +104,7 @@
         -->
 
         <dependency>
-            <groupId>org.hibernate</groupId>
+            <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
             <scope>test</scope>
         </dependency>
