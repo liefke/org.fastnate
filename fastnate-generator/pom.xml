@@ -63,7 +63,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>provided,test</scope>
+            <scope>provided</scope>
         </dependency>
 
         <!-- This is just the JPA standalone API (without Hibernate) -->
