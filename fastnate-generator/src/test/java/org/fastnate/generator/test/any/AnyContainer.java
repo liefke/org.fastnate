@@ -3,14 +3,12 @@ package org.fastnate.generator.test.any;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.persistence.Access;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.*;
 
 import org.fastnate.generator.test.BaseTestEntity;
 import org.hibernate.annotations.Any;
+import org.hibernate.annotations.AnyKeyJavaClass;
+import org.hibernate.annotations.AnyKeyJavaType;
 import org.hibernate.annotations.ManyToAny;
 
 import lombok.Getter;
@@ -28,6 +26,8 @@ public class AnyContainer extends BaseTestEntity {
 
 	@Any
 	@JoinColumn(name = "entityId")
+	@AnyKeyJavaClass(Integer.class)
+	@Column(name = "singleAny")
 	private BaseTestEntity singleAny;
 
 	@ManyToAny
@@ -35,11 +35,15 @@ public class AnyContainer extends BaseTestEntity {
 			joinColumns = @JoinColumn(name = "containerId"), //
 			inverseJoinColumns = @JoinColumn(name = "entityId"))
 	@OrderColumn(name = "orderId")
+	@AnyKeyJavaClass(Integer.class)
+	@Column(name = "ManyAny")
 	private List<BaseTestEntity> manyAny;
 
 	@ManyToAny
 	@JoinTable(name = "AnyMap", //
 			joinColumns = @JoinColumn(name = "containerId"), //
 			inverseJoinColumns = @JoinColumn(name = "entityId"))
+	@Column(name = "AnyMap")
+	@AnyKeyJavaClass(Integer.class)
 	private Map<String, BaseTestEntity> anyMap;
 }
