@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
@@ -30,7 +31,7 @@
 			<url>https://github.com/liefke</url>
 		</developer>
 	</developers>
-	
+
 	<contributors>
 		<contributor>
 			<name>Andreas Penski</name>
@@ -69,10 +70,6 @@
 		<system>GitHub</system>
 	</issueManagement>
 
-	<prerequisites>
-		<maven>3.0.4</maven>
-	</prerequisites>
-
 	<modules>
 		<module>fastnate-generator</module>
 		<module>fastnate-data</module>
@@ -107,7 +104,7 @@
 			<dependency>
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
-				<version>1.16.8</version>
+				<version>1.18.42</version>
 			</dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
@@ -243,15 +240,130 @@
 			<extension>
 				<groupId>org.apache.maven.wagon</groupId>
 				<artifactId>wagon-ssh-external</artifactId>
-				<version>3.4.3</version>
+				<version>3.5.3</version>
 			</extension>
 		</extensions>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-enforcer-plugin</artifactId>
+					<version>3.6.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-clean-plugin</artifactId>
+					<version>3.5.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-install-plugin</artifactId>
+					<version>3.1.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>3.1.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>3.4.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.14.1</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>3.4.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>3.5.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>3.12.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-site-plugin</artifactId>
+					<version>3.21.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-checkstyle-plugin</artifactId>
+					<version>3.6.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>3.5.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-release-plugin</artifactId>
+					<version>3.3.1</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-gpg-plugin</artifactId>
+					<version>3.2.8</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-plugin-plugin</artifactId>
+					<version>3.15.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.projectlombok</groupId>
+					<artifactId>lombok-maven-plugin</artifactId>
+					<version>1.18.20.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.sonatype.plugins</groupId>
+					<artifactId>nexus-staging-maven-plugin</artifactId>
+					<version>1.7.0</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
+			<plugin>
+				<!-- Enforce correct plugin versions -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>enforce-maven</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireMavenVersion>
+									<version>3.8.0</version>
+								</requireMavenVersion>
+								<requireJavaVersion>
+									<version>1.8</version>
+								</requireJavaVersion>
+								<requirePluginVersions>
+									<unCheckedPluginList>org.fastnate:fastnate-maven-plugin</unCheckedPluginList>
+								</requirePluginVersions>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<!-- Define the default compiler settings. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.5.1</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -263,7 +375,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>2.4</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -278,7 +389,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -296,7 +406,6 @@
 			<plugin>
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok-maven-plugin</artifactId>
-				<version>1.16.10.0</version>
 				<executions>
 					<execution>
 						<phase>generate-sources</phase>
@@ -315,7 +424,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.3</version>
 				<executions>
 					<execution>
 						<id>make-javadoc</id>
@@ -326,7 +434,6 @@
 					</execution>
 				</executions>
 				<configuration>
-					<defaultVersion>${project.version}</defaultVersion>
 					<sourcepath>target/generated-sources/delombok</sourcepath>
 				</configuration>
 			</plugin>
@@ -335,7 +442,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
-				<version>3.10.0</version>
 			</plugin>
 
 			<!-- Enable release of Fastnate -->
@@ -358,9 +464,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.3</version>
 				<configuration>
-					<defaultVersion>${project.version}</defaultVersion>
 					<sourcepath>target/generated-sources/delombok</sourcepath>
 					<show>private</show>
 				</configuration>
@@ -368,7 +472,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.1.1</version>
 				<configuration>
 					<configLocation>src/checkstyle/checkstyle.xml</configLocation>
 					<propertyExpansion>config_loc=${fastnate.root}/src/checkstyle</propertyExpansion>
@@ -386,7 +489,6 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.5</version>
 						<executions>
 							<execution>
 								<id>sign-artifacts</id>
@@ -419,7 +521,6 @@
 					<plugin>
 						<groupId>org.sonatype.plugins</groupId>
 						<artifactId>nexus-staging-maven-plugin</artifactId>
-						<version>1.6.7</version>
 						<extensions>true</extensions>
 						<configuration>
 							<serverId>ossrh</serverId>
