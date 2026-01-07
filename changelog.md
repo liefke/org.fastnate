@@ -66,3 +66,10 @@ Fastnate Changelog
 * #47 Support AssociationOverride with JoinColumns defined in the JoinTable
 * #48 Support for schema and catalog name in table and sequence annotations
 * #50 Support to create Liquibase changelog file
+
+### 1.6.0 (2026-01-07)
+* #54 Support Embeddable in Collection of Embeddables
+* #41 Support Java 8 Local Time API
+* #61 Can't override table of an @ElementCollection
+* #43 Support for Hibernate property "globally_quoted_identifiers"
+* Upgraded some dependencies
