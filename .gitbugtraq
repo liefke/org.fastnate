@@ -1,0 +1,3 @@
+[bugtraq "github"]
+    url = https://github.com/liefke/org.fastnate/issues/%BUGID%
+    logregex = #(\d+)
