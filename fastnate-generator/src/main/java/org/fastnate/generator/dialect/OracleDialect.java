@@ -18,6 +18,8 @@ public class OracleDialect extends GeneratorDialect {
 
 	private static final int MAX_VARCHAR_LENGTH = 2000;
 
+	private static final int MAX_BLOB_LENGTH = 2000;
+
 	@Override
 	public void adjustNextSequenceValue(final StatementsWriter writer, final String sequenceName,
 			final long currentSequenceValue, final long nextSequenceValue, final int incrementSize) throws IOException {
@@ -70,6 +72,12 @@ public class OracleDialect extends GeneratorDialect {
 
 	@Override
 	public String createBlobExpression(final byte[] blob) {
+		if (blob.length > MAX_BLOB_LENGTH) {
+			// TODO: Support bigger blobs with dbms_lob.createtemporary in PrimitiveProperty.createPostInsertStatements()
+			// see https://stackoverflow.com/questions/18116634/oracle-10-using-hextoraw-to-fill-in-blob-data
+			throw new IllegalArgumentException("Can't handle BLOB values with more than " + MAX_BLOB_LENGTH
+					+ " bytes (given BLOB had " + blob.length + " bytes)");
+		}
 		return createHexBlobExpression("hextoraw('", blob, "')");
 	}
 
