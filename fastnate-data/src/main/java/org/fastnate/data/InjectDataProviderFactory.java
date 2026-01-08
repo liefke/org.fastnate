@@ -163,7 +163,7 @@ public class InjectDataProviderFactory extends AbstractDataProviderFactory {
 				this.importer.addDataProvider(provider, injection.getOrder());
 			}
 			return injection;
-		} catch (final InstantiationException | IllegalAccessException | InvocationTargetException e) {
+		} catch (final ReflectiveOperationException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}

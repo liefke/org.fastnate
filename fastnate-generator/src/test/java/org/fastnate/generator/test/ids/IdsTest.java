@@ -160,9 +160,8 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 						generator.write(entity1);
 						generator.flush();
 					}
-				} catch (final IOException | InstantiationException | IllegalAccessException
-						| InvocationTargetException e) {
-					throw new IllegalStateException(e);
+				} catch (final IOException | ReflectiveOperationException e) {
+					throw new IllegalArgumentException(e);
 				}
 			});
 		}

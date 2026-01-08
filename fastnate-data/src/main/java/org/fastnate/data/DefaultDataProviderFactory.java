@@ -146,7 +146,7 @@ public class DefaultDataProviderFactory extends AbstractDataProviderFactory {
 			// And add it after the first provider with the same or a smaller order criteria
 			importer.addDataProvider(provider, maxOrder.getValue());
 			return provider;
-		} catch (final InstantiationException | IllegalAccessException | InvocationTargetException e) {
+		} catch (final ReflectiveOperationException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}

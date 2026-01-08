@@ -1,7 +1,6 @@
 package org.fastnate.generator.converter;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.ModelException;
@@ -43,7 +42,7 @@ public class NumberConverter implements ValueConverter<Number> {
 		try {
 			return PrimitiveColumnExpression.create(this.stringConstructor.newInstance(defaultValue),
 					context.getDialect());
-		} catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+		} catch (final ReflectiveOperationException e) {
 			throw new IllegalArgumentException("Can't convert default value '" + defaultValue + "' to "
 					+ this.stringConstructor.getDeclaringClass(), e);
 		}

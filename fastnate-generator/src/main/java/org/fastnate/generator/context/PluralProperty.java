@@ -2,7 +2,6 @@ package org.fastnate.generator.context;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -224,7 +223,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	private static <T> Constructor<T> findValueConstructor(final Class<T> valueClass) {
 		try {
 			final Constructor<T> constructor = valueClass.getConstructor();
-			if (!constructor.isAccessible()) {
+			if (!constructor.canAccess(null)) {
 				constructor.setAccessible(true);
 			}
 			return constructor;
@@ -783,7 +782,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		}
 		try {
 			return this.valueConstructor.newInstance();
-		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+		} catch (final ReflectiveOperationException e) {
 			throw new UnsupportedOperationException("Could not create new element", e);
 		}
 	}

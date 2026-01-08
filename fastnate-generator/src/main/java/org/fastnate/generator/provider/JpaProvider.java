@@ -105,9 +105,9 @@ public interface JpaProvider {
 			final Class<Object> databaseType = ClassUtil.getActualTypeBinding(converterClass, AttributeConverter.class,
 					1);
 			try {
-				return new CustomValueConverter<>(converterClass.newInstance(),
+				return new CustomValueConverter<>(converterClass.getConstructor().newInstance(),
 						createBasicConverter(attribute.getName(), databaseType));
-			} catch (InstantiationException | IllegalAccessException e) {
+			} catch (final ReflectiveOperationException e) {
 				throw new IllegalArgumentException("Could not create AttributeConverter: " + converterClass, e);
 			}
 		}

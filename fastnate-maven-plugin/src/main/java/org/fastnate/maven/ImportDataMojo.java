@@ -241,7 +241,7 @@ public class ImportDataMojo extends AbstractMojo {
 					try {
 						final Class<?> detectorClass = Thread.currentThread().getContextClassLoader()
 								.loadClass(this.changeDetector);
-						final Object detector = detectorClass.newInstance();
+						final Object detector = detectorClass.getConstructor().newInstance();
 						final Method isDataFile = detectorClass.getMethod("isDataFile", File.class);
 						for (final String file : includedFiles) {
 							if ((Boolean) isDataFile.invoke(detector, new File(file))) {

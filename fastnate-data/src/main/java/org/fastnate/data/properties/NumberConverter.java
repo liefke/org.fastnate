@@ -1,7 +1,5 @@
 package org.fastnate.data.properties;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -21,15 +19,14 @@ public class NumberConverter implements PropertyConverter<Number> {
 			return null;
 		}
 		if (targetType == Number.class) {
-			return new Float(value);
+			return Float.valueOf(value);
 		}
 		final Class<? extends Number> wrapperType = targetType.isPrimitive()
 				? (Class<? extends Number>) ClassUtils.primitiveToWrapper(targetType)
 				: targetType;
 		try {
 			return wrapperType.getConstructor(String.class).newInstance(value);
-		} catch (final InstantiationException | IllegalAccessException | InvocationTargetException
-				| NoSuchMethodException e) {
+		} catch (final ReflectiveOperationException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}

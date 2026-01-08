@@ -293,10 +293,9 @@ public class GeneratorContext {
 			providerName = JpaProvider.class.getPackage().getName() + '.' + providerName;
 		}
 		try {
-			this.provider = (JpaProvider) Class.forName(providerName).newInstance();
+			this.provider = (JpaProvider) Class.forName(providerName).getConstructor().newInstance();
 			this.provider.initialize(settings);
-		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException
-				| ClassCastException e) {
+		} catch (final ReflectiveOperationException | ClassCastException e) {
 			throw new IllegalArgumentException("Can't instantiate provider: " + providerName, e);
 		}
 
@@ -308,9 +307,8 @@ public class GeneratorContext {
 			}
 		}
 		try {
-			this.dialect = (GeneratorDialect) Class.forName(dialectName).newInstance();
-		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException
-				| ClassCastException e) {
+			this.dialect = (GeneratorDialect) Class.forName(dialectName).getConstructor().newInstance();
+		} catch (final ReflectiveOperationException | ClassCastException e) {
 			throw new IllegalArgumentException("Can't instantiate dialect: " + dialectName, e);
 		}
 

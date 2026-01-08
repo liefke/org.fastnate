@@ -1,6 +1,5 @@
 package org.fastnate.data.properties;
 
-import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -54,8 +53,7 @@ public class DateConverter<D extends Date> extends FormatConverter<D> {
 		}
 		try {
 			return targetType.getConstructor(long.class).newInstance(date.getTime());
-		} catch (final InstantiationException | IllegalAccessException | InvocationTargetException
-				| NoSuchMethodException e) {
+		} catch (final ReflectiveOperationException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}

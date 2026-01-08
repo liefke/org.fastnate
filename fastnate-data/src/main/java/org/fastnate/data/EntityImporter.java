@@ -222,11 +222,11 @@ public class EntityImporter {
 		try {
 			final Class<? extends DataProviderFactory> providerFactoryClass = (Class<? extends DataProviderFactory>) Class
 					.forName(providerFactoryName);
-			final DataProviderFactory providerFactory = providerFactoryClass.newInstance();
+			final DataProviderFactory providerFactory = providerFactoryClass.getConstructor().newInstance();
 			providerFactory.createDataProviders(this);
 		} catch (final ClassNotFoundException e) {
 			throw new IllegalArgumentException("Could not find DataProviderFactory: " + providerFactoryName, e);
-		} catch (final InstantiationException | IllegalAccessException e) {
+		} catch (final ReflectiveOperationException | ClassCastException e) {
 			throw new IllegalArgumentException("Could not create DataProviderFactory: " + providerFactoryName, e);
 		}
 	}

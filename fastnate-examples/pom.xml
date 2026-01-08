@@ -46,6 +46,11 @@
 		</dependency>
 
 		<dependency>
+		    <groupId>javax.annotation</groupId>
+		    <artifactId>javax.annotation-api</artifactId>
+		</dependency>		
+
+		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<scope>provided</scope>
@@ -56,7 +61,7 @@
 			<artifactId>hibernate-core</artifactId>
 			<scope>provided</scope>
 		</dependency>
-
+		
 		<!-- This is just the JPA standalone API (without Hibernate) -->
 		<dependency>
 			<groupId>org.hibernate.javax.persistence</groupId>

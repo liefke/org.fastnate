@@ -26,6 +26,7 @@ import lombok.Getter;
  * @author Tobias Liefke
  */
 public enum AccessStyle {
+
 	/** The persistent attributes are read using field access. */
 	FIELD {
 
@@ -107,7 +108,7 @@ public enum AccessStyle {
 					return null;
 				}
 				try {
-					if (!this.field.isAccessible()) {
+					if (!this.field.canAccess(entity)) {
 						this.field.setAccessible(true);
 					}
 					return (T) this.field.get(entity);
@@ -126,7 +127,7 @@ public enum AccessStyle {
 			@Override
 			public <E, T> void setValue(final E entity, final T value) {
 				try {
-					if (!this.field.isAccessible()) {
+					if (!this.field.canAccess(entity)) {
 						this.field.setAccessible(true);
 					}
 					this.field.set(entity, value);
@@ -238,7 +239,7 @@ public enum AccessStyle {
 					return null;
 				}
 				try {
-					if (!this.method.isAccessible()) {
+					if (!this.method.canAccess(entity)) {
 						this.method.setAccessible(true);
 					}
 					return (T) this.method.invoke(entity);
@@ -274,7 +275,7 @@ public enum AccessStyle {
 									+ setterName + '(' + paramType + ')');
 						}
 
-						if (!this.setter.isAccessible()) {
+						if (!this.setter.canAccess(entity)) {
 							this.setter.setAccessible(true);
 						}
 					}

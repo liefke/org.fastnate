@@ -3,7 +3,6 @@ package org.fastnate.generator.context;
 import java.io.IOException;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -967,7 +966,7 @@ public class EntityClass<E> {
 	public E newInstance() {
 		try {
 			return this.entityConstructor.newInstance();
-		} catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
+		} catch (final ReflectiveOperationException e) {
 			throw new UnsupportedOperationException(e);
 		}
 	}

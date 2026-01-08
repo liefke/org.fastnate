@@ -2,7 +2,6 @@ package org.fastnate.generator.context;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
@@ -162,7 +161,7 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 			try {
 				value = this.constructor.newInstance();
 				setValue(entity, value);
-			} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+			} catch (final ReflectiveOperationException e) {
 				throw new UnsupportedOperationException(e);
 			}
 		}

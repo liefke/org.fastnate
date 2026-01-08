@@ -1,7 +1,6 @@
 package org.fastnate.data.properties;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -35,7 +34,7 @@ public class MapConverter<K, T> implements PropertyConverter<T>, Function<String
 			return new MapConverter<>(map, key -> {
 				try {
 					return keyConstructor.newInstance(key);
-				} catch (final IllegalAccessException | InstantiationException | InvocationTargetException e) {
+				} catch (final ReflectiveOperationException e) {
 					throw new IllegalArgumentException(e);
 				}
 			});
