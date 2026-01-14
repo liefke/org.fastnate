@@ -17,11 +17,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.inject.Inject;
+
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -72,11 +73,11 @@ public class ImportDataMojo extends AbstractMojo {
 	}
 
 	/** The current build context for incremental builds. */
-	@Component
+	@Inject
 	private BuildContext context;
 
 	/** The POM project. */
-	@Component
+	@Inject
 	private MavenProject project;
 
 	/** Indicates to skip the execution of this plugin, even if it is configured for a phase. */
@@ -273,10 +274,10 @@ public class ImportDataMojo extends AbstractMojo {
 			final Class<? extends Annotation> mappedSuperClass;
 			try {
 				dataProviderClass = classLoader.loadClass("org.fastnate.data.DataProvider");
-				entityClass = (Class<? extends Annotation>) classLoader.loadClass("javax.persistence.Entity");
-				embeddableClass = (Class<? extends Annotation>) classLoader.loadClass("javax.persistence.Embeddable");
+				entityClass = (Class<? extends Annotation>) classLoader.loadClass("jakarta.persistence.Entity");
+				embeddableClass = (Class<? extends Annotation>) classLoader.loadClass("jakarta.persistence.Embeddable");
 				mappedSuperClass = (Class<? extends Annotation>) classLoader
-						.loadClass("javax.persistence.MappedSuperclass");
+						.loadClass("jakarta.persistence.MappedSuperclass");
 			} catch (final ClassNotFoundException e) {
 				getLog().warn("Missing JPA or fastnate-data dependency", e);
 				return false;

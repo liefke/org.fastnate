@@ -16,8 +16,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Resource;
 
 import org.fastnate.generator.context.ModelException;
 

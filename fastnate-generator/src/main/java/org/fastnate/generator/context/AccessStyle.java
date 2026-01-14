@@ -10,13 +10,11 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.Transient;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fastnate.util.ClassUtil;
-import org.hibernate.annotations.Formula;
 
 import lombok.Getter;
 
@@ -103,6 +101,11 @@ public enum AccessStyle {
 			}
 
 			@Override
+			public int getModifiers() {
+				return this.field.getModifiers();
+			}
+
+			@Override
 			public <E, T> T getValue(final E entity) {
 				if (entity == null) {
 					return null;
@@ -115,13 +118,6 @@ public enum AccessStyle {
 				} catch (final ReflectiveOperationException e) {
 					throw new IllegalStateException(e);
 				}
-			}
-
-			@Override
-			public boolean isPersistent() {
-				final int modifiers = this.field.getModifiers();
-				return !Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)
-						&& !isAnnotationPresent(Transient.class) && !isAnnotationPresent(Formula.class);
 			}
 
 			@Override
@@ -234,6 +230,11 @@ public enum AccessStyle {
 			}
 
 			@Override
+			public int getModifiers() {
+				return this.method.getModifiers();
+			}
+
+			@Override
 			public <E, T> T getValue(final E entity) {
 				if (entity == null) {
 					return null;
@@ -246,13 +247,6 @@ public enum AccessStyle {
 				} catch (final ReflectiveOperationException | IllegalArgumentException e) {
 					throw new IllegalStateException("Could not execute " + this.method + " on " + entity + ": " + e, e);
 				}
-			}
-
-			@Override
-			public boolean isPersistent() {
-				final int modifiers = this.method.getModifiers();
-				return !Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)
-						&& !isAnnotationPresent(Transient.class) && !isAnnotationPresent(Formula.class);
 			}
 
 			@Override

@@ -9,16 +9,16 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import javax.persistence.MapKeyTemporal;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import jakarta.persistence.MapKeyTemporal;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
-import org.fastnate.generator.RelativeDate;
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.EntityClass;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.PrimitiveColumnExpression;
+import org.fastnate.util.RelativeDate;
 
 import lombok.RequiredArgsConstructor;
 

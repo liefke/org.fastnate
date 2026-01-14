@@ -5,16 +5,16 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Date;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Table;
-import javax.persistence.TemporalType;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Table;
+import jakarta.persistence.TemporalType;
+import jakarta.validation.constraints.NotNull;
 
-import org.fastnate.generator.RelativeDate;
 import org.fastnate.generator.context.GeneratorColumn;
 import org.fastnate.generator.context.GeneratorTable;
 import org.fastnate.generator.statements.StatementsWriter;
+import org.fastnate.util.RelativeDate;
 
 import lombok.Getter;
 
@@ -299,16 +299,6 @@ public abstract class GeneratorDialect {
 
 		suffix.getChars(0, suffix.length(), result, suffixStart);
 		return new String(result);
-	}
-
-	/**
-	 * Resolves the GenerationType used, if {@link GenerationType#AUTO} is set for a {@link GeneratedValue}.
-	 *
-	 * @return the replacement for {@link GenerationType#AUTO} for the current dialect in Hibernate.
-	 */
-	public GenerationType getAutoGenerationType() {
-		return isSequenceSupported() ? GenerationType.SEQUENCE
-				: isIdentitySupported() ? GenerationType.IDENTITY : GenerationType.TABLE;
 	}
 
 	/**

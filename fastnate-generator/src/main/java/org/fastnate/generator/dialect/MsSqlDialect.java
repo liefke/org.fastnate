@@ -2,9 +2,9 @@ package org.fastnate.generator.dialect;
 
 import java.util.Date;
 
-import javax.persistence.TemporalType;
+import jakarta.persistence.TemporalType;
 
-import org.fastnate.generator.RelativeDate;
+import org.fastnate.util.RelativeDate;
 
 /**
  * Handles MS SQL specific conversions.

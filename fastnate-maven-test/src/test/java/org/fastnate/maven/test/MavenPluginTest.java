@@ -4,14 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
+import jakarta.persistence.criteria.CriteriaQuery;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests that all entities were written to the SQL file during process classes.
@@ -27,7 +27,7 @@ public class MavenPluginTest {
 	/**
 	 * Build a entity manager factory (with a connected database) for testing.
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.emf = Persistence.createEntityManagerFactory("test");
 		this.em = this.emf.createEntityManager();
@@ -36,7 +36,7 @@ public class MavenPluginTest {
 	/**
 	 * Close the entity manager factory.
 	 */
-	@After
+	@AfterEach
 	public void tearDown() {
 		this.em.close();
 		this.emf.close();

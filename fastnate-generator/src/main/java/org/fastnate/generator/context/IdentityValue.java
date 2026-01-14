@@ -2,7 +2,7 @@ package org.fastnate.generator.context;
 
 import java.io.IOException;
 
-import javax.persistence.GenerationType;
+import jakarta.persistence.GenerationType;
 
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.PlainColumnExpression;

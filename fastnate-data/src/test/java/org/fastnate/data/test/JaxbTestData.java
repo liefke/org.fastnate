@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import org.fastnate.data.AbstractDataProvider;
 import org.fastnate.data.files.DataFolder;

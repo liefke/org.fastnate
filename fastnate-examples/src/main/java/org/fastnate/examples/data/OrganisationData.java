@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import org.fastnate.data.AbstractDataProvider;
 import org.fastnate.data.EntityRegistration;

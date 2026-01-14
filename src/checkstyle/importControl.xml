@@ -8,6 +8,7 @@
 	<allow pkg="de" />
 	<allow pkg="java" />
 	<allow pkg="javax" />
+	<allow pkg="jakarta" />
 	<allow pkg="net" />
 	<allow pkg="org" />
 

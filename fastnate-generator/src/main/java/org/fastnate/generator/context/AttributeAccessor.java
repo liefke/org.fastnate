@@ -2,6 +2,7 @@ package org.fastnate.generator.context;
 
 import java.beans.Introspector;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
 /**
@@ -52,6 +53,13 @@ public interface AttributeAccessor extends AnnotatedElement {
 	Class<?> getImplementationClass();
 
 	/**
+	 * The combination of {@link Modifier}s.
+	 *
+	 * @return the modifiers of the field or method
+	 */
+	int getModifiers();
+
+	/**
 	 * The name of the accessed attribute.
 	 *
 	 * @return the name ({@link Introspector#decapitalize(String) decapitalized} if necessary)
@@ -74,13 +82,6 @@ public interface AttributeAccessor extends AnnotatedElement {
 	 * @return the value, {@code null} if entity is {@code null}
 	 */
 	<E, T> T getValue(E entity);
-
-	/**
-	 * Indicates that this attribute is written to the database.
-	 *
-	 * @return {@code true} if the represented attribute is neither static, nor transient, nor generated.
-	 */
-	boolean isPersistent();
 
 	/**
 	 * Sets a new value for the attribute on the given entity.

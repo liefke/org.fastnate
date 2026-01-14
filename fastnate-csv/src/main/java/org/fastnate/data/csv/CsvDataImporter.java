@@ -752,8 +752,10 @@ public class CsvDataImporter<E> extends PropertyDataImporter {
 			}
 
 			// Guess the encoding
-			final BOMInputStream inputStream = new BOMInputStream(fileStream, false, ByteOrderMark.UTF_8,
-					ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE);
+			final BOMInputStream inputStream = BOMInputStream.builder().setInputStream(fileStream)
+					.setByteOrderMarks(ByteOrderMark.UTF_8, ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE,
+							ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE)
+					.get();
 			final String charset;
 			if (inputStream.hasBOM()) {
 				charset = inputStream.getBOMCharsetName();

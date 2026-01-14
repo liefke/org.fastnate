@@ -10,11 +10,12 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import javax.annotation.Nonnull;
-import javax.persistence.Access;
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
-import javax.persistence.Embeddable;
-import javax.persistence.EmbeddedId;
+
+import jakarta.persistence.Access;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
 
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
@@ -98,8 +99,8 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 				.getAccociationOverrides(surroundingAssociationOverrides, prefix, attribute.getElement());
 		for (final AttributeAccessor embeddedAttribute : accessStyle.getDeclaredAttributes((Class<Object>) type,
 				type)) {
-			final Property<T, ?> property = entityClass.buildProperty(table, embeddedAttribute, attributeOverrides,
-					associationOverrides);
+			final Property<T, ?> property = entityClass.getContext().getProvider().buildProperty(entityClass, table,
+					embeddedAttribute, attributeOverrides, associationOverrides);
 			if (property != null) {
 				this.embeddedProperties.put(embeddedAttribute.getName(), property);
 			}

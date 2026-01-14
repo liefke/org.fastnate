@@ -5,35 +5,36 @@ import java.util.Collection;
 import java.util.Collections;
 
 import javax.annotation.Nullable;
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.MapsId;
-import javax.persistence.OneToOne;
-import javax.validation.constraints.NotNull;
 
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
+import jakarta.validation.constraints.NotNull;
+
+import org.apache.commons.lang3.StringUtils;
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.PrimitiveColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
-import org.hibernate.annotations.Any;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 /**
- * Describes a property of an {@link EntityClass} that references another entity.
+ * Describes a property of an {@link EntityClass} that references exactly one other entity.
  *
- * @author Tobias Liefke
  * @param <E>
  *            The type of the container entity
  * @param <T>
  *            The type of the target entity
+ *
+ * @author Tobias Liefke
  */
 @Getter
 public class EntityProperty<E, T> extends SingularProperty<E, T> {
@@ -42,9 +43,8 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	 * Helper for evaluating correct mapping information from the annotations.
 	 */
 	@Getter
-	private static class MappingInformation {
-
-		private final AttributeAccessor attribute;
+	@RequiredArgsConstructor
+	protected static class MappingInformation {
 
 		private final Class<?> valueClass;
 
@@ -52,72 +52,55 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 
 		private final String mappedBy;
 
-		private final Column anyColumn;
-
-		private final String anyDefName;
-
 		private final boolean composition;
 
 		MappingInformation(final AttributeAccessor attribute) {
-			this.attribute = attribute;
 			final OneToOne oneToOne = attribute.getAnnotation(OneToOne.class);
 			final NotNull notNull = attribute.getAnnotation(NotNull.class);
 			if (oneToOne != null) {
 				this.valueClass = oneToOne.targetEntity() == void.class ? attribute.getType() : oneToOne.targetEntity();
 				this.optional = oneToOne.optional() && notNull == null;
 				this.mappedBy = oneToOne.mappedBy();
-				this.anyColumn = null;
-				this.anyDefName = null;
 				this.composition = Property.isComposition(oneToOne.cascade());
 			} else {
-				this.mappedBy = "";
+				this.mappedBy = null;
 				final ManyToOne manyToOne = attribute.getAnnotation(ManyToOne.class);
-				if (manyToOne != null) {
-					this.valueClass = manyToOne.targetEntity() == void.class ? attribute.getType()
-							: manyToOne.targetEntity();
-					this.optional = manyToOne.optional() && notNull == null;
-					this.anyColumn = null;
-					this.anyDefName = null;
-					this.composition = Property.isComposition(manyToOne.cascade());
-				} else {
-					final Any any = attribute.getAnnotation(Any.class);
-					ModelException.mustExist(any, "{} declares none of OneToOne, ManyToOne, or Any", attribute);
-					this.valueClass = attribute.getType();
-					this.optional = any.optional() && notNull == null;
-					this.anyColumn = any.metaColumn();
-					this.anyDefName = any.metaDef();
-					this.composition = false;
-				}
+				ModelException.mustExist(manyToOne, "{} declares none of OneToOne or ManyToOne", attribute);
+				this.valueClass = manyToOne.targetEntity() == void.class ? attribute.getType()
+						: manyToOne.targetEntity();
+				this.optional = manyToOne.optional() && notNull == null;
+				this.composition = Property.isComposition(manyToOne.cascade());
 			}
-		}
-
-		<T> AnyMapping<T> buildAnyMapping(final GeneratorContext context, final GeneratorTable containerTable) {
-			if (this.anyColumn == null) {
-				return null;
-			}
-			return new AnyMapping<>(context, this.attribute, containerTable, this.anyColumn, this.anyDefName);
 		}
 
 	}
 
 	/**
-	 * Indicates that the given attribute references an entity and may be used by an {@link EntityProperty}.
+	 * Indicates that the given attribute references a single entity and may be used by an {@link EntityProperty}.
 	 *
 	 * @param attribute
 	 *            accessor of the attribute to check
 	 * @return {@code true} if an {@link EntityProperty} may be created for the given attribute
 	 */
-	static boolean isEntityProperty(final AttributeAccessor attribute) {
-		return attribute.isAnnotationPresent(OneToOne.class) || attribute.isAnnotationPresent(ManyToOne.class)
-				|| attribute.isAnnotationPresent(Any.class);
+	public static boolean isEntityProperty(final AttributeAccessor attribute) {
+		return attribute.isAnnotationPresent(OneToOne.class) || attribute.isAnnotationPresent(ManyToOne.class);
+	}
+
+	private static GeneratorColumn resolveJoinColumn(final GeneratorTable containerTable,
+			final AttributeAccessor attribute, final AssociationOverride override, final EntityClass<?> targetClass) {
+		final JoinColumn joinColumn = override != null && override.joinColumns().length > 0 ? override.joinColumns()[0]
+				: attribute.getAnnotation(JoinColumn.class);
+		if (joinColumn != null && joinColumn.name().length() > 0) {
+			return containerTable.resolveColumn(joinColumn.name());
+		}
+		return containerTable.resolveColumn(attribute.getName() + '_'
+				+ (targetClass == null ? "id" : targetClass.getIdColumn(attribute).getUnquotedName()));
 	}
 
 	/** The current context. */
 	private final GeneratorContext context;
 
-	/**
-	 * The description of the type of this property. Usually {@code null} for attributes defined as type {@link Any}.
-	 */
+	/** The description of the type of this property. */
 	private final EntityClass<T> targetClass;
 
 	/** Indicates, that this property needs a value. */
@@ -140,14 +123,11 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	@Setter(AccessLevel.PACKAGE)
 	private Property<T, ?> inverseProperty;
 
-	/** The name of the join column. */
+	/** The description of the join column. */
 	private final GeneratorColumn column;
 
 	/** The name of the id for referencing an embedded id. */
 	private final String idField;
-
-	/** Contains information about an addition class column, if {@link Any} is used. */
-	private final AnyMapping<T> anyMapping;
 
 	/**
 	 * Creates a new instance of {@link EntityProperty}.
@@ -159,7 +139,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	 * @param attribute
 	 *            the accessor of the attribute
 	 * @param override
-	 *            optional {@link AttributeOverride} configuration.
+	 *            optional {@link AssociationOverride} configuration
 	 */
 	public EntityProperty(final GeneratorContext context, final GeneratorTable containerTable,
 			final AttributeAccessor attribute, @Nullable final AssociationOverride override) {
@@ -167,26 +147,19 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		this.context = context;
 
 		// Initialize according to the *ToOne annotations
-		final MappingInformation mapping = new MappingInformation(attribute);
+		final MappingInformation mapping = findEntityMappingInformation(attribute);
 		final Class<T> type = (Class<T>) mapping.getValueClass();
 		this.targetClass = context.getDescription(type);
 		this.required = !mapping.isOptional();
 		this.composition = mapping.isComposition();
-		this.mappedBy = mapping.getMappedBy().length() == 0 ? null : mapping.getMappedBy();
+		this.mappedBy = StringUtils.defaultIfEmpty(mapping.getMappedBy(), null);
+
 		final MapsId mapsId = attribute.getAnnotation(MapsId.class);
 		this.idField = mapsId != null ? mapsId.value() : null;
 
 		// Initialize the column name
 		if (this.mappedBy == null) {
-			final JoinColumn joinColumn = override != null && override.joinColumns().length > 0
-					? override.joinColumns()[0]
-					: attribute.getAnnotation(JoinColumn.class);
-			if (joinColumn != null && joinColumn.name().length() > 0) {
-				this.column = containerTable.resolveColumn(joinColumn.name());
-			} else {
-				this.column = containerTable.resolveColumn(attribute.getName() + '_' + (this.targetClass == null ? "id"
-						: this.targetClass.getIdColumn(attribute).getUnquotedName()));
-			}
+			this.column = resolveJoinColumn(containerTable, attribute, override, this.targetClass);
 		} else {
 			this.column = null;
 
@@ -202,9 +175,6 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 				}
 			});
 		}
-
-		// Initialize ANY meta information
-		this.anyMapping = mapping.buildAnyMapping(context, containerTable);
 	}
 
 	@Override
@@ -214,16 +184,12 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			// Resolve the entity
 			final T value = getValue(entity);
 			if (value != null) {
-				if (this.anyMapping != null) {
-					this.anyMapping.setColumnValue(statement, value);
-				}
-
 				final EntityClass<T> entityClass = this.context.getDescription(value);
 				if (!entityClass.isNew(value)) {
 					final ColumnExpression expression = entityClass.getEntityReference(value, this.idField, false);
 					if (expression != null) {
 						// We have an ID - use the expression
-						statement.setColumnValue(this.column, expression);
+						writeColumnExpression(statement, value, expression);
 						return;
 					}
 				}
@@ -233,12 +199,20 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 			}
 			failIfRequired(entity);
 			if (this.context.isWriteNullValues()) {
-				statement.setColumnValue(this.column, PrimitiveColumnExpression.NULL);
-				if (this.anyMapping != null && value == null) {
-					this.anyMapping.setColumnValue(statement, value);
-				}
+				writeColumnExpression(statement, value, PrimitiveColumnExpression.NULL);
 			}
 		}
+	}
+
+	/**
+	 * Builds the mapping information for a reference to an entity.
+	 *
+	 * @param attribute
+	 *            accessor to the represented attribute
+	 * @return the mapping information
+	 */
+	protected MappingInformation findEntityMappingInformation(final AttributeAccessor attribute) {
+		return new MappingInformation(attribute);
 	}
 
 	@Override
@@ -257,7 +231,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		final EntityClass<E> entityClass = this.context.getDescription(entity);
 		final TableStatement stmt = writer.createUpdateStatement(this.context.getDialect(), entityClass.getTable(),
 				entityClass.getIdColumn(getAttribute()), entityClass.getEntityReference(entity, this.idField, true));
-		stmt.setColumnValue(this.column, expression);
+		writeColumnExpression(stmt, (T) writtenEntity, expression);
 		writer.writeStatement(stmt);
 	}
 
@@ -280,17 +254,27 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 		if (reference == null) {
 			return null;
 		}
-		final String predicate = this.column.getQualifiedName() + " = " + reference.toSql();
-		if (this.anyMapping == null) {
-			return predicate;
-		}
-
-		return '(' + predicate + " AND " + this.anyMapping.getPredicate(value) + ')';
+		return this.column.getQualifiedName() + " = " + reference.toSql();
 	}
 
 	@Override
 	public boolean isTableColumn() {
 		return this.mappedBy == null;
+	}
+
+	/**
+	 * Writes the column expression to the statement.
+	 *
+	 * @param statement
+	 *            the current statement
+	 * @param value
+	 *            the written value
+	 * @param expression
+	 *            the expression of the value
+	 */
+	protected void writeColumnExpression(final TableStatement statement, final T value,
+			final ColumnExpression expression) {
+		statement.setColumnValue(this.column, expression);
 	}
 
 }

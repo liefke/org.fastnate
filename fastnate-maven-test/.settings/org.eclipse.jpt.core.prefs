@@ -1,5 +1,5 @@
 eclipse.preferences.version=1
-org.eclipse.jpt.core.platform=generic2_0
+org.eclipse.jpt.core.platform=generic3_1
 org.eclipse.jpt.jpa.core.discoverAnnotatedClasses=true
 problem.ASSOCIATION_OVERRIDE_INVALID_NAME=error
 problem.ATTRIBUTE_OVERRIDE_DERIVED_AND_SPECIFIED=error
@@ -76,7 +76,7 @@ problem.MAP_KEY_JOIN_COLUMN_UNRESOLVED_REFERENCED_COLUMN_NAME=error
 problem.NO_JPA_PROJECT=error
 problem.ORDER_COLUMN_AND_ORDER_BY_BOTH_SPECIFIED=error
 problem.ORDER_COLUMN_UNRESOLVED_NAME=error
-problem.PERSISTENCE_MULTIPLE_PERSISTENCE_UNITS=warning
+problem.PERSISTENCE_MULTIPLE_PERSISTENCE_UNITS=ignore
 problem.PERSISTENCE_NO_PERSISTENCE_UNIT=error
 problem.PERSISTENCE_UNIT_DUPLICATE_CLASS=error
 problem.PERSISTENCE_UNIT_DUPLICATE_JAR_FILE=error

@@ -6,10 +6,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
-import javax.persistence.ElementCollection;
-import javax.persistence.OrderColumn;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.OrderColumn;
 
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.dialect.GeneratorDialect;
@@ -38,7 +38,7 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	 *            the attribute to check
 	 * @return {@code true} if an {@link CollectionProperty} may be created for the given attribute
 	 */
-	static boolean isCollectionProperty(final AttributeAccessor attribute) {
+	public static boolean isCollectionProperty(final AttributeAccessor attribute) {
 		return Collection.class.isAssignableFrom(attribute.getType()) && hasPluralAnnotation(attribute);
 	}
 
@@ -60,8 +60,6 @@ public class CollectionProperty<E, T> extends PluralProperty<E, Collection<T>, T
 	public CollectionProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
 			final AssociationOverride associationOverride, final AttributeOverride attributeOverride) {
 		super(sourceClass, attribute, associationOverride, attributeOverride, 0);
-
-		// Read a potentially defined order column
 		final OrderColumn orderColumnDef = attribute.getAnnotation(OrderColumn.class);
 		this.orderColumn = orderColumnDef == null ? null
 				: getTable().resolveColumn(

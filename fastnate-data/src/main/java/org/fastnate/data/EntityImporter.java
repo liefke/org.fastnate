@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fastnate.data.files.DataFile;
@@ -132,9 +132,8 @@ public class EntityImporter {
 			if (dataFolderPath.matches("(?i)[-a-z0-9_]+(\\.[-a-z0-9_]+)*")) {
 				// The data folder is part of the class path
 				log.info("Using package \"{}\" as data folder", dataFolderPath);
-				return new VfsDataFolder(
-						ClasspathHelper.forClassLoader().stream().map(Vfs::fromURL).collect(Collectors.toList()))
-								.getPath(dataFolderPath.replace('.', '/'));
+				return new VfsDataFolder(ClasspathHelper.forPackage(dataFolderPath).stream().map(Vfs::fromURL)
+						.collect(Collectors.toList())).getPath(dataFolderPath.replace('.', '/'));
 			}
 			throw new IllegalArgumentException("Data folder not found: " + dataFolderPath);
 		} catch (final MalformedURLException e) {
@@ -213,7 +212,7 @@ public class EntityImporter {
 		String providerFactoryName = getSettings().getProperty(FACTORY_KEY, "");
 		if (providerFactoryName.isEmpty()) {
 			try {
-				Class.forName("javax.inject.Inject");
+				Class.forName("jakarta.inject.Inject");
 				providerFactoryName = "org.fastnate.data.InjectDataProviderFactory";
 			} catch (final ClassNotFoundException e) {
 				providerFactoryName = DefaultDataProviderFactory.class.getName();

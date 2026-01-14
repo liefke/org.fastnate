@@ -11,7 +11,7 @@ import org.fastnate.data.EntityImporter;
 import org.fastnate.data.csv.CsvDataImporter;
 import org.fastnate.data.csv.GenericCsvDataProvider;
 import org.fastnate.generator.context.GeneratorContext;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests the {@link GenericCsvDataProvider}.

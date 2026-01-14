@@ -18,10 +18,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-import javax.inject.Inject;
-import javax.inject.Qualifier;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Resource;
+import jakarta.inject.Inject;
+import jakarta.inject.Qualifier;
 
 import org.fastnate.generator.context.ModelException;
 import org.reflections.Reflections;

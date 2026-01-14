@@ -12,27 +12,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.persistence.AssociationOverride;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.JoinTable;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.TableGenerator;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.TableGenerator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.dialect.H2Dialect;
-import org.fastnate.generator.provider.HibernateProvider;
+import org.fastnate.generator.dialect.MsSqlDialect;
+import org.fastnate.generator.dialect.MySqlDialect;
+import org.fastnate.generator.dialect.OracleDialect;
+import org.fastnate.generator.dialect.PostgresDialect;
 import org.fastnate.generator.provider.JpaProvider;
+import org.fastnate.generator.statements.ConnectedStatementsWriter;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -92,10 +98,8 @@ public class GeneratorContext {
 	/**
 	 * The settings key for the JPA provider.
 	 *
-	 * Contains either the fully qualified class name of an extension of {@link JpaProvider} or the simple name of one
-	 * of the classes from {@code org.fastnate.generator.provider}.
-	 *
-	 * Defaults to {@code HibernateProvider}.
+	 * Contains the fully qualified class name of an extension of {@link JpaProvider}. If none is given, the available
+	 * from META-INF/services/org.fastnate.generator.provider.JpaProvider is used.
 	 */
 	public static final String PROVIDER_KEY = "fastnate.generator.jpa.provider";
 
@@ -145,6 +149,24 @@ public class GeneratorContext {
 
 	/** The settings key for {@link #preferSequenceCurentValue}. */
 	public static final String PREFER_SEQUENCE_CURRENT_VALUE = "fastnate.generator.prefer.sequence.current.value";
+
+	private static final Map<String, Class<? extends GeneratorDialect>> DEFAULT_DIALECTS = Map.of("oracle",
+			OracleDialect.class, "postgres", PostgresDialect.class, "mysql", MySqlDialect.class, "mariadb",
+			MySqlDialect.class, "sqlserver", MsSqlDialect.class, "h2", H2Dialect.class);
+
+	private static JpaProvider createDefaultProvider() {
+		return ServiceLoader.load(JpaProvider.class).findFirst().orElseThrow(() -> new IllegalArgumentException(
+				"Missing JPA provider, please add fastnate-hibernate to the classpath."));
+	}
+
+	private static Class<? extends GeneratorDialect> detectDialect(final String setting) {
+		if (setting == null) {
+			return null;
+		}
+		final String lowercaseSetting = setting.toLowerCase();
+		return DEFAULT_DIALECTS.entrySet().stream().filter(entry -> lowercaseSetting.contains(entry.getKey()))
+				.map(Map.Entry::getValue).findFirst().orElse(null);
+	}
 
 	/**
 	 * Tries to read any persistence file defined in the settings.
@@ -250,10 +272,10 @@ public class GeneratorContext {
 	private final Map<GeneratorId, IdGenerator> generators = new HashMap<>();
 
 	/** The default sequence generator, if none is explicitly specified in a {@link GeneratedValue}. */
-	private SequenceIdGenerator defaultSequenceGenerator;
+	private Map<String, SequenceIdGenerator> defaultSequenceGenerators = new HashMap<>();
 
 	/** The default table generator, if none is explicitly specified in a {@link GeneratedValue}. */
-	private TableIdGenerator defaultTableGenerator;
+	private Map<String, TableIdGenerator> defaultTableGenerators = new HashMap<>();
 
 	/** All listeners of this context. */
 	private List<ContextModelListener> contextModelListeners = new ArrayList<>();
@@ -273,7 +295,7 @@ public class GeneratorContext {
 	 */
 	public GeneratorContext(final GeneratorDialect dialect) {
 		this.dialect = dialect;
-		this.provider = new HibernateProvider();
+		this.provider = createDefaultProvider();
 		this.settings = new Properties();
 	}
 
@@ -288,29 +310,27 @@ public class GeneratorContext {
 
 		readPersistenceFile(settings);
 
-		String providerName = settings.getProperty(PROVIDER_KEY, "HibernateProvider");
-		if (providerName.indexOf('.') < 0) {
-			providerName = JpaProvider.class.getPackage().getName() + '.' + providerName;
-		}
-		try {
-			this.provider = (JpaProvider) Class.forName(providerName).getConstructor().newInstance();
-			this.provider.initialize(settings);
-		} catch (final ReflectiveOperationException | ClassCastException e) {
-			throw new IllegalArgumentException("Can't instantiate provider: " + providerName, e);
-		}
+		JpaProvider.copySetting(settings, "jakarta.persistence.jdbc.driver",
+				ConnectedStatementsWriter.DATABASE_DRIVER_KEY);
+		JpaProvider.copySetting(settings, "jakarta.persistence.jdbc.url", ConnectedStatementsWriter.DATABASE_URL_KEY);
+		JpaProvider.copySetting(settings, "jakarta.persistence.jdbc.user", ConnectedStatementsWriter.DATABASE_USER_KEY);
+		JpaProvider.copySetting(settings, "jakarta.persistence.jdbc.password",
+				ConnectedStatementsWriter.DATABASE_PASSWORD_KEY);
 
-		String dialectName = settings.getProperty(DIALECT_KEY, "H2Dialect");
-		if (dialectName.indexOf('.') < 0) {
-			dialectName = GeneratorDialect.class.getPackage().getName() + '.' + dialectName;
-			if (!dialectName.endsWith("Dialect")) {
-				dialectName += "Dialect";
+		final String providerName = settings.getProperty(PROVIDER_KEY);
+		if (providerName == null) {
+			this.provider = createDefaultProvider();
+		} else {
+			try {
+				this.provider = (JpaProvider) Class.forName(providerName).getConstructor().newInstance();
+			} catch (final ReflectiveOperationException | ClassCastException e) {
+				throw new IllegalArgumentException("Can't instantiate provider: " + providerName, e);
 			}
 		}
-		try {
-			this.dialect = (GeneratorDialect) Class.forName(dialectName).getConstructor().newInstance();
-		} catch (final ReflectiveOperationException | ClassCastException e) {
-			throw new IllegalArgumentException("Can't instantiate dialect: " + dialectName, e);
-		}
+
+		this.provider.initialize(settings);
+
+		detectDialect();
 
 		this.writeRelativeIds = Boolean
 				.parseBoolean(settings.getProperty(RELATIVE_IDS_KEY, String.valueOf(this.writeRelativeIds)));
@@ -388,6 +408,40 @@ public class GeneratorContext {
 		return adjustIdentifier(catalog) + '.' + adjustIdentifier(schema) + '.' + adjustIdentifier(objectName);
 	}
 
+	private void detectDialect() {
+		Class<? extends GeneratorDialect> dialectClass;
+		String dialectName = this.settings.getProperty(DIALECT_KEY);
+		if (dialectName == null) {
+			dialectClass = detectDialect(this.settings.getProperty("jakarta.persistence.database-product-name"));
+			if (dialectClass == null) {
+				dialectClass = detectDialect(this.settings.getProperty(ConnectedStatementsWriter.DATABASE_DRIVER_KEY));
+				if (dialectClass == null) {
+					dialectClass = detectDialect(this.settings.getProperty(ConnectedStatementsWriter.DATABASE_URL_KEY));
+					if (dialectClass == null) {
+						dialectClass = H2Dialect.class;
+					}
+				}
+			}
+		} else {
+			if (dialectName.indexOf('.') < 0) {
+				dialectName = GeneratorDialect.class.getPackage().getName() + '.' + dialectName;
+				if (!dialectName.endsWith("Dialect")) {
+					dialectName += "Dialect";
+				}
+			}
+			try {
+				dialectClass = (Class<? extends GeneratorDialect>) Class.forName(dialectName);
+			} catch (final ClassNotFoundException e) {
+				throw new IllegalArgumentException("Dialect class not found: " + dialectName, e);
+			}
+		}
+		try {
+			this.dialect = dialectClass.getConstructor().newInstance();
+		} catch (final ReflectiveOperationException | ClassCastException e) {
+			throw new IllegalArgumentException("Can't instantiate dialect: " + dialectName, e);
+		}
+	}
+
 	/**
 	 * Fires an event to all {@link #getContextModelListeners() listeners}.
 	 *
@@ -403,30 +457,36 @@ public class GeneratorContext {
 		}
 	}
 
-	private IdGenerator getDefaultSequenceGenerator() {
-		if (this.defaultSequenceGenerator == null) {
+	private IdGenerator getDefaultSequenceGenerator(final GeneratorTable table) {
+		final String sequenceName = this.provider.getDefaultSequence(table.getName());
+		SequenceIdGenerator sequenceIdGenerator = this.defaultSequenceGenerators.get(sequenceName);
+		if (sequenceIdGenerator == null) {
 			final Map<String, Object> defaults = Stream
-					.of(new SimpleEntry<String, Object>("sequenceName", this.provider.getDefaultSequence()),
+					.of(new SimpleEntry<String, Object>("sequenceName", sequenceName),
 							new SimpleEntry<String, Object>("allocationSize", Integer.valueOf(1)))
 					.collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
-			this.defaultSequenceGenerator = new SequenceIdGenerator(
-					AnnotationDefaults.create(SequenceGenerator.class, defaults), this);
-			fireContextObjectAdded(ContextModelListener::foundGenerator, this.defaultSequenceGenerator);
+			sequenceIdGenerator = new SequenceIdGenerator(AnnotationDefaults.create(SequenceGenerator.class, defaults),
+					this);
+			this.defaultSequenceGenerators.put(sequenceName, sequenceIdGenerator);
+			fireContextObjectAdded(ContextModelListener::foundGenerator, sequenceIdGenerator);
 		}
-		return this.defaultSequenceGenerator;
+		return sequenceIdGenerator;
 	}
 
-	private IdGenerator getDefaultTableGenerator() {
-		if (this.defaultTableGenerator == null) {
+	private IdGenerator getDefaultTableGenerator(final GeneratorTable table) {
+		final String generatorName = this.provider.getDefaultGeneratorTablePkColumnValue(table.getName());
+		TableIdGenerator tableIdGenerator = this.defaultTableGenerators.get(generatorName);
+		if (tableIdGenerator == null) {
 			final Map<String, Object> defaults = Stream
-					.of(new SimpleEntry<String, Object>("pkColumnValue", "default"),
+					.of(new SimpleEntry<String, Object>("pkColumnValue", generatorName),
 							new SimpleEntry<String, Object>("allocationSize", Integer.valueOf(1)))
 					.collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
-			this.defaultTableGenerator = new TableIdGenerator(AnnotationDefaults.create(TableGenerator.class, defaults),
-					this);
-			fireContextObjectAdded(ContextModelListener::foundGenerator, this.defaultTableGenerator);
+			tableIdGenerator = new TableIdGenerator(table.getName(),
+					AnnotationDefaults.create(TableGenerator.class, defaults), this);
+			this.defaultTableGenerators.put(generatorName, tableIdGenerator);
+			fireContextObjectAdded(ContextModelListener::foundGenerator, tableIdGenerator);
 		}
-		return this.defaultTableGenerator;
+		return tableIdGenerator;
 	}
 
 	/**
@@ -519,7 +579,7 @@ public class GeneratorContext {
 			return generator;
 		}
 		if (strategy == GenerationType.AUTO) {
-			strategy = this.dialect.getAutoGenerationType();
+			strategy = this.provider.getAutoGenerationType(this.dialect);
 		}
 		switch (strategy) {
 			case IDENTITY:
@@ -527,9 +587,9 @@ public class GeneratorContext {
 						new GeneratorId(column.getUnquotedName(), table.getQualifiedName()),
 						new IdentityValue(this, table, column));
 			case TABLE:
-				return getDefaultTableGenerator();
+				return getDefaultTableGenerator(table);
 			case SEQUENCE:
-				return getDefaultSequenceGenerator();
+				return getDefaultSequenceGenerator(table);
 			case AUTO:
 			default:
 				throw new ModelException("Unknown GenerationType: " + strategy);
@@ -582,7 +642,7 @@ public class GeneratorContext {
 			final GeneratorId key = new GeneratorId(tableGenerator.name(), null);
 			if (!this.generators.containsKey(key)) {
 				addContextObject(this.generators, ContextModelListener::foundGenerator, key,
-						new TableIdGenerator(tableGenerator, this));
+						new TableIdGenerator(table.getName(), tableGenerator, this));
 			}
 		}
 	}
@@ -677,11 +737,11 @@ public class GeneratorContext {
 		for (final IdGenerator generator : this.generators.values()) {
 			generator.alignNextValue(writer);
 		}
-		if (this.defaultSequenceGenerator != null) {
-			this.defaultSequenceGenerator.alignNextValue(writer);
+		for (final SequenceIdGenerator generator : this.defaultSequenceGenerators.values()) {
+			generator.alignNextValue(writer);
 		}
-		if (this.defaultTableGenerator != null) {
-			this.defaultTableGenerator.alignNextValue(writer);
+		for (final TableIdGenerator generator : this.defaultTableGenerators.values()) {
+			generator.alignNextValue(writer);
 		}
 	}
 }

@@ -1,4 +1,5 @@
 activeProfiles=eclipse
+eclipse.m2.autoUpdateProjects=false
 eclipse.preferences.version=1
 resolveWorkspaceProjects=true
 version=1

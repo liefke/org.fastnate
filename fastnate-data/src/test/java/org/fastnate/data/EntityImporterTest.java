@@ -9,16 +9,16 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 
 import org.fastnate.data.test.InjectTestData;
 import org.fastnate.data.test.TestData;
 import org.fastnate.data.test.TestEntity;
 import org.fastnate.generator.context.GeneratorContext;
 import org.hibernate.internal.SessionImpl;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.reflections.Reflections;
 
 /**
@@ -124,10 +124,8 @@ public class EntityImporterTest {
 		final Properties settings = createDefaultSettings();
 		final EntityImporter entityImporter = new EntityImporter(settings);
 
-		final EntityManagerFactory emf = Persistence.createEntityManagerFactory("test", settings);
-		try {
-			final EntityManager em = emf.createEntityManager();
-			try {
+		try (EntityManagerFactory emf = Persistence.createEntityManagerFactory("test", settings)) {
+			try (EntityManager em = emf.createEntityManager()) {
 				try (Connection connection = em.unwrap(SessionImpl.class).getJdbcConnectionAccess()
 						.obtainConnection()) {
 					entityImporter.importData(connection);
@@ -141,11 +139,7 @@ public class EntityImporterTest {
 				// TextEntity.xml + TestData + DependentConstructorData + DependentResourceData + InjectTestData
 				final int expectedEntities = 9 + 3 + 1 + 1 + 2;
 				assertThat(entities).hasSize(expectedEntities);
-			} finally {
-				em.close();
 			}
-		} finally {
-			emf.close();
 		}
 	}
 

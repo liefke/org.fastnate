@@ -5,26 +5,27 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
-import javax.persistence.Access;
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
-import javax.persistence.CascadeType;
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Embeddable;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.MapsId;
-import javax.persistence.OneToMany;
+import jakarta.persistence.Access;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToMany;
 
-import org.apache.commons.lang3.StringUtils;
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.converter.ValueConverter;
 import org.fastnate.generator.dialect.GeneratorDialect;
@@ -33,9 +34,9 @@ import org.fastnate.generator.statements.PrimitiveColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
 import org.fastnate.util.ClassUtil;
-import org.hibernate.annotations.ManyToAny;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Base class for {@link MapProperty} and {@link CollectionProperty}.
@@ -55,7 +56,8 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 * Helper for evaluating correct mapping information from the annotations.
 	 */
 	@Getter
-	private static class MappingInformation {
+	@RequiredArgsConstructor
+	protected static class EntityMappingInformation {
 
 		private static boolean useTargetTable(final AttributeAccessor attribute, final AssociationOverride override) {
 			final JoinColumn joinColumn = override != null && override.joinColumns().length > 0
@@ -66,60 +68,33 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			return joinColumn != null && joinTable == null;
 		}
 
-		private final AttributeAccessor attribute;
-
 		private final Class<?> valueClass;
 
 		private final String mappedBy;
 
 		private final boolean useTargetTable;
 
-		private final Column anyColumn;
-
-		private final String anyDefName;
-
 		private final boolean composition;
 
-		MappingInformation(final AttributeAccessor attribute, final AssociationOverride override,
+		EntityMappingInformation(final AttributeAccessor attribute, final AssociationOverride override,
 				final int valueArgumentIndex) {
-			this.attribute = attribute;
 			final OneToMany oneToMany = attribute.getAnnotation(OneToMany.class);
 			if (oneToMany != null) {
 				this.valueClass = getPropertyArgument(attribute, oneToMany.targetEntity(), valueArgumentIndex);
 				this.mappedBy = oneToMany.mappedBy().length() == 0 ? null : oneToMany.mappedBy();
 				this.useTargetTable = this.mappedBy != null || useTargetTable(attribute, override);
-				this.anyColumn = null;
-				this.anyDefName = null;
 				this.composition = Property.isComposition(oneToMany.cascade());
 			} else {
 				final ManyToMany manyToMany = attribute.getAnnotation(ManyToMany.class);
-				if (manyToMany != null) {
-					this.valueClass = getPropertyArgument(attribute, manyToMany.targetEntity(), valueArgumentIndex);
-					this.mappedBy = manyToMany.mappedBy().length() == 0 ? null : manyToMany.mappedBy();
-					this.useTargetTable = this.mappedBy != null;
-					this.anyColumn = null;
-					this.anyDefName = null;
-					this.composition = Property.isComposition(manyToMany.cascade());
-				} else {
-					final ManyToAny manyToAny = attribute.getAnnotation(ManyToAny.class);
-					ModelException.mustExist(manyToAny,
-							"{} declares none of OneToMany, ManyToMany, ElementCollection, or AnyToMany", attribute);
-					this.valueClass = getPropertyArgument(attribute, void.class, valueArgumentIndex);
-					this.mappedBy = null;
-					this.useTargetTable = false;
-					this.anyColumn = manyToAny.metaColumn();
-					this.anyDefName = manyToAny.metaDef();
-					this.composition = false;
-				}
+				ModelException.mustExist(manyToMany, "{} declares none of OneToMany, ManyToMany, or ElementCollection",
+						attribute);
+				this.valueClass = getPropertyArgument(attribute, manyToMany.targetEntity(), valueArgumentIndex);
+				this.mappedBy = manyToMany.mappedBy().length() == 0 ? null : manyToMany.mappedBy();
+				this.useTargetTable = this.mappedBy != null;
+				this.composition = Property.isComposition(manyToMany.cascade());
 			}
 		}
 
-		<T> AnyMapping<T> buildAnyMapping(final GeneratorContext context, final GeneratorTable containerTable) {
-			if (this.anyColumn == null) {
-				return null;
-			}
-			return new AnyMapping<>(context, this.attribute, containerTable, this.anyColumn, this.anyDefName);
-		}
 	}
 
 	/**
@@ -159,7 +134,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			return joinColumn.name();
 		}
 
-		return StringUtils.defaultString(getJoinColumnName(joinColumns), defaultIdColumn);
+		return Objects.toString(getJoinColumnName(joinColumns), defaultIdColumn);
 	}
 
 	private static String buildIdColumn(final AttributeAccessor attribute, final AssociationOverride override,
@@ -282,8 +257,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 */
 	protected static boolean hasPluralAnnotation(final AttributeAccessor attribute) {
 		return attribute.isAnnotationPresent(OneToMany.class) || attribute.isAnnotationPresent(ManyToMany.class)
-				|| attribute.isAnnotationPresent(ElementCollection.class)
-				|| attribute.isAnnotationPresent(ManyToAny.class);
+				|| attribute.isAnnotationPresent(ElementCollection.class);
 	}
 
 	private static String resolveAnnotationAttribute(final AssociationOverride override, final JoinTable joinTable,
@@ -383,14 +357,11 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	/** Indicates that entities are referenced by the collection. */
 	private final boolean entityReference;
 
-	/** The description of the {@link #valueClass}, {@code null} if not an entity or {@link ManyToAny} is used. */
+	/** The description of the {@link #valueClass}, {@code null} if not an entity (or something provider specific). */
 	private final EntityClass<T> valueEntityClass;
 
 	/** The converter for the value of the collection, {@code null} if not a primitive value. */
 	private final ValueConverter<T> valueConverter;
-
-	/** Contains information about an addition class column, if {@link ManyToAny} is used. */
-	private final AnyMapping<T> anyMapping;
 
 	/**
 	 * Creates a new property.
@@ -404,10 +375,10 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 * @param attributeOverride
 	 *            the configured attribute override, if we reference an {@link ElementCollection}
 	 * @param valueClassParamIndex
-	 *            the index of the value argument in the collection class (0 for collection, 1 for map)
+	 *            the index of the value argument in the collection class (0 for {@link Collection}, 1 for {@link Map}}
 	 */
 	@SuppressWarnings("checkstyle:JavaNCSS")
-	public PluralProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
+	protected PluralProperty(final EntityClass<?> sourceClass, final AttributeAccessor attribute,
 			final AssociationOverride associationOverride, final AttributeOverride attributeOverride,
 			final int valueClassParamIndex) {
 		super(attribute);
@@ -418,11 +389,10 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 		// Check if we are OneToMany, ManyToMany, ManyToAny, or ElementCollection and initialize accordingly
 		final CollectionTable collectionTable = attribute.getAnnotation(CollectionTable.class);
-		final ElementCollection values = attribute.getAnnotation(ElementCollection.class);
-		this.entityReference = values == null;
-		if (values == null) {
-			// Entity mapping, either OneToMany, ManyToMany, or ManyToAny
-			final MappingInformation mapping = new MappingInformation(attribute, associationOverride,
+		final ElementCollection elementCollection = attribute.getAnnotation(ElementCollection.class);
+		this.entityReference = elementCollection == null;
+		if (elementCollection == null) {
+			final EntityMappingInformation mapping = findEntityMappingInformation(attribute, associationOverride,
 					valueClassParamIndex);
 			this.mappedBy = mapping.getMappedBy();
 			this.useTargetTable = mapping.isUseTargetTable();
@@ -431,10 +401,6 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			// Resolve the target entity class
 			this.valueClass = (Class<T>) mapping.getValueClass();
 			this.valueEntityClass = sourceClass.getContext().getDescription(this.valueClass);
-
-			// An entity mapping needs an entity class
-			ModelException.test(this.valueEntityClass != null || mapping.getAnyColumn() != null,
-					"{} has no entity as value", attribute);
 
 			// No primitive value
 			this.valueConverter = null;
@@ -446,7 +412,6 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				initializeInverseProperty();
 				this.valueColumn = buildValueColumn(this.table, null, null, attribute,
 						this.valueEntityClass.getIdColumn(attribute).getName());
-				this.anyMapping = null;
 			} else if (this.useTargetTable) {
 				// Unidirectional and join column is in the table of the target class
 				this.table = this.valueEntityClass.getTable();
@@ -454,7 +419,6 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 						attribute.getName() + '_' + sourceClass.getIdColumn(attribute).getUnquotedName()));
 				this.valueColumn = buildValueColumn(this.table, null, null, attribute,
 						this.valueEntityClass.getIdColumn(attribute).getName());
-				this.anyMapping = null;
 			} else {
 				// We need a mapping table
 				final JoinTable joinTable = attribute.getAnnotation(JoinTable.class);
@@ -466,13 +430,11 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				this.valueColumn = buildValueColumn(this.table, associationOverride, null, attribute,
 						attribute.getName() + '_' + (this.valueEntityClass == null ? "id"
 								: this.valueEntityClass.getIdColumn(attribute).getUnquotedName()));
-				this.anyMapping = mapping.buildAnyMapping(this.context, this.table);
 			}
 		} else {
 			// We are the owning side of the mapping
 			this.mappedBy = null;
 			this.useTargetTable = false;
-			this.anyMapping = null;
 			this.composition = true;
 
 			// Initialize the table and id column name
@@ -483,7 +445,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					sourceClass.getEntityName() + '_' + sourceClass.getIdColumn(attribute).getUnquotedName()));
 
 			// Initialize the target description and columns
-			this.valueClass = getPropertyArgument(attribute, values.targetClass(), valueClassParamIndex);
+			this.valueClass = getPropertyArgument(attribute, elementCollection.targetClass(), valueClassParamIndex);
 			this.valueEntityClass = null;
 			if (this.valueClass.isAnnotationPresent(Embeddable.class)) {
 				buildEmbeddedProperties(sourceClass, this.valueClass);
@@ -535,9 +497,9 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 					sourceClass.getAssociationOverrides(), prefix, getAttribute().getElement());
 			for (final AttributeAccessor attribute : accessStyle.getDeclaredAttributes((Class<Object>) targetType,
 					getAttribute().getImplementationClass())) {
-				if (attribute.isPersistent()) {
-					final Property<T, ?> property = sourceClass.buildProperty(this.table, attribute, attributeOverrides,
-							accociationOverrides);
+				final Property<T, ?> property = sourceClass.getContext().getProvider().buildProperty(sourceClass,
+						this.table, attribute, attributeOverrides, accociationOverrides);
+				if (property != null) {
 
 					this.embeddedProperties.add(property);
 					this.embeddedPropertiesByName.put(property.getName(), property);
@@ -567,32 +529,29 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	 */
 	protected void createDirectValueStatement(final StatementsWriter writer, final E entity,
 			final ColumnExpression sourceId, final ColumnExpression key, final T value) throws IOException {
-		final ColumnExpression target = createValueExpression(entity, sourceId, value, key);
-		if (target != null) {
-			final TableStatement stmt;
+		final ColumnExpression valueExpression = createValueExpression(entity, sourceId, value, key);
+		if (valueExpression != null) {
+			final TableStatement statement;
 			if (this.useTargetTable) {
 				// Unidirectional, but from target table
 				if (value == null) {
 					return;
 				}
-				stmt = writer.createUpdateStatement(this.dialect, this.table, this.valueColumn, target);
+				statement = writer.createUpdateStatement(this.dialect, this.table, this.valueColumn, valueExpression);
 				if (this.mappedBy == null) {
-					stmt.setColumnValue(this.idColumn, sourceId);
+					statement.setColumnValue(this.idColumn, sourceId);
 				}
 			} else {
-				stmt = writer.createInsertStatement(this.dialect, this.table);
-				stmt.setColumnValue(this.idColumn, sourceId);
-				stmt.setColumnValue(this.valueColumn, target);
-				if (this.anyMapping != null) {
-					this.anyMapping.setColumnValue(stmt, value);
-				}
+				statement = writer.createInsertStatement(this.dialect, this.table);
+				statement.setColumnValue(this.idColumn, sourceId);
+				writeValueExpression(statement, value, valueExpression);
 			}
 
 			final GeneratorColumn keyColumn = getKeyColumn();
 			if (keyColumn != null) {
-				stmt.setColumnValue(keyColumn, key);
+				statement.setColumnValue(keyColumn, key);
 			}
-			writer.writeStatement(stmt);
+			writer.writeStatement(statement);
 		}
 	}
 
@@ -699,6 +658,22 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		}
 	}
 
+	/**
+	 * Builds the mapping information for a entity collection.
+	 *
+	 * @param attribute
+	 *            accessor to the represented attribute
+	 * @param associationOverride
+	 *            the configured assocation override
+	 * @param valueClassParamIndex
+	 *            the index of the value argument in the collection class (0 for {@link Collection}, 1 for {@link Map}}
+	 * @return the mapping information
+	 */
+	protected EntityMappingInformation findEntityMappingInformation(final AttributeAccessor attribute,
+			final AssociationOverride associationOverride, final int valueClassParamIndex) {
+		return new EntityMappingInformation(attribute, associationOverride, valueClassParamIndex);
+	}
+
 	@Override
 	public void generatePendingStatements(final StatementsWriter writer, final E entity, final Object writtenEntity,
 			final Object... arguments) throws IOException {
@@ -785,6 +760,21 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		} catch (final ReflectiveOperationException e) {
 			throw new UnsupportedOperationException("Could not create new element", e);
 		}
+	}
+
+	/**
+	 * Writes the value expression to the statement.
+	 *
+	 * @param statement
+	 *            the current statement
+	 * @param value
+	 *            the written value
+	 * @param expression
+	 *            the expression of the value
+	 */
+	protected void writeValueExpression(final TableStatement statement, final T value,
+			final ColumnExpression expression) {
+		statement.setColumnValue(this.valueColumn, expression);
 	}
 
 }

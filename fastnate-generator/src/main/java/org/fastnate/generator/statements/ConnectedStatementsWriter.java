@@ -228,13 +228,13 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
 	private static Connection buildConnection(final GeneratorContext context) throws SQLException {
 		final String url = context.getSettings().getProperty(DATABASE_URL_KEY,
-				context.getSettings().getProperty("javax.persistence.jdbc.url", null));
+				context.getSettings().getProperty("jakarta.persistence.jdbc.url", null));
 		if (url == null) {
 			throw new IllegalArgumentException("Can't find " + DATABASE_URL_KEY + " in the settings");
 		}
 
 		final String driver = context.getSettings().getProperty(DATABASE_DRIVER_KEY,
-				context.getSettings().getProperty("javax.persistence.jdbc.driver", null));
+				context.getSettings().getProperty("jakarta.persistence.jdbc.driver", null));
 		if (driver != null) {
 			try {
 				Class.forName(driver);
@@ -244,9 +244,9 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 		}
 
 		final String user = context.getSettings().getProperty(DATABASE_USER_KEY,
-				context.getSettings().getProperty("javax.persistence.jdbc.user", null));
+				context.getSettings().getProperty("jakarta.persistence.jdbc.user", null));
 		final String password = context.getSettings().getProperty(DATABASE_PASSWORD_KEY,
-				context.getSettings().getProperty("javax.persistence.jdbc.password", null));
+				context.getSettings().getProperty("jakarta.persistence.jdbc.password", null));
 		return DriverManager.getConnection(url, user, password);
 	}
 

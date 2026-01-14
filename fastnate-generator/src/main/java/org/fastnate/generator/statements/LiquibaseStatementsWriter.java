@@ -17,13 +17,13 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
-import org.fastnate.generator.RelativeDate;
-import org.fastnate.generator.RelativeDate.Precision;
-import org.fastnate.generator.RelativeDate.ReferenceDate;
 import org.fastnate.generator.context.GeneratorColumn;
 import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.dialect.H2Dialect;
+import org.fastnate.util.RelativeDate;
+import org.fastnate.util.RelativeDate.Precision;
+import org.fastnate.util.RelativeDate.ReferenceDate;
 
 import lombok.AccessLevel;
 import lombok.Getter;

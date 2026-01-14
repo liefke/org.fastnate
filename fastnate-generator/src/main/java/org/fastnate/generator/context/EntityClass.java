@@ -17,30 +17,29 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.persistence.Access;
-import javax.persistence.AssociationOverride;
-import javax.persistence.AssociationOverrides;
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Embedded;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.MapsId;
-import javax.persistence.OneToOne;
-import javax.persistence.PrimaryKeyJoinColumn;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
-import javax.persistence.Version;
+
+import jakarta.persistence.Access;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AssociationOverrides;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fastnate.generator.context.GenerationState.PendingState;
@@ -546,8 +545,8 @@ public class EntityClass<E> {
 		if (c.isAnnotationPresent(MappedSuperclass.class) || c.isAnnotationPresent(Entity.class)) {
 			for (final AttributeAccessor attribute : this.accessStyle.getDeclaredAttributes(c, this.entityClass)) {
 				if (!attribute.isAnnotationPresent(EmbeddedId.class) && !attribute.isAnnotationPresent(Id.class)) {
-					final Property<E, ?> property = buildProperty(this.table, attribute, this.attributeOverrides,
-							this.associationOverrides);
+					final Property<E, ?> property = this.context.getProvider().buildProperty(this, this.table,
+							attribute, this.attributeOverrides, this.associationOverrides);
 					if (property != null) {
 						this.properties.put(attribute.getName(), property);
 						this.allProperties.add(property);
@@ -559,52 +558,6 @@ public class EntityClass<E> {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Builds the property for the given attribute.
-	 *
-	 * @param propertyTable
-	 *            the table of the new property (if it is not a collection property)
-	 * @param attribute
-	 *            the attribute to inspect
-	 * @param surroundingAttributeOverrides
-	 *            the overrides defined for the surrounding element
-	 * @param surroundingAssociationOverrides
-	 *            the overrides defined for the surrounding element
-	 * @return the property that represents the attribute or {@code null} if not persistent
-	 */
-	<X> Property<X, ?> buildProperty(final GeneratorTable propertyTable, final AttributeAccessor attribute,
-			final Map<String, AttributeOverride> surroundingAttributeOverrides,
-			final Map<String, AssociationOverride> surroundingAssociationOverrides) {
-		if (!attribute.isPersistent()) {
-			return null;
-		}
-		if (CollectionProperty.isCollectionProperty(attribute)) {
-			ModelException.test(propertyTable == this.table, "Unsupported nesting of collection property {}",
-					attribute);
-			return new CollectionProperty<>(this, attribute, surroundingAssociationOverrides.get(attribute.getName()),
-					surroundingAttributeOverrides.get(attribute.getName()));
-		}
-		if (MapProperty.isMapProperty(attribute)) {
-			ModelException.test(propertyTable == this.table, "Unsupported nesting of map property {}", attribute);
-			return new MapProperty<>(this, attribute, surroundingAssociationOverrides.get(attribute.getName()),
-					surroundingAttributeOverrides.get(attribute.getName()));
-		}
-		if (EntityProperty.isEntityProperty(attribute)) {
-			return new EntityProperty<>(this.context, propertyTable, attribute,
-					surroundingAssociationOverrides.get(attribute.getName()));
-		}
-		if (attribute.isAnnotationPresent(Embedded.class)) {
-			return new EmbeddedProperty<>(this, propertyTable, attribute, surroundingAttributeOverrides,
-					surroundingAssociationOverrides);
-		}
-
-		final Column columnMetadata = getColumnAnnotation(attribute, surroundingAttributeOverrides);
-		if (attribute.isAnnotationPresent(Version.class)) {
-			return new VersionProperty<>(this.context, propertyTable, attribute, columnMetadata);
-		}
-		return new PrimitiveProperty<>(this.context, propertyTable, attribute, columnMetadata);
 	}
 
 	private void buildUniqueProperties(final UniqueConstraint[] uniqueConstraints) {
@@ -716,8 +669,8 @@ public class EntityClass<E> {
 					this.idProperty = new GeneratedIdProperty<>(this, attribute,
 							getColumnAnnotation(attribute, this.attributeOverrides));
 				} else {
-					this.idProperty = buildProperty(this.table, attribute, this.attributeOverrides,
-							this.associationOverrides);
+					this.idProperty = this.context.getProvider().buildProperty(this, this.table, attribute,
+							this.attributeOverrides, this.associationOverrides);
 				}
 				return true;
 			}

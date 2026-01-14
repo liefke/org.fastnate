@@ -2,10 +2,9 @@ package org.fastnate.generator.context;
 
 import java.io.IOException;
 
-import javax.persistence.TableGenerator;
+import jakarta.persistence.TableGenerator;
 
 import org.apache.commons.lang3.StringUtils;
-import org.fastnate.generator.dialect.GeneratorDialect;
 import org.fastnate.generator.provider.JpaProvider;
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.PlainColumnExpression;
@@ -29,7 +28,7 @@ import lombok.Getter;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class TableIdGenerator extends IdGenerator {
 
-	private final GeneratorDialect dialect;
+	private final GeneratorContext context;
 
 	private final boolean relativeIds;
 
@@ -57,13 +56,15 @@ public class TableIdGenerator extends IdGenerator {
 	/**
 	 * Creates a new instance of {@link SequenceIdGenerator}.
 	 *
+	 * @param tableName
+	 *            the name of the current table
 	 * @param generator
 	 *            the annotation that contains our settings
 	 * @param context
 	 *            the current context
 	 */
-	public TableIdGenerator(final TableGenerator generator, final GeneratorContext context) {
-		this.dialect = context.getDialect();
+	public TableIdGenerator(final String tableName, final TableGenerator generator, final GeneratorContext context) {
+		this.context = context;
 		this.relativeIds = context.isWriteRelativeIds();
 		this.allocationSize = generator.allocationSize();
 		ModelException.test(this.allocationSize > 0, "Only allocation sizes greater 0 are allowed, found {}",
@@ -78,8 +79,9 @@ public class TableIdGenerator extends IdGenerator {
 		this.pkColumn = this.generatorTable.resolveColumn(
 				StringUtils.defaultIfEmpty(generator.pkColumnName(), provider.getDefaultGeneratorTablePkColumnName()));
 		final String value = StringUtils.defaultIfEmpty(generator.pkColumnValue(),
-				provider.getDefaultGeneratorTablePkColumnValue());
-		this.pkColumnValue = StringUtils.isEmpty(value) ? null : PrimitiveColumnExpression.create(value, this.dialect);
+				provider.getDefaultGeneratorTablePkColumnValue(tableName));
+		this.pkColumnValue = StringUtils.isEmpty(value) ? PrimitiveColumnExpression.NULL
+				: PrimitiveColumnExpression.create(value, this.context.getDialect());
 	}
 
 	@Override
@@ -94,8 +96,8 @@ public class TableIdGenerator extends IdGenerator {
 	public void alignNextValue(final StatementsWriter writer) throws IOException {
 		if (this.relativeIds) {
 			if (this.maxAllocatedValue >= this.nextValue) {
-				final TableStatement statement = writer.createUpdateStatement(this.dialect, this.generatorTable,
-						this.pkColumn, this.pkColumnValue);
+				final TableStatement statement = writer.createUpdateStatement(this.context.getDialect(),
+						this.generatorTable, this.pkColumn, this.pkColumnValue);
 				statement.setColumnValue(this.valueColumn, new PlainColumnExpression(
 						this.valueColumn + " - " + (this.maxAllocatedValue - (this.nextValue - 1))));
 				this.maxAllocatedValue = this.nextValue - 1;
@@ -103,20 +105,12 @@ public class TableIdGenerator extends IdGenerator {
 			}
 		} else if (this.maxAllocatedValue < this.initialValue) {
 			if (this.nextValue > this.initialValue) {
-				this.maxAllocatedValue = this.nextValue;
-				final TableStatement statement = writer.createInsertStatement(this.dialect, this.generatorTable);
-				statement.setColumnValue(this.pkColumn, this.pkColumnValue);
-				statement.setColumnValue(this.valueColumn, PrimitiveColumnExpression
-						.create(this.maxAllocatedValue + this.allocationSize - 1, this.dialect));
-				writer.writeStatement(statement);
+				this.maxAllocatedValue = this.nextValue - 1;
+				writeAllocatedValue(writer, true, this.maxAllocatedValue + this.allocationSize - 1);
 			}
 		} else if (this.maxAllocatedValue >= this.nextValue) {
-			final TableStatement statement = writer.createUpdateStatement(this.dialect, this.generatorTable,
-					this.pkColumn, this.pkColumnValue);
-			this.maxAllocatedValue = this.nextValue;
-			statement.setColumnValue(this.valueColumn,
-					PrimitiveColumnExpression.create(this.maxAllocatedValue + this.allocationSize - 1, this.dialect));
-			writer.writeStatement(statement);
+			this.maxAllocatedValue = this.nextValue - 1;
+			writeAllocatedValue(writer, false, this.maxAllocatedValue + this.allocationSize - 1);
 		}
 	}
 
@@ -133,29 +127,28 @@ public class TableIdGenerator extends IdGenerator {
 
 			if (this.relativeIds) {
 				if (firstUpdate) {
-					// Initialize the table if necessary with the predecessor of the initialValue
-					writer.writePlainStatement(this.dialect, "INSERT INTO " + this.generatorTable + " (" + this.pkColumn
-							+ ", " + this.valueColumn + ") SELECT " + this.pkColumnValue + ", " + this.maxAllocatedValue
-							+ ' ' + this.dialect.getOptionalTable() + " WHERE NOT EXISTS (SELECT * FROM "
-							+ this.generatorTable + " WHERE " + this.pkColumn + " = " + this.pkColumnValue + ')');
+					if (this.context.getProvider().isInitializingGeneratorTables()) {
+						// Ensure that we have at least our allocation size written
+						writer.writePlainStatement(this.context.getDialect(), "UPDATE " + this.generatorTable + " SET "
+								+ this.valueColumn + " = " + this.maxAllocatedValue + " WHERE " + this.pkColumn + " = "
+								+ this.pkColumnValue + " AND " + this.valueColumn + " < " + this.maxAllocatedValue);
+					} else {
+						// Initialize the table if necessary with the predecessor of the initialValue
+						writer.writePlainStatement(this.context.getDialect(),
+								"INSERT INTO " + this.generatorTable + " (" + this.pkColumn + ", " + this.valueColumn
+										+ ") SELECT " + this.pkColumnValue + ", " + this.maxAllocatedValue + ' '
+										+ this.context.getDialect().getOptionalTable()
+										+ " WHERE NOT EXISTS (SELECT * FROM " + this.generatorTable + " WHERE "
+										+ this.pkColumn + " = " + this.pkColumnValue + ')');
+					}
 				}
-				final TableStatement statement = writer.createUpdateStatement(this.dialect, this.generatorTable,
-						this.pkColumn, this.pkColumnValue);
+				final TableStatement statement = writer.createUpdateStatement(this.context.getDialect(),
+						this.generatorTable, this.pkColumn, this.pkColumnValue);
 				statement.setColumnValue(this.valueColumn,
 						new PlainColumnExpression(this.valueColumn + " + " + this.allocationSize));
 				writer.writeStatement(statement);
 			} else {
-				final TableStatement statement;
-				if (firstUpdate) {
-					statement = writer.createInsertStatement(this.dialect, this.generatorTable);
-					statement.setColumnValue(this.pkColumn, this.pkColumnValue);
-				} else {
-					statement = writer.createUpdateStatement(this.dialect, this.generatorTable, this.pkColumn,
-							this.pkColumnValue);
-				}
-				statement.setColumnValue(this.valueColumn,
-						PrimitiveColumnExpression.create(this.maxAllocatedValue + this.allocationSize, this.dialect));
-				writer.writeStatement(statement);
+				writeAllocatedValue(writer, firstUpdate, this.maxAllocatedValue + this.allocationSize);
 			}
 		}
 	}
@@ -163,9 +156,9 @@ public class TableIdGenerator extends IdGenerator {
 	@Override
 	public IdGenerator derive(final GeneratorTable currentTable) {
 		if (this.pkColumnValue == null) {
-			return new TableIdGenerator(this.dialect, this.relativeIds, this.generatorTable, this.pkColumn,
-					PrimitiveColumnExpression.create(currentTable.getUnquotedName(), this.dialect), this.valueColumn,
-					this.allocationSize, this.initialValue, this.nextValue, this.maxAllocatedValue);
+			return new TableIdGenerator(this.context, this.relativeIds, this.generatorTable, this.pkColumn,
+					PrimitiveColumnExpression.create(currentTable.getUnquotedName(), this.context.getDialect()),
+					this.valueColumn, this.allocationSize, this.initialValue, this.nextValue, this.maxAllocatedValue);
 		}
 		return this;
 	}
@@ -179,13 +172,13 @@ public class TableIdGenerator extends IdGenerator {
 	public ColumnExpression getExpression(final GeneratorTable table, final GeneratorColumn column,
 			final Number targetId, final boolean whereExpression) {
 		final long diff = getValueColumnValue() - targetId.longValue();
-		return new PlainColumnExpression("(SELECT " + this.valueColumn.getQualifiedName()
-				+ (diff == 0 ? "" : " - " + diff) + " FROM " + this.generatorTable.getQualifiedName() + " WHERE "
+		return new PlainColumnExpression("(SELECT GREATEST(0, " + this.valueColumn.getQualifiedName()
+				+ (diff == 0 ? "" : " - " + diff) + ") FROM " + this.generatorTable.getQualifiedName() + " WHERE "
 				+ this.pkColumn.getQualifiedName() + " = " + this.pkColumnValue + ')');
 	}
 
 	private long getValueColumnValue() {
-		return this.maxAllocatedValue + this.allocationSize;
+		return this.maxAllocatedValue + this.allocationSize - 1;
 	}
 
 	@Override
@@ -195,8 +188,28 @@ public class TableIdGenerator extends IdGenerator {
 
 	@Override
 	public void setCurrentValue(final long currentValue) {
-		this.nextValue = currentValue + 1;
-		this.maxAllocatedValue = currentValue;
+		if (currentValue == 0) {
+			this.nextValue = 0;
+			this.maxAllocatedValue = -1;
+		} else {
+			this.nextValue = currentValue + 1;
+			this.maxAllocatedValue = currentValue;
+		}
+	}
+
+	private void writeAllocatedValue(final StatementsWriter writer, final boolean firstUpdate,
+			final long allocatedValue) throws IOException {
+		final TableStatement statement;
+		if (firstUpdate && !this.context.getProvider().isInitializingGeneratorTables()) {
+			statement = writer.createInsertStatement(this.context.getDialect(), this.generatorTable);
+			statement.setColumnValue(this.pkColumn, this.pkColumnValue);
+		} else {
+			statement = writer.createUpdateStatement(this.context.getDialect(), this.generatorTable, this.pkColumn,
+					this.pkColumnValue);
+		}
+		statement.setColumnValue(this.valueColumn,
+				PrimitiveColumnExpression.create(allocatedValue, this.context.getDialect()));
+		writer.writeStatement(statement);
 	}
 
 }

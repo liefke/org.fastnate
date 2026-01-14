@@ -1,0 +1,86 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<name>Fastnate Hibernate module</name>
+	<description>The Fastnate module that contains the classes that deal with Hibernate specific JPA extensions.</description>
+
+	<parent>
+		<groupId>org.fastnate</groupId>
+		<artifactId>fastnate-base</artifactId>
+		<version>2.0.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>fastnate-hibernate</artifactId>
+	<packaging>jar</packaging>
+
+	<properties>
+		<!-- Projectroot -->
+		<fastnate.root>${basedir}/..</fastnate.root>
+	</properties>
+
+	<dependencies>
+		<!-- Use the generator -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>fastnate-generator</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<!-- Compile time dependencies -->
+		<dependency>
+			<groupId>org.hibernate.orm</groupId>
+			<artifactId>hibernate-core</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+
+		<!-- Test dependencies -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>fastnate-generator-test</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate.validator</groupId>
+			<artifactId>hibernate-validator</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-suite-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<dependenciesToScan>
+						<dependency>
+							${project.groupId}:fastnate-generator-test
+						</dependency>
+					</dependenciesToScan>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

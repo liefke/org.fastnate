@@ -1,9 +1,9 @@
 package org.fastnate.generator.converter;
 
-import javax.persistence.Column;
-import javax.persistence.MapKeyColumn;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import jakarta.persistence.Column;
+import jakarta.persistence.MapKeyColumn;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import org.fastnate.generator.context.AttributeAccessor;
 import org.fastnate.generator.context.EntityClass;

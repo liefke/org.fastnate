@@ -6,12 +6,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.persistence.AssociationOverride;
-import javax.persistence.AttributeOverride;
-import javax.persistence.ElementCollection;
-import javax.persistence.MapKeyClass;
-import javax.persistence.MapKeyColumn;
-import javax.persistence.MapKeyJoinColumn;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.MapKeyClass;
+import jakarta.persistence.MapKeyColumn;
+import jakarta.persistence.MapKeyJoinColumn;
 
 import org.fastnate.generator.converter.EntityConverter;
 import org.fastnate.generator.converter.ValueConverter;
@@ -58,7 +58,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	 *            the attribute to check
 	 * @return {@code true} if an {@link MapProperty} may be created for the given attribute
 	 */
-	static boolean isMapProperty(final AttributeAccessor attribute) {
+	public static boolean isMapProperty(final AttributeAccessor attribute) {
 		return Map.class.isAssignableFrom(attribute.getType()) && hasPluralAnnotation(attribute);
 	}
 
