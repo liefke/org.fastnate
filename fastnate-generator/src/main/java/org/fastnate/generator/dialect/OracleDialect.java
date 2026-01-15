@@ -73,7 +73,7 @@ public class OracleDialect extends GeneratorDialect {
 	@Override
 	public String createBlobExpression(final byte[] blob) {
 		if (blob.length > MAX_BLOB_LENGTH) {
-			// TODO: Support bigger blobs with dbms_lob.createtemporary in PrimitiveProperty.createPostInsertStatements()
+			// TODO #79: Support bigger blobs with dbms_lob.createtemporary in PrimitiveProperty.createPostInsertStatements()
 			// see https://stackoverflow.com/questions/18116634/oracle-10-using-hextoraw-to-fill-in-blob-data
 			throw new IllegalArgumentException("Can't handle BLOB values with more than " + MAX_BLOB_LENGTH
 					+ " bytes (given BLOB had " + blob.length + " bytes)");
