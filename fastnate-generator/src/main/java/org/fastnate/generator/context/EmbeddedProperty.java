@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.annotation.Nonnull;
-
 import jakarta.persistence.Access;
 import jakarta.persistence.AssociationOverride;
 import jakarta.persistence.AttributeOverride;
@@ -43,7 +41,6 @@ public class EmbeddedProperty<E, T> extends Property<E, T> {
 
 	private final boolean id;
 
-	@Nonnull
 	@Getter(AccessLevel.NONE)
 	private final Constructor<T> constructor;
 

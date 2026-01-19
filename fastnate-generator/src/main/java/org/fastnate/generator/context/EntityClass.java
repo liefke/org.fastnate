@@ -15,9 +15,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import jakarta.persistence.Access;
 import jakarta.persistence.AssociationOverride;
 import jakarta.persistence.AssociationOverrides;
@@ -193,20 +190,16 @@ public class EntityClass<E> {
 	private final GeneratorContext context;
 
 	/** The represented class. */
-	@Nonnull
 	private final Class<E> entityClass;
 
 	/** The JPA constructor. */
-	@Nonnull
 	@Getter(AccessLevel.NONE)
 	private final Constructor<E> entityConstructor;
 
 	/** The entity name. */
-	@Nonnull
 	private final String entityName;
 
 	/** The main table of the entity. */
-	@Nonnull
 	private GeneratorTable table;
 
 	/** The type of access that is used for the properties (field access or bean property access). */
@@ -258,7 +251,6 @@ public class EntityClass<E> {
 	 *
 	 * If a {@link #joinedParentClass} exists, this property is the id property of the parent class.
 	 */
-	@Nullable
 	private Property<? super E, ?> idProperty;
 
 	/**
@@ -268,7 +260,6 @@ public class EntityClass<E> {
 	 * {@link GeneratorContext#getMaxUniqueProperties()} this might be {@code null}, even if there is a set of
 	 * {@link #allUniqueProperties available unique properties}, if the quality is not enough.
 	 */
-	@Nullable
 	private List<SingularProperty<E, ?>> uniqueProperties;
 
 	/** Indicates the quality of {@link #uniqueProperties}. */

@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
-import javax.annotation.Nullable;
-
 import jakarta.persistence.AssociationOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.JoinColumn;
@@ -142,7 +140,7 @@ public class EntityProperty<E, T> extends SingularProperty<E, T> {
 	 *            optional {@link AssociationOverride} configuration
 	 */
 	public EntityProperty(final GeneratorContext context, final GeneratorTable containerTable,
-			final AttributeAccessor attribute, @Nullable final AssociationOverride override) {
+			final AttributeAccessor attribute, final AssociationOverride override) {
 		super(attribute);
 		this.context = context;
 
