@@ -81,7 +81,7 @@ public class AnyMapping<T> {
 		final Column discriminatorColumnDefinition = attributeOverride != null
 				&& attributeOverride.column().length() > 0 ? attributeOverride.column()
 						: attribute.getAnnotation(Column.class);
-		if (discriminatorColumnDefinition != null && discriminatorColumnDefinition.name().length() > 0) {
+		if (discriminatorColumnDefinition != null && !discriminatorColumnDefinition.name().isEmpty()) {
 			this.column = containerTable.resolveColumn(discriminatorColumnDefinition.name());
 		} else {
 			this.column = containerTable.resolveColumn(attribute.getName());
@@ -144,8 +144,9 @@ public class AnyMapping<T> {
 	public void setColumnValue(final TableStatement statement, final T value) {
 		if (value == null) {
 			statement.setColumnValue(this.column, PrimitiveColumnExpression.NULL);
+		} else {
+			statement.setColumnValue(this.column, findDesc(value));
 		}
-		statement.setColumnValue(this.column, findDesc(value));
 	}
 
 }
