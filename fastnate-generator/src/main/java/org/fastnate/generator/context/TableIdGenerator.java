@@ -47,7 +47,7 @@ public class TableIdGenerator extends IdGenerator {
 	private long nextValue;
 
 	/**
-	 * The maximum allocated value.
+	 * The maximum allocated value (high value).
 	 *
 	 * The value column value in the table is at any time by {@link #allocationSize} greater.
 	 */

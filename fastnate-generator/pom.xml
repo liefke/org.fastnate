@@ -4,7 +4,7 @@
 	<name>Fastnate SQL Generator</name>
 	<description>
 		Contains all JPA specific classes for generating SQL statements. 
-		The JPA implementation specific classes are contained in fastnate-hibernate.
+		The JPA implementation specific classes are contained in fastnate-hibernate and fastnate-eclipselink.
 	</description>
 
 	<parent>

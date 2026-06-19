@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
  * Known limitations:
  * <ul>
  * <li>Not all databases covered, see {@link GeneratorDialect}.</li>
- * <li>Only tested with Hibernate.</li>
+ * <li>Only tested with Hibernate and EclipseLink.</li>
  * </ul>
  *
  * @author Tobias Liefke

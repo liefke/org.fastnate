@@ -30,12 +30,6 @@ import lombok.Getter;
 @Getter
 public abstract class GeneratorDialect {
 
-	/**
-	 * @deprecated Use {@link RelativeDate#NOW} instead
-	 */
-	@Deprecated
-	public static final Date NOW = RelativeDate.NOW;
-
 	private static void finishPart(final StringBuilder result, final String value, final int start, final int end,
 			final boolean isOpen, final boolean close, final String concatOperator) {
 		if (start < end) {
@@ -449,7 +443,7 @@ public abstract class GeneratorDialect {
 	 * @return the quoted string
 	 */
 	public String quoteString(final String value) {
-		if (value.length() == 0) {
+		if (value.isEmpty()) {
 			return "''";
 		}
 		final StringBuilder result = new StringBuilder(value.length() + 2);

@@ -23,7 +23,7 @@ public class OverridesTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write an entity with different {@link AttributeOverride}s and {@link AssociationOverride}s.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testOverrides() throws Exception {

@@ -82,7 +82,7 @@ public class StringConverter implements ValueConverter<String> {
 	 *            column definition)
 	 */
 	public StringConverter(final Column column, final boolean nullable) {
-		this.attributeName = column == null || column.name().length() == 0 ? "column" : column.name();
+		this.attributeName = column == null || column.name().isEmpty() ? "column" : column.name();
 		this.minSize = 0;
 		this.maxSize = column != null ? column.length() : DEFAULT_COLUMN_LENGTH;
 		this.nullable = nullable && (column == null || column.nullable());
@@ -101,7 +101,7 @@ public class StringConverter implements ValueConverter<String> {
 					+ ") is smaller than the minimum allowed length of " + this.attributeName + " (" + this.minSize
 					+ "): " + value);
 		}
-		if (value.length() == 0 && !this.nullable && context.getDialect().isEmptyStringEqualToNull()) {
+		if (value.isEmpty() && !this.nullable && context.getDialect().isEmptyStringEqualToNull()) {
 			throw new IllegalArgumentException("The given string is empty, but property " + this.attributeName
 					+ " must be not empty for the current database type.");
 		}

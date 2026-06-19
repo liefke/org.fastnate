@@ -28,7 +28,7 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write an entity with just the generated ID.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testEmptyEntity() throws Exception {
@@ -44,7 +44,7 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write entities with fixed ids.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testFixedId() throws Exception {
@@ -56,7 +56,7 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write an entity with an identity column.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testIdentityGenerator() throws Exception {
@@ -73,7 +73,7 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 * @param entityPrefix
 	 *            an option Prefix for the entity names to allow more than one call of this method
 	 *
-	 * @return the first written entity as read by Hibernate
+	 * @return the first written entity as read by JPA library
 	 * @throws IOException
 	 *             if the generator throws one
 	 * @throws SQLException
@@ -115,7 +115,9 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 
 		// And ensure that another entity may be written afterwards
 		final E entity4 = entityConstructor.newInstance(entityPrefix + "4");
-		entity4.setOther(foundEntity);
+		entity4.setOther(findSingleResult(
+				"SELECT e FROM " + entityClass.getSimpleName() + " e WHERE e.name = '" + entityPrefix + "3'",
+				entityClass));
 		getEm().persist(entity4);
 
 		getEm().getTransaction().commit();
@@ -175,18 +177,20 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write an entity with a sequence generator.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testPrimitiveIds() throws Exception {
-		testIds(PrimitiveIdTestEntity.class, "primitiveIdEntity");
+		if (getSetup().testPrimitiveIds()) {
+			testIds(PrimitiveIdTestEntity.class, "primitiveIdEntity");
+		}
 	}
 
 	/**
 	 * Tests to write an entity with a sequence generator.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testSequenceGenerator() throws Exception {
@@ -199,7 +203,7 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write an entity with a table generator.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testTableGenerator() throws Exception {

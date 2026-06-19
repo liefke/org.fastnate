@@ -81,7 +81,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			final OneToMany oneToMany = attribute.getAnnotation(OneToMany.class);
 			if (oneToMany != null) {
 				this.valueClass = getPropertyArgument(attribute, oneToMany.targetEntity(), valueArgumentIndex);
-				this.mappedBy = oneToMany.mappedBy().length() == 0 ? null : oneToMany.mappedBy();
+				this.mappedBy = oneToMany.mappedBy().isEmpty() ? null : oneToMany.mappedBy();
 				this.useTargetTable = this.mappedBy != null || useTargetTable(attribute, override);
 				this.composition = Property.isComposition(oneToMany.cascade());
 			} else {
@@ -89,7 +89,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 				ModelException.mustExist(manyToMany, "{} declares none of OneToMany, ManyToMany, or ElementCollection",
 						attribute);
 				this.valueClass = getPropertyArgument(attribute, manyToMany.targetEntity(), valueArgumentIndex);
-				this.mappedBy = manyToMany.mappedBy().length() == 0 ? null : manyToMany.mappedBy();
+				this.mappedBy = manyToMany.mappedBy().isEmpty() ? null : manyToMany.mappedBy();
 				this.useTargetTable = this.mappedBy != null;
 				this.composition = Property.isComposition(manyToMany.cascade());
 			}
@@ -130,7 +130,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		}
 
 		final JoinColumn joinColumn = attribute.getAnnotation(JoinColumn.class);
-		if (joinColumn != null && joinColumn.name().length() > 0) {
+		if (joinColumn != null && !joinColumn.name().isEmpty()) {
 			return joinColumn.name();
 		}
 
@@ -170,7 +170,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 		if (attributeOverride != null) {
 			final Column column = attributeOverride.column();
-			if (column != null && column.name().length() > 0) {
+			if (column != null && !column.name().isEmpty()) {
 				return table.resolveColumn(column.name());
 			}
 		}
@@ -184,7 +184,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 		}
 
 		final Column columnMetadata = attribute.getAnnotation(Column.class);
-		if (columnMetadata != null && columnMetadata.name().length() > 0) {
+		if (columnMetadata != null && !columnMetadata.name().isEmpty()) {
 			return table.resolveColumn(columnMetadata.name());
 		}
 		return table.resolveColumn(defaultColumnName);
@@ -192,7 +192,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 
 	private static String findMappedId(final AttributeAccessor attribute) {
 		final MapsId mapsId = attribute.getAnnotation(MapsId.class);
-		return mapsId == null || mapsId.value().length() == 0 ? null : mapsId.value();
+		return mapsId == null || mapsId.value().isEmpty() ? null : mapsId.value();
 	}
 
 	private static <T> Constructor<T> findValueConstructor(final Class<T> valueClass) {
@@ -211,7 +211,7 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 	private static String getJoinColumnName(final JoinColumn[] joinColumns) {
 		if (joinColumns != null && joinColumns.length > 0) {
 			final JoinColumn joinColumn = joinColumns[0];
-			if (joinColumn.name().length() > 0) {
+			if (!joinColumn.name().isEmpty()) {
 				return joinColumn.name();
 			}
 		}
@@ -267,20 +267,20 @@ public abstract class PluralProperty<E, C, T> extends Property<E, C> {
 			final JoinTable joinTableOverride = override.joinTable();
 			if (joinTableOverride != null) {
 				final String value = joinTableAttribute.apply(joinTableOverride);
-				if (value.length() > 0) {
+				if (!value.isEmpty()) {
 					return value;
 				}
 			}
 		}
 		if (joinTable != null) {
 			final String value = joinTableAttribute.apply(joinTable);
-			if (value.length() > 0) {
+			if (!value.isEmpty()) {
 				return value;
 			}
 		}
 		if (collectionTable != null) {
 			final String value = collectionTableAttribute.apply(collectionTable);
-			if (value.length() > 0) {
+			if (!value.isEmpty()) {
 				return value;
 			}
 		}

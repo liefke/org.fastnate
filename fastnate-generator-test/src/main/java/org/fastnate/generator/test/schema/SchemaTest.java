@@ -20,7 +20,7 @@ public class SchemaTest extends AbstractEntitySqlGeneratorTest {
 	 * correctly.
 	 *
 	 * @throws IOException
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testSchema() throws IOException {

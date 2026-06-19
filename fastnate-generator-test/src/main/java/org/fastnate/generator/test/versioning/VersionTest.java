@@ -32,6 +32,7 @@ public class VersionTest extends AbstractEntitySqlGeneratorTest {
 		getGenerator().flush();
 		getEm().getTransaction().begin();
 		final VersionTestEntity result = findSingleResult(VersionTestEntity.class);
+		assertThat(result.getId()).isNotNull();
 		assertThat(result.getVer()).isEqualTo(0);
 
 		// And check that the JPA framework can still write our entity

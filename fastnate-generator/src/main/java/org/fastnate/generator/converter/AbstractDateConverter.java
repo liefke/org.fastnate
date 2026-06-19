@@ -69,7 +69,7 @@ public abstract class AbstractDateConverter<T> implements ValueConverter<T> {
 	 * @param mapKey
 	 *            indicates that the converter is used for the key of a map property
 	 */
-	public AbstractDateConverter(final AttributeAccessor attribute, final boolean mapKey) {
+	protected AbstractDateConverter(final AttributeAccessor attribute, final boolean mapKey) {
 		TemporalType temporalType = TemporalType.TIMESTAMP;
 		if (mapKey) {
 			final MapKeyTemporal temporal = attribute.getAnnotation(MapKeyTemporal.class);

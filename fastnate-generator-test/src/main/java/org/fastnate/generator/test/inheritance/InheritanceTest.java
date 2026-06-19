@@ -48,7 +48,7 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write an entity hierarchy with {@link InheritanceType#JOINED}.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testJoinedInheritance() throws Exception {
@@ -68,7 +68,7 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write sub classes of mapped superclasses.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testMappedSuperclasses() throws Exception {
@@ -87,7 +87,7 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write an entity hierarchy with {@link InheritanceType#SINGLE_TABLE}.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testSingleTableInheritance() throws Exception {
@@ -104,7 +104,7 @@ public class InheritanceTest extends AbstractEntitySqlGeneratorTest {
 	 * Tests to write an entity hierarchy with {@link InheritanceType#TABLE_PER_CLASS}.
 	 *
 	 * @throws Exception
-	 *             if Hibernate or the generator throws one
+	 *             if the JPA library or the generator throws one
 	 */
 	@Test
 	public void testTablePerClassInheritance() throws Exception {

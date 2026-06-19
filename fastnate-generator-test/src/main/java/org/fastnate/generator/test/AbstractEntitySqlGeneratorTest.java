@@ -204,6 +204,7 @@ public class AbstractEntitySqlGeneratorTest {
 	@Getter(AccessLevel.PROTECTED)
 	private EntitySqlGenerator generator;
 
+	@Getter(AccessLevel.PROTECTED)
 	private JpaProviderTestSetup setup;
 
 	/**

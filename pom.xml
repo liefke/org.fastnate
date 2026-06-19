@@ -72,6 +72,7 @@
 		<module>fastnate-generator</module>
 		<module>fastnate-generator-test</module>
 		<module>fastnate-hibernate</module>
+		<module>fastnate-eclipselink</module>
 		<module>fastnate-data</module>
 		<module>fastnate-csv</module>
 		<module>fastnate-maven-plugin</module>
@@ -204,6 +205,13 @@
 				<artifactId>hibernate-validator</artifactId>
 				<version>${hibernate.validator.version}</version>
 			</dependency>
+			
+			<!-- EclipseLink dependencies -->
+			<dependency>
+				<groupId>org.eclipse.persistence</groupId>
+				<artifactId>eclipselink</artifactId>
+				<version>4.0.9</version>
+			</dependency>			
 			
 			<!-- Test dependencies -->
 			<dependency>

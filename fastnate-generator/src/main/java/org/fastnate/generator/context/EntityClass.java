@@ -302,7 +302,7 @@ public class EntityClass<E> {
 		this.context = context;
 		this.entityClass = entityClass;
 		final String name = entityClass.getAnnotation(Entity.class).name();
-		this.entityName = name.length() > 0 ? name : entityClass.getSimpleName();
+		this.entityName = name.isEmpty() ? entityClass.getSimpleName() : name;
 		this.entityStates = context.getStates(this);
 
 		try {
@@ -742,7 +742,7 @@ public class EntityClass<E> {
 					// At least one required property is null -> use the id
 					return generatedIdProperty.getExpression(entity, whereExpression);
 				}
-				if (condition.length() > 0) {
+				if (!condition.isEmpty()) {
 					condition.append(" AND ");
 				}
 				condition.append(expression);
@@ -780,7 +780,7 @@ public class EntityClass<E> {
 		}
 		if (this.idProperty instanceof EmbeddedProperty) {
 			final MapsId mapsId = attribute.getAnnotation(MapsId.class);
-			if (mapsId != null && mapsId.value().length() > 0) {
+			if (mapsId != null && !mapsId.value().isEmpty()) {
 				final Property<?, ?> property = ((EmbeddedProperty<E, ?>) this.idProperty).getEmbeddedProperties()
 						.get(mapsId.value());
 				if (property instanceof SingularProperty) {

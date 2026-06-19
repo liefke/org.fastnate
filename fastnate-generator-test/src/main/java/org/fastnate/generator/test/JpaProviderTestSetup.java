@@ -7,6 +7,7 @@ import java.util.Properties;
 import jakarta.persistence.EntityManager;
 
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.test.ids.IdsTest;
 
 /**
  * Provides methods for accessing functions specific for the current JPA implementation during the tests.
@@ -54,13 +55,23 @@ public interface JpaProviderTestSetup {
 	}
 
 	/**
-	 * Initializes the properties for Hibernate and Fastnate.
+	 * Initializes the properties for the JPA library and Fastnate.
 	 *
 	 * @param properties
 	 *            the properties
 	 */
 	default void initialize(final Properties properties) {
 		// The default does nothing
+	}
+
+	/**
+	 * Indicates to test primitive IDs. Some JPA providers like Eclipse link have problems persisting entities with
+	 * generated primitiv IDs.
+	 *
+	 * @return {code true} to run {@link IdsTest#testPrimitiveIds()}
+	 */
+	default boolean testPrimitiveIds() {
+		return true;
 	}
 
 }

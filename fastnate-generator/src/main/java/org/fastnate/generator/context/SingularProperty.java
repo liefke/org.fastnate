@@ -18,7 +18,7 @@ public abstract class SingularProperty<E, T> extends Property<E, T> {
 	 * @param attribute
 	 *            access to the represented attribute
 	 */
-	public SingularProperty(final AttributeAccessor attribute) {
+	protected SingularProperty(final AttributeAccessor attribute) {
 		super(attribute);
 	}
 

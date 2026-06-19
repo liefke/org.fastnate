@@ -77,7 +77,7 @@ public class MySqlDialect extends GeneratorDialect {
 	 */
 	@Override
 	public String quoteString(final String value) {
-		if (value.length() == 0) {
+		if (value.isEmpty()) {
 			return "''";
 		}
 		final StringBuilder result = new StringBuilder(value.length() + 2).append('\'');

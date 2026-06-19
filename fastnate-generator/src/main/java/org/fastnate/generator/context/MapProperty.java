@@ -37,7 +37,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 
 	private static GeneratorColumn buildKeyColumn(final GeneratorTable table, final MapKeyColumn keyColumn,
 			final String defaultKeyColumn) {
-		if (keyColumn != null && keyColumn.name().length() > 0) {
+		if (keyColumn != null && !keyColumn.name().isEmpty()) {
 			return table.resolveColumn(keyColumn.name());
 		}
 		return table.resolveColumn(defaultKeyColumn);
@@ -45,7 +45,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 
 	private static GeneratorColumn buildKeyColumn(final GeneratorTable table, final MapKeyJoinColumn keyColumn,
 			final String defaultKeyColumn) {
-		if (keyColumn != null && keyColumn.name().length() > 0) {
+		if (keyColumn != null && !keyColumn.name().isEmpty()) {
 			return table.resolveColumn(keyColumn.name());
 		}
 		return table.resolveColumn(defaultKeyColumn);
@@ -167,7 +167,7 @@ public class MapProperty<E, K, T> extends PluralProperty<E, Map<K, T>, T> {
 	@Override
 	public Map<K, T> getValue(final E entity) {
 		final Map<K, T> value = super.getValue(entity);
-		return value == null ? Collections.EMPTY_MAP : value;
+		return value == null ? Collections.emptyMap() : value;
 	}
 
 }

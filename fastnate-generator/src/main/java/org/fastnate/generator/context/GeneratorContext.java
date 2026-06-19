@@ -156,7 +156,7 @@ public class GeneratorContext {
 
 	private static JpaProvider createDefaultProvider() {
 		return ServiceLoader.load(JpaProvider.class).findFirst().orElseThrow(() -> new IllegalArgumentException(
-				"Missing JPA provider, please add fastnate-hibernate to the classpath."));
+				"Missing JPA provider, please add fastnate-hibernate or fastnate-eclipselink to the classpath."));
 	}
 
 	private static Class<? extends GeneratorDialect> detectDialect(final String setting) {
@@ -396,13 +396,13 @@ public class GeneratorContext {
 	 * @return the qualified name, as used by this dialect
 	 */
 	public String buildQualifiedName(final String catalog, final String schema, final String objectName) {
-		if (catalog == null || catalog.length() == 0) {
-			if (schema == null || schema.length() == 0 || !this.dialect.isSchemaSupported()) {
+		if (catalog == null || catalog.isEmpty()) {
+			if (schema == null || schema.isEmpty() || !this.dialect.isSchemaSupported()) {
 				return adjustIdentifier(objectName);
 			}
 			return adjustIdentifier(schema) + '.' + adjustIdentifier(objectName);
 		}
-		if (schema == null || schema.length() == 0 || !this.dialect.isSchemaSupported()) {
+		if (schema == null || schema.isEmpty() || !this.dialect.isSchemaSupported()) {
 			return adjustIdentifier(catalog) + '.' + adjustIdentifier(objectName);
 		}
 		return adjustIdentifier(catalog) + '.' + adjustIdentifier(schema) + '.' + adjustIdentifier(objectName);

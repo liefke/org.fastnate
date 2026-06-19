@@ -218,7 +218,7 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 	public static final String LOG_STATEMENTS_KEY = "fastnate.generator.log.statements";
 
 	/** The count of milliseconds to wait, until a log message with the current count of statements is written. */
-	private static final long MILLISECONDS_BETWEEN_LOG_MESSAGES = 60 * 1000;
+	private static final long MILLISECONDS_BETWEEN_LOG_MESSAGES = 60 * 1000L;
 
 	/** The minimum major version of the JDBC API that the driver needs to support. */
 	private static final int MINIMUM_JDBC_DRIVER_MAJOR_VERSION = 4;
@@ -383,15 +383,13 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 
 	@Override
 	public TableStatement createInsertStatement(final GeneratorDialect dialect, final GeneratorTable table) {
-		List<PreparedInsertStatement> availableStatements = this.availablePreparedStatements.get(table);
-		if (availableStatements == null) {
-			this.availablePreparedStatements.put(table, availableStatements = new ArrayList<>());
-		}
+		final List<PreparedInsertStatement> availableStatements = this.availablePreparedStatements
+				.computeIfAbsent(table, t -> new ArrayList<>());
 		final PreparedInsertStatement insertStatement;
 		if (availableStatements.isEmpty()) {
 			try {
-				this.preparedStatements
-						.add(insertStatement = new PreparedInsertStatement(dialect, this.connection, table));
+				insertStatement = new PreparedInsertStatement(dialect, this.connection, table);
+				this.preparedStatements.add(insertStatement);
 			} catch (final SQLException e) {
 				throw new IllegalStateException("Can't generate prepared statement for " + table.getQualifiedName(), e);
 			}

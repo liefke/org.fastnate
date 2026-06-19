@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Tobias Liefke
  */
-public class AnyTest extends AbstractEntitySqlGeneratorTest {
+class AnyTest extends AbstractEntitySqlGeneratorTest {
 
 	/**
 	 * Tests that all "Any" annotations are interpreted correctly.
@@ -27,7 +27,7 @@ public class AnyTest extends AbstractEntitySqlGeneratorTest {
 	 *             if the generator throws one
 	 */
 	@Test
-	public void testAnyFields() throws IOException {
+	void testAnyFields() throws IOException {
 		final AnyContainer entity = new AnyContainer();
 		final SimpleTestEntity singleAny = new SimpleTestEntity("AnyTest");
 		entity.setSingleAny(singleAny);

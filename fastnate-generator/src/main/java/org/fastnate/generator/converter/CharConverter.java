@@ -19,7 +19,7 @@ public class CharConverter implements ValueConverter<Character> {
 
 	@Override
 	public ColumnExpression getExpression(final String defaultValue, final GeneratorContext context) {
-		return getExpression(defaultValue.length() >= 1 ? defaultValue.charAt(0) : ' ', context);
+		return getExpression(defaultValue.isEmpty() ? ' ' : defaultValue.charAt(0), context);
 	}
 
 }
