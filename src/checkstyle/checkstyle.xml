@@ -18,10 +18,12 @@ The checkstyle configuration for fastnate.org
       <property name="accessModifiers" value="public, protected, package"/>
       <property name="allowMissingParamTags" value="true"/>
     </module>
-    <module name="JavadocStyle">
-      <property name="checkEmptyJavadoc" value="true"/>
-      <property name="tokens" value="INTERFACE_DEF,CLASS_DEF,METHOD_DEF,CTOR_DEF"/>
+    <module name="JavadocType">
+      <property name="excludeScope" value="private"/>
+      <property name="scope" value="package"/>
+      <property name="authorFormat" value="[A-Z][a-z]+ [A-Z][a-z]+"/>
     </module>
+    <module name="SummaryJavadoc"/>
     <module name="ConstantName"/>
     <module name="LocalFinalVariableName"/>
     <module name="LocalVariableName"/>
@@ -98,11 +100,6 @@ The checkstyle configuration for fastnate.org
     <module name="PackageDeclaration"/>
     <module name="OneStatementPerLine"/>
     <module name="CyclomaticComplexity"/>
-    <module name="JavadocType">
-      <property name="excludeScope" value="private"/>
-      <property name="scope" value="package"/>
-      <property name="authorFormat" value="[A-Z][a-z]+ [A-Z][a-z]+"/>
-    </module>
     <module name="TrailingComment">
       <property name="legalComment" value="^()|(NOSONAR.*)$"/>
     </module>
