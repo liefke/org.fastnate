@@ -12,13 +12,13 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -43,8 +43,10 @@ import org.reflections.Reflections;
 import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
+import liquibase.resource.AbstractResource;
 import liquibase.resource.AbstractResourceAccessor;
 import liquibase.resource.InputStreamList;
+import liquibase.resource.Resource;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -56,17 +58,61 @@ import lombok.RequiredArgsConstructor;
  */
 public class AbstractEntitySqlGeneratorTest {
 
+	private static final class ByteArrayResource extends AbstractResource {
+
+		private final byte[] bytes;
+
+		private ByteArrayResource(final String path, final byte[] bytes) {
+			super(path, URI.create(path));
+			this.bytes = bytes;
+		}
+
+		@Override
+		public boolean exists() {
+			return true;
+		}
+
+		@Override
+		public InputStream openInputStream() throws IOException {
+			return new ByteArrayInputStream(this.bytes);
+		}
+
+		@Override
+		public Resource resolve(final String other) {
+			return new ByteArrayResource(resolvePath(other), new byte[0]);
+		}
+
+		@Override
+		public Resource resolveSibling(final String other) {
+			return new ByteArrayResource(resolveSiblingPath(other), new byte[0]);
+		}
+	}
+
 	/** Liquibase resource accessor that returns only a stream from the given byte buffer. */
 	@RequiredArgsConstructor
 	private static final class ByteArrayResourceAccessor extends AbstractResourceAccessor {
 
 		private final String fileName;
 
-		private final byte[] buffer;
+		private final byte[] bytes;
 
 		@Override
-		public SortedSet<String> describeLocations() {
-			return new TreeSet<>(Collections.singletonList(this.fileName));
+		public void close() throws Exception {
+			// Nothing to do
+		}
+
+		@Override
+		public List<String> describeLocations() {
+			return Collections.singletonList(this.fileName);
+		}
+
+		@Override
+		public List<Resource> getAll(final String path) throws IOException {
+			final List<Resource> result = new ArrayList<>();
+			if (this.fileName.startsWith(path)) {
+				result.add(new ByteArrayResource(path, this.bytes));
+			}
+			return result;
 		}
 
 		@Override
@@ -85,9 +131,14 @@ public class AbstractEntitySqlGeneratorTest {
 			if (!this.fileName.equals(streamPath)) {
 				return list;
 			}
-			final InputStream stream = new ByteArrayInputStream(this.buffer);
+			final InputStream stream = new ByteArrayInputStream(this.bytes);
 			list.add(URI.create(streamPath), stream);
 			return list;
+		}
+
+		@Override
+		public List<Resource> search(final String path, final boolean recursive) throws IOException {
+			return getAll(path);
 		}
 
 	}
@@ -140,7 +191,7 @@ public class AbstractEntitySqlGeneratorTest {
 	private static final List<String> MAPPED_CLASSES = new Reflections((Object[]) new String[] { "org.fastnate" })
 			.get(SubTypes.of(TypesAnnotated.with(Entity.class, MappedSuperclass.class, Converter.class))
 					.asClass(Thread.currentThread().getContextClassLoader()))
-			.stream().map(Class::getName).collect(Collectors.toList());
+			.stream().map(Class::getName).toList();
 
 	/** The settings key that indicates which {@link StatementsWriter} to use for tests. */
 	public static final String WRITER_KEY = "fastnate.test.writer";
