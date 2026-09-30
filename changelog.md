@@ -73,3 +73,7 @@ Fastnate Changelog
 * #61 Can't override table of an @ElementCollection
 * #43 Support for Hibernate property "globally_quoted_identifiers"
 * Upgraded some dependencies
+
+### 2.0.0 (2026-09-30)
+* #78 Use Jakarta EE 10 and Java 21
+* #79 Support bigger offline BLOBs in Oracle
