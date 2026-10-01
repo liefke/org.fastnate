@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.Entity;
 import javax.xml.namespace.QName;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.Location;
@@ -22,6 +20,9 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
+
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Entity;
 
 import org.fastnate.data.DataImportException;
 import org.fastnate.data.EntityRegistration;
@@ -44,7 +45,9 @@ import org.fastnate.generator.context.SingularProperty;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Imports entities from a set of XML files in the following format:
+ * Imports entities from a set of XML files.
+ *
+ * The XML files have the following format:
  *
  * <pre>
  *   &lt;ArbitraryRoot&gt;

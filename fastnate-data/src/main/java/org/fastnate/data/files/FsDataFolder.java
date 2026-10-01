@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FsDataFolder implements DataFolder {
 
-	/** The directory from the filesystem */
+	/** The directory from the filesystem. */
 	@Getter
 	private final File folder;
 

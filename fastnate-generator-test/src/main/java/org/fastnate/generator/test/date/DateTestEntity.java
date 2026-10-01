@@ -35,7 +35,7 @@ public class DateTestEntity {
 	@GeneratedValue
 	private Long id;
 
-	/** Legacy dates */
+	// Legacy dates
 
 	@Temporal(TemporalType.DATE)
 	@Column(name = "dateColumn")
@@ -58,7 +58,7 @@ public class DateTestEntity {
 	@DefaultValue("2000-01-01T01:02:03.456+0200")
 	private Date defaultDate2000;
 
-	/** Java8 date objects */
+	// Java8 date objects
 
 	@Column(name = "localDateColumn")
 	private LocalDate localDate;

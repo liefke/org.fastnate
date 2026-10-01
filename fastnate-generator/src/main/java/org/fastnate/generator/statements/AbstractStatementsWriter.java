@@ -34,7 +34,7 @@ public abstract class AbstractStatementsWriter implements StatementsWriter {
 	@RequiredArgsConstructor
 	protected abstract static class AbstractTableStatement implements TableStatement {
 
-		/** The current database dialect */
+		/** The current database dialect. */
 		private final GeneratorDialect dialect;
 
 		/** The main table of this update / insert statement. */

@@ -31,6 +31,8 @@ import lombok.Getter;
 public abstract class GeneratorDialect {
 
 	/**
+	 * Represents the constant for writing the "now" function to SQL.
+	 *
 	 * @deprecated Use {@link RelativeDate#NOW} instead
 	 */
 	@Deprecated
