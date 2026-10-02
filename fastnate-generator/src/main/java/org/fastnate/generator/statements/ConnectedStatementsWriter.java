@@ -21,6 +21,7 @@ import org.fastnate.generator.context.GeneratorContext;
 import org.fastnate.generator.context.GeneratorTable;
 import org.fastnate.generator.context.IdGenerator;
 import org.fastnate.generator.context.ModelException;
+import org.fastnate.generator.context.NumberIdGenerator;
 import org.fastnate.generator.context.SequenceIdGenerator;
 import org.fastnate.generator.dialect.GeneratorDialect;
 
@@ -68,10 +69,11 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 		}
 
 		@Override
-		public void foundGenerator(final IdGenerator generator) {
+		public void foundGenerator(final IdGenerator<?> generator) {
 			// Initialize generator, if necessary
-			if (!this.context.isWriteRelativeIds()) {
-				String sql = generator.getExpression(null, null, generator.getCurrentValue(), false).toSql();
+			if (!this.context.isWriteRelativeIds() && generator instanceof final NumberIdGenerator numberGenerator) {
+				String sql = numberGenerator
+						.getExpression(null, null, Long.valueOf(numberGenerator.getCurrentValue()), false).toSql();
 				if (sql.matches("\\(?SELECT\\W.*")) {
 					sql = sql.replaceFirst("^\\((.*)\\)$", "$1");
 				} else {
@@ -83,13 +85,10 @@ public class ConnectedStatementsWriter extends AbstractStatementsWriter {
 						if (resultSet.wasNull()) {
 							return;
 						}
-						if (generator instanceof SequenceIdGenerator) {
-							final SequenceIdGenerator sequence = (SequenceIdGenerator) generator;
-							if (sequence.getInitialValue() - sequence.getAllocationSize() == currentValue) {
-								return;
-							}
+						if (!(numberGenerator instanceof final SequenceIdGenerator sequence)
+								|| sequence.getInitialValue() - sequence.getAllocationSize() != currentValue) {
+							numberGenerator.setCurrentValue(currentValue);
 						}
-						generator.setCurrentValue(currentValue);
 					}
 				} catch (final SQLException e) {
 					if (!(generator instanceof SequenceIdGenerator)) {

@@ -20,13 +20,13 @@ import lombok.Getter;
  * Saves the current value for a {@link TableGenerator}.
  *
  * The content of the value column is interpreted like <i>nextValue</i> of a sequence, which means the maximum allocated
- * value is allways at most {@code value column value - allocationSize}.
+ * value is always at most {@code value column value - allocationSize}.
  *
  * @author Tobias Liefke
  */
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TableIdGenerator extends IdGenerator {
+public class TableIdGenerator extends NumberIdGenerator {
 
 	private final GeneratorContext context;
 
@@ -154,7 +154,7 @@ public class TableIdGenerator extends IdGenerator {
 	}
 
 	@Override
-	public IdGenerator derive(final GeneratorTable currentTable) {
+	public TableIdGenerator derive(final GeneratorTable currentTable) {
 		if (this.pkColumnValue == null) {
 			return new TableIdGenerator(this.context, this.relativeIds, this.generatorTable, this.pkColumn,
 					PrimitiveColumnExpression.create(currentTable.getUnquotedName(), this.context.getDialect()),

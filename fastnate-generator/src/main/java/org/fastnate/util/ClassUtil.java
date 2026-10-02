@@ -65,7 +65,7 @@ public final class ClassUtil {
 	 *             if the target type is not a common number type
 	 */
 	public static <N extends Number> N convertNumber(final Number number, final Class<N> targetType) {
-		if (targetType.isInstance(number) || number == null) {
+		if (number == null || targetType.isInstance(number)) {
 			return (N) number;
 		}
 		final Function<Number, N> mapper = (Function<Number, N>) NUMBER_MAPPERS.get(targetType);
@@ -218,6 +218,17 @@ public final class ClassUtil {
 			}
 		}
 		return stackTrace[1].getMethodName();
+	}
+
+	/**
+	 * Indicates that the given type is either a subclass of {@link Number} or a primitive type that is numeric.
+	 *
+	 * @param type
+	 *            the type that we need
+	 * @return {@code true} if we have a numeric type
+	 */
+	public static boolean isNumberType(final Class<?> type) {
+		return Number.class.isAssignableFrom(type) || type.isPrimitive() && NUMBER_MAPPERS.containsKey(type);
 	}
 
 	private ClassUtil() {

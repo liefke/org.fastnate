@@ -146,7 +146,7 @@ public class EntitySqlGenerator implements Closeable {
 	 *            the id of the entity in
 	 */
 	public <E> void markExistingEntity(final E entity, final Number id) {
-		((GeneratedIdProperty<E, Number>) this.context.getDescription(entity).getIdProperty()).markReference(entity,
+		((GeneratedIdProperty<E, Number>) this.context.getDescription(entity).getIdProperty()).markExistingEntity(entity,
 				id);
 	}
 

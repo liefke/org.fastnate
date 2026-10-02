@@ -158,7 +158,7 @@ public abstract class Property<E, T> {
 	 *            indicates that the expression is used in a "where" statement
 	 * @return the expression for the value of this property or {@code null} if no exists
 	 */
-	public ColumnExpression getExpression(final E entity, final boolean whereExpression) {
+	public ColumnExpression getEntityReference(final E entity, final boolean whereExpression) {
 		return null;
 	}
 

@@ -18,7 +18,7 @@ public class DefaultContextModelListener implements ContextModelListener {
 	}
 
 	@Override
-	public void foundGenerator(final IdGenerator generator) {
+	public void foundGenerator(final IdGenerator<?> generator) {
 		// Empty method stub
 	}
 

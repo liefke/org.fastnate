@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
  * @author Tobias Liefke
  */
 @RequiredArgsConstructor
-public class IdentityValue extends IdGenerator {
+public class IdentityValue extends NumberIdGenerator {
 
 	private final GeneratorContext context;
 

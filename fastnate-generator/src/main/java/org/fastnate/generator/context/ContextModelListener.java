@@ -30,7 +30,7 @@ public interface ContextModelListener {
 	 * @param generator
 	 *            the new generator
 	 */
-	void foundGenerator(IdGenerator generator);
+	void foundGenerator(IdGenerator<?> generator);
 
 	/**
 	 * Called when a new table was discovered.

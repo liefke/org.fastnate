@@ -600,7 +600,8 @@ public class EntityClass<E> {
 			if (this.idProperty instanceof GeneratedIdProperty) {
 				final GeneratedIdProperty<E, ?> generatedIdProperty = (GeneratedIdProperty<E, ?>) this.idProperty;
 				generatedIdProperty.postInsert(entity);
-				if (generatedIdProperty.isPrimitive() && generatedIdProperty.getValue(entity).longValue() == 0) {
+				if (generatedIdProperty.isPrimitive()
+						&& ((Number) generatedIdProperty.getValue(entity)).longValue() == 0) {
 					// Mark the first entity of the generation as persisted,
 					// as we can't distinguish it from new instances otherwise
 					oldState = this.entityStates.put(new EntityId(entity), GenerationState.PERSISTED);
@@ -702,7 +703,7 @@ public class EntityClass<E> {
 			if (this.context.isWriteRelativeIds()) {
 				return getGeneratedIdReference(entity, whereExpression);
 			}
-			return property.getExpression(entity, whereExpression);
+			return property.getEntityReference(entity, whereExpression);
 		}
 		if (property instanceof EmbeddedProperty) {
 			final Map<String, ?> embeddedProperties = ((EmbeddedProperty<E, ?>) this.idProperty)
@@ -717,43 +718,43 @@ public class EntityClass<E> {
 			}
 		}
 		@SuppressWarnings("null")
-		final ColumnExpression expression = property.getExpression(entity, whereExpression);
+		final ColumnExpression expression = property.getEntityReference(entity, whereExpression);
 		ModelException.test(expression != null, "Can't find any id for {} in property '{}'", this.idProperty, entity);
 		return expression;
 	}
 
 	private ColumnExpression getGeneratedIdReference(final E entity, final boolean whereExpression) {
 		final GeneratedIdProperty<E, ?> generatedIdProperty = (GeneratedIdProperty<E, ?>) this.idProperty;
-		if (!generatedIdProperty.isReference(entity) && this.uniqueProperties != null) {
-			// Check to write "currval" of sequence if we just have written the same value
-			if (this.context.isPreferSequenceCurentValue()) {
-				final IdGenerator generator = generatedIdProperty.getGenerator();
-				if (generator instanceof SequenceIdGenerator
-						&& generator.getCurrentValue() == generatedIdProperty.getValue(entity).longValue()) {
-					return generatedIdProperty.getExpression(entity, whereExpression);
-				}
-			}
-
-			// Check to write the reference with the unique properties
-			final StringBuilder condition = new StringBuilder();
-			for (final SingularProperty<E, ?> property : this.uniqueProperties) {
-				final String expression = property.getPredicate(entity);
-				if (expression == null) {
-					// At least one required property is null -> use the id
-					return generatedIdProperty.getExpression(entity, whereExpression);
-				}
-				if (condition.length() > 0) {
-					condition.append(" AND ");
-				}
-				condition.append(expression);
-			}
-			if (this.discriminator != null) {
-				condition.append(" AND ").append(this.discriminatorColumn).append(" = ").append(this.discriminator);
-			}
-			return new PlainColumnExpression(
-					"(SELECT " + generatedIdProperty.getColumn() + " FROM " + this.table + " WHERE " + condition + ')');
+		if (generatedIdProperty.isExistingEntity(entity) || this.uniqueProperties == null) {
+			return generatedIdProperty.getEntityReference(entity, whereExpression);
 		}
-		return generatedIdProperty.getExpression(entity, whereExpression);
+		// Check to write "currval" of sequence if we just have written the same value
+		if (this.context.isPreferSequenceCurentValue()) {
+			final IdGenerator<?> generator = generatedIdProperty.getGenerator();
+			if (generator instanceof SequenceIdGenerator && ((SequenceIdGenerator) generator)
+					.getCurrentValue() == ((Number) generatedIdProperty.getValue(entity)).longValue()) {
+				return generatedIdProperty.getEntityReference(entity, whereExpression);
+			}
+		}
+
+		// Check to write the reference with the unique properties
+		final StringBuilder condition = new StringBuilder();
+		for (final SingularProperty<E, ?> property : this.uniqueProperties) {
+			final String expression = property.getPredicate(entity);
+			if (expression == null) {
+				// At least one required property is null -> use the id
+				return generatedIdProperty.getEntityReference(entity, whereExpression);
+			}
+			if (condition.length() > 0) {
+				condition.append(" AND ");
+			}
+			condition.append(expression);
+		}
+		if (this.discriminator != null) {
+			condition.append(" AND ").append(this.discriminatorColumn).append(" = ").append(this.discriminator);
+		}
+		return new PlainColumnExpression(
+				"(SELECT " + generatedIdProperty.getColumn() + " FROM " + this.table + " WHERE " + condition + ')');
 	}
 
 	/**
@@ -869,7 +870,7 @@ public class EntityClass<E> {
 	 */
 	public void markExistingEntity(final E entity) {
 		if (this.idProperty instanceof GeneratedIdProperty) {
-			((GeneratedIdProperty<E, ?>) this.idProperty).markReference(entity);
+			((GeneratedIdProperty<E, ?>) this.idProperty).markExistingEntity(entity);
 			this.entityStates.remove(new EntityId(entity));
 		} else {
 			this.entityStates.put(getStateId(entity), GenerationState.PERSISTED);
