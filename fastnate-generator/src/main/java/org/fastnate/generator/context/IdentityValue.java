@@ -17,8 +17,9 @@ import lombok.RequiredArgsConstructor;
  *
  * @author Tobias Liefke
  */
+@Getter
 @RequiredArgsConstructor
-public class IdentityValue extends IdGenerator {
+public class IdentityValue extends NumberIdGenerator {
 
 	private final GeneratorContext context;
 
@@ -26,7 +27,6 @@ public class IdentityValue extends IdGenerator {
 
 	private final GeneratorColumn column;
 
-	@Getter
 	private long currentValue;
 
 	private boolean needsAlignment;

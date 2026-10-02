@@ -1,17 +1,20 @@
 package org.fastnate.generator.context;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 import org.fastnate.generator.statements.ColumnExpression;
 import org.fastnate.generator.statements.StatementsWriter;
 import org.fastnate.generator.statements.TableStatement;
 
 /**
- * Saves the current value and increments the value for a {@link GeneratedIdProperty}.
+ * Generates the next value for a {@link GeneratedIdProperty}.
  *
  * @author Tobias Liefke
+ * @param <V>
+ *            the type of the generated values
  */
-public abstract class IdGenerator {
+public abstract class IdGenerator<V extends Serializable> {
 
 	/**
 	 * Adds the generated value to the given statement.
@@ -25,7 +28,7 @@ public abstract class IdGenerator {
 	 * @param nextValue
 	 *            the current value of the column, previously generated with {@link #createNextValue}
 	 */
-	public abstract void addNextValue(TableStatement statement, GeneratorColumn column, Number nextValue);
+	public abstract void addNextValue(TableStatement statement, GeneratorColumn column, V nextValue);
 
 	/**
 	 * Creates all statements that are necessary to set the next value created from the database is
@@ -41,38 +44,15 @@ public abstract class IdGenerator {
 	/**
 	 * Resolves the next value of this generator.
 	 *
-	 * @return the generated value
-	 */
-	protected abstract long createNextValue();
-
-	/**
-	 * Resolves the next value of this generator.
-	 *
 	 * @param propertyClass
 	 *            the type of the generated value
 	 *
 	 * @return the generated value
 	 */
-	public <N extends Number> N createNextValue(final Class<N> propertyClass) {
-		final long nextValue = createNextValue();
-		if (propertyClass == Long.class || propertyClass == long.class) {
-			return (N) Long.valueOf(nextValue);
-		}
-		if (propertyClass == Integer.class || propertyClass == int.class) {
-			return (N) Integer.valueOf((int) nextValue);
-		}
-		if (propertyClass == Short.class || propertyClass == short.class) {
-			return (N) Short.valueOf((short) nextValue);
-		}
-		if (propertyClass == Byte.class || propertyClass == byte.class) {
-			return (N) Byte.valueOf((byte) nextValue);
-		}
-		throw new ModelException("Can't handle number class for generated value: " + propertyClass);
-	}
+	public abstract V createNextValue(Class<V> propertyClass);
 
 	/**
-	 * Creates the statements that are needed in the output before
-	 * {@link #addNextValue(TableStatement, GeneratorColumn, Number)}.
+	 * Creates the statements that are needed in the output before {@link #addNextValue}.
 	 *
 	 * @param writer
 	 *            target for the created statements
@@ -91,16 +71,9 @@ public abstract class IdGenerator {
 	 *            the current entity table
 	 * @return the generator
 	 */
-	public IdGenerator derive(final GeneratorTable entityTable) {
+	public IdGenerator<V> derive(final GeneratorTable entityTable) {
 		return this;
 	}
-
-	/**
-	 * The last value returned by {@link #createNextValue(Class)}.
-	 *
-	 * @return the current value
-	 */
-	public abstract long getCurrentValue();
 
 	/**
 	 * Builds the reference to another entity that has the given ID.
@@ -116,24 +89,16 @@ public abstract class IdGenerator {
 	 *            in this situation
 	 * @return the expression for selecting the ID
 	 */
-	public abstract ColumnExpression getExpression(GeneratorTable table, GeneratorColumn column, Number id,
+	public abstract ColumnExpression getExpression(GeneratorTable table, GeneratorColumn column, V id,
 			boolean whereExpression);
 
 	/**
-	 * Indicates that {@link #createNextValue(Class)} should be called after the entity was written - as the value is
-	 * not available before.
+	 * Indicates that {@link #createNextValue} should be called after the entity was written - as the value is not
+	 * available before.
 	 *
 	 * @return {@code true} if the database increments the value _after_ the insert statement was executed, {@code true}
 	 *         if it is incremented before or during the execution
 	 */
 	public abstract boolean isPostIncrement();
-
-	/**
-	 * Sets a new start value.
-	 *
-	 * @param currentValue
-	 *            the current value - most likely as extracted from the target database
-	 */
-	public abstract void setCurrentValue(long currentValue);
 
 }

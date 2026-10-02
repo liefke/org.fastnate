@@ -22,7 +22,7 @@ import lombok.Getter;
  * @author Tobias Liefke
  */
 @Getter
-public class SequenceIdGenerator extends IdGenerator {
+public class SequenceIdGenerator extends NumberIdGenerator {
 
 	/** The current database dialect. */
 	private final GeneratorDialect dialect;
@@ -36,7 +36,7 @@ public class SequenceIdGenerator extends IdGenerator {
 	/** The name of the sequence. */
 	private final String sequenceName;
 
-	/** The fully qualfied name of the sequence, including the optional catalog and schema name. */
+	/** The fully qualified name of the sequence, including the optional catalog and schema name. */
 	private final String qualifiedName;
 
 	/** Indicates that the sequence is used when referencing existing IDs, instead of absolute IDs. */

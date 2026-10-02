@@ -10,19 +10,27 @@ import java.util.Properties;
 
 import org.fastnate.generator.EntitySqlGenerator;
 import org.fastnate.generator.context.GeneratorContext;
+import org.fastnate.generator.context.UuidGenerator;
 import org.fastnate.generator.dialect.H2Dialect;
 import org.fastnate.generator.test.AbstractEntitySqlGeneratorTest;
 import org.fastnate.generator.test.embedded.EmbeddedTest;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests that ids of entities are written correctly.
+ * Tests that IDs of entities are written correctly.
  *
- * The test for writing an embbeded id is located in {@link EmbeddedTest}.
+ * The test for writing an embedded id is located in {@link EmbeddedTest}.
  *
  * @author Tobias Liefke
  */
 public class IdsTest extends AbstractEntitySqlGeneratorTest {
+
+	@Override
+	protected Properties getGeneratorProperties() {
+		final Properties properties = super.getGeneratorProperties();
+		properties.put(UuidGenerator.RANDOUM_UUIDS_KEY, "true");
+		return properties;
+	}
 
 	/**
 	 * Tests to write an entity with just the generated ID.
@@ -204,6 +212,17 @@ public class IdsTest extends AbstractEntitySqlGeneratorTest {
 	@Test
 	public void testTableGenerator() throws Exception {
 		testIds(TableTestEntity.class, "tableEntity");
+	}
+
+	/**
+	 * Tests to write an entity with a table generator.
+	 *
+	 * @throws Exception
+	 *             if Hibernate or the generator throws one
+	 */
+	@Test
+	public void testUuidGenerator() throws Exception {
+		testIds(UuidTestEntity.class, "uuidEntity");
 	}
 
 }

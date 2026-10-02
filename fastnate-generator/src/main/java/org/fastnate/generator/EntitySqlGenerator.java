@@ -146,13 +146,13 @@ public class EntitySqlGenerator implements Closeable {
 	 *            the id of the entity in
 	 */
 	public <E> void markExistingEntity(final E entity, final Number id) {
-		((GeneratedIdProperty<E, Number>) this.context.getDescription(entity).getIdProperty()).markReference(entity,
-				id);
+		((GeneratedIdProperty<E, Number>) this.context.getDescription(entity).getIdProperty())
+				.markExistingEntity(entity, id);
 	}
 
 	/**
 	 * Creates the Import-SQL for an entity. If the entity was already written (has an id), it is updated (if
-	 * nessecary).
+	 * necessary).
 	 *
 	 * @param entity
 	 *            the entity to create the SQL for

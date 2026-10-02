@@ -269,7 +269,7 @@ public class GeneratorContext {
 
 	/** Mapping from the name of a generator to the generator itself. */
 	@Getter(AccessLevel.NONE)
-	private final Map<GeneratorId, IdGenerator> generators = new HashMap<>();
+	private final Map<GeneratorId, IdGenerator<?>> generators = new HashMap<>();
 
 	/** The default sequence generator, if none is explicitly specified in a {@link GeneratedValue}. */
 	private Map<String, SequenceIdGenerator> defaultSequenceGenerators = new HashMap<>();
@@ -457,7 +457,7 @@ public class GeneratorContext {
 		}
 	}
 
-	private IdGenerator getDefaultSequenceGenerator(final GeneratorTable table) {
+	private SequenceIdGenerator getDefaultSequenceGenerator(final GeneratorTable table) {
 		final String sequenceName = this.provider.getDefaultSequence(table.getName());
 		SequenceIdGenerator sequenceIdGenerator = this.defaultSequenceGenerators.get(sequenceName);
 		if (sequenceIdGenerator == null) {
@@ -473,7 +473,7 @@ public class GeneratorContext {
 		return sequenceIdGenerator;
 	}
 
-	private IdGenerator getDefaultTableGenerator(final GeneratorTable table) {
+	private TableIdGenerator getDefaultTableGenerator(final GeneratorTable table) {
 		final String generatorName = this.provider.getDefaultGeneratorTablePkColumnValue(table.getName());
 		TableIdGenerator tableIdGenerator = this.defaultTableGenerators.get(generatorName);
 		if (tableIdGenerator == null) {
@@ -557,43 +557,52 @@ public class GeneratorContext {
 	 *            the name of the current column
 	 * @return the generator that is responsible for managing the values
 	 */
-	@SuppressWarnings("null")
-	public IdGenerator getGenerator(final GeneratedValue generatedValue, final GeneratorTable table,
+	public IdGenerator<?> getGenerator(final GeneratedValue generatedValue, final GeneratorTable table,
 			final GeneratorColumn column) {
 		GenerationType strategy = generatedValue.strategy();
-		final String name = generatedValue.generator();
-		if (StringUtils.isNotEmpty(name)) {
-			ModelException.test(strategy != GenerationType.IDENTITY,
-					"Generator for GenerationType.IDENTITY not allowed");
-			IdGenerator generator = this.generators.get(new GeneratorId(name, table.getQualifiedName()));
-			if (generator == null) {
-				generator = this.generators.get(new GeneratorId(name, null));
-				ModelException.test(generator != null, "Generator '{}' not found", name);
-
-				final IdGenerator derived = generator.derive(table);
-				if (derived != generator) {
-					return addContextObject(this.generators, ContextModelListener::foundGenerator,
-							new GeneratorId(name, table.getQualifiedName()), derived);
-				}
-			}
-			return generator;
-		}
 		if (strategy == GenerationType.AUTO) {
 			strategy = this.provider.getAutoGenerationType(this.dialect);
 		}
+
+		final String name = generatedValue.generator();
+		if (StringUtils.isNotEmpty(name)) {
+			return getGenerator(table, strategy, name);
+		}
 		switch (strategy) {
-			case IDENTITY:
-				return addContextObject(this.generators, ContextModelListener::foundGenerator,
-						new GeneratorId(column.getUnquotedName(), table.getQualifiedName()),
-						new IdentityValue(this, table, column));
 			case TABLE:
 				return getDefaultTableGenerator(table);
 			case SEQUENCE:
 				return getDefaultSequenceGenerator(table);
+			case IDENTITY:
+				return addContextObject(this.generators, ContextModelListener::foundGenerator,
+						new GeneratorId(column.getUnquotedName(), table.getQualifiedName()),
+						new IdentityValue(this, table, column));
+			case UUID:
+				final UuidGenerator generator = new UuidGenerator(table);
+				fireContextObjectAdded(ContextModelListener::foundGenerator, generator);
+				return generator;
 			case AUTO:
 			default:
-				throw new ModelException("Unknown GenerationType: " + strategy);
+				throw new ModelException("Unsupported GenerationType: " + strategy);
 		}
+	}
+
+	private IdGenerator<?> getGenerator(final GeneratorTable table, final GenerationType strategy, final String name) {
+		ModelException.test(strategy == GenerationType.TABLE || strategy == GenerationType.SEQUENCE,
+				"Referencing a generator by name only allowed for TABLE or SEQUENCE");
+		IdGenerator<?> generator = this.generators.get(new GeneratorId(name, table.getQualifiedName()));
+		if (generator == null) {
+			generator = this.generators.get(new GeneratorId(name, null));
+			ModelException.test(generator != null, "Generator '{}' not found", name);
+
+			@SuppressWarnings("null")
+			final IdGenerator<?> derived = generator.derive(table);
+			if (derived != generator) {
+				return addContextObject(this.generators, ContextModelListener::foundGenerator,
+						new GeneratorId(name, table.getQualifiedName()), derived);
+			}
+		}
+		return generator;
 	}
 
 	/**
@@ -626,7 +635,7 @@ public class GeneratorContext {
 		final SequenceGenerator sequenceGenerator = element.getAnnotation(SequenceGenerator.class);
 		if (sequenceGenerator != null) {
 			GeneratorId key = new GeneratorId(sequenceGenerator.name(), null);
-			final IdGenerator existingGenerator = this.generators.get(key);
+			final IdGenerator<?> existingGenerator = this.generators.get(key);
 			if (!(existingGenerator instanceof SequenceIdGenerator) || !((SequenceIdGenerator) existingGenerator)
 					.getSequenceName().equals(sequenceGenerator.sequenceName())) {
 				if (existingGenerator != null) {
@@ -734,7 +743,7 @@ public class GeneratorContext {
 	 *             if the writer throws one
 	 */
 	public void writeAlignmentStatements(final StatementsWriter writer) throws IOException {
-		for (final IdGenerator generator : this.generators.values()) {
+		for (final IdGenerator<?> generator : this.generators.values()) {
 			generator.alignNextValue(writer);
 		}
 		for (final SequenceIdGenerator generator : this.defaultSequenceGenerators.values()) {

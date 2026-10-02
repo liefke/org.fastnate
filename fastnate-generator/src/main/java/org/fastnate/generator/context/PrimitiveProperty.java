@@ -165,7 +165,7 @@ public class PrimitiveProperty<E, T> extends SingularProperty<E, T> {
 	}
 
 	@Override
-	public ColumnExpression getExpression(final E entity, final boolean whereExpression) {
+	public ColumnExpression getEntityReference(final E entity, final boolean whereExpression) {
 		final T value = getValue(entity);
 		if (value == null) {
 			if (this.defaultValue != null) {
